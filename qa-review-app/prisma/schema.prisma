@@ -1,0 +1,135 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String   @default("$2a$10$cw/7jS5.k.z.Q.q.q.q.q.q.q.q.q.q.q.q.q.q.q.q.q.q.q.q")
+  roles     String   @default("[\"REVIEWER\"]") // Stored as JSON string for SQLite compatibility
+  passwordResetToken String?
+  passwordResetExpiry DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  leadProjects            Project[] @relation("ProjectLead")
+  reviewerProjects        Project[] @relation("ProjectReviewer")
+  secondaryReviewerProjects Project[] @relation("ProjectSecondaryReviewer")
+  contactProjects         Project[] @relation("ProjectContact")
+  pmProjects              Project[] @relation("ProjectPM")
+  devArchitectProjects    Project[] @relation("ProjectDevArchitect")
+  reviews                 Review[]  @relation("PrimaryReviewer")
+  secondaryReviews        Review[]  @relation("SecondaryReviewer")
+  comments                Comment[]
+}
+
+model Project {
+  id             String   @id @default(cuid())
+  name           String   @unique
+  description    String?
+  type           String   @default("MANUAL") // "MANUAL", "AUTOMATION_WEB", "AUTOMATION_MOBILE", "API", "DESKTOP"
+  leadId         String?
+  reviewerId     String?
+  secondaryReviewerId String?
+  contactPersonId String? // Made optional temporarily if needed, but usually required. Let's keep it required if possible, but during migration it might be tricky.
+  pmId           String?  // Project Manager (optional)
+  devArchitectId String?  // Dev Architect (optional)
+  status         String   @default("ACTIVE") // ACTIVE or CLOSED
+  closedAt       DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  lead         User?         @relation("ProjectLead", fields: [leadId], references: [id])
+  reviewer     User?         @relation("ProjectReviewer", fields: [reviewerId], references: [id])
+  secondaryReviewer User?    @relation("ProjectSecondaryReviewer", fields: [secondaryReviewerId], references: [id])
+  contactPerson User?        @relation("ProjectContact", fields: [contactPersonId], references: [id]) // Changed relation to User
+  pm           User?         @relation("ProjectPM", fields: [pmId], references: [id])
+  devArchitect User?         @relation("ProjectDevArchitect", fields: [devArchitectId], references: [id])
+
+  reviews Review[]
+}
+
+model Form {
+  id          String   @id @default(cuid())
+  title       String
+  questions   String   // Stored as JSON string: [{id, type, label, options}]
+  projectType String?  // "MANUAL", "AUTOMATION_WEB", "AUTOMATION_MOBILE", "API", "DESKTOP", or null for all types
+  isActive    Boolean  @default(true)
+  isSprint0   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  reviews Review[]
+}
+
+model Review {
+  id            String    @id @default(cuid())
+  projectId     String
+  reviewerId    String
+  secondaryReviewerId String?
+  formId        String
+  status        String    // PENDING, SCHEDULED, SUBMITTED, DEFERRED, ON_HOLD, PROJECT_ENDED
+  healthStatus  String    @default("On Track") // "On Track", "Slightly Challenged", "Extremely Challenged"
+  deferredReason String?  // Reason if status is DEFERRED
+  endedReason   String?   // Reason if status is PROJECT_ENDED
+  onHoldReason  String?   // Reason if status is ON_HOLD
+  notCompletedReason String? // Reason if status is NOT_COMPLETED
+  observations  String?   // Detailed observations
+  recommendedActions String? // Actions recommended by the reviewer
+  followUpComment String? // PM/Lead/Admin follow up comments
+  scheduledDate DateTime?
+  submittedDate DateTime?
+  answers       String?   // Stored as JSON string: {questionId: answer}
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  project           Project @relation(fields: [projectId], references: [id])
+  reviewer          User    @relation("PrimaryReviewer", fields: [reviewerId], references: [id])
+  secondaryReviewer User?   @relation("SecondaryReviewer", fields: [secondaryReviewerId], references: [id])
+  form              Form    @relation(fields: [formId], references: [id])
+  comments Comment[]
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  reviewId  String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  userId      String?  // Nullable for system actions
+  userName    String?  // Denormalized for easier querying
+  userEmail   String?  // Denormalized for easier querying
+  action      String   // e.g., "LOGIN", "CREATE_PROJECT", "UPDATE_REVIEW", "DELETE_USER"
+  entity      String?  // e.g., "Project", "Review", "User", "Comment"
+  entityId    String?  // ID of the affected entity
+  projectId   String?  // ID of the related project (if any)
+  projectName String?  // Name of the related project (denormalized)
+  details     String?  // JSON string with additional context
+  ipAddress   String?  // User's IP address
+  userAgent   String?  // Browser/client info
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([entity])
+  @@index([projectId])
+  @@index([createdAt])
+}
