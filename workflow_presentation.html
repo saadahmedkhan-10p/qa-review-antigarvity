@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QA Review Process - Workflow Overview</title>
+    <!-- Mermaid JS -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'base',
+            flowchart: { curve: 'basis' },
+            themeVariables: {
+                primaryColor: '#e0f2fe',
+                primaryTextColor: '#0f172a',
+                primaryBorderColor: '#0ea5e9',
+                lineColor: '#64748b',
+                secondaryColor: '#f0fdf4',
+                tertiaryColor: '#fff7ed',
+                fontFamily: 'Inter, sans-serif'
+            }
+        });
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-sub: #64748b;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-purple: #a855f7;
+            --accent-orange: #f97316;
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            max-width: 800px;
+        }
+
+        h1 {
+            font-weight: 800;
+            font-size: 3rem;
+            margin: 0 0 1rem 0;
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+        }
+
+        p.subtitle {
+            color: var(--text-sub);
+            font-size: 1.25rem;
+            line-height: 1.6;
+            font-weight: 500;
+        }
+
+        .diagram-wrapper {
+            background: var(--card-bg);
+            border-radius: 24px;
+            box-shadow: var(--shadow-lg);
+            padding: 3rem;
+            width: 100%;
+            max-width: 1400px;
+            overflow: hidden;
+            /* For rounded corners */
+            position: relative;
+            border: 1px solid #e2e8f0;
+        }
+
+        .diagram-container {
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Legend Styles */
+        .legend {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+            padding-top: 2rem;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 0.95rem;
+            color: var(--text-sub);
+            font-weight: 500;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 4px;
+            margin-right: 8px;
+        }
+
+        .footer {
+            margin-top: 3rem;
+            color: var(--text-sub);
+            font-size: 0.875rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .footer span {
+            opacity: 0.7;
+        }
+
+        /* Branding/Logo Placeholder */
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo svg {
+            width: 32px;
+            height: 32px;
+            color: var(--accent-blue);
+        }
+
+        /* Role Cards Section */
+        .roles-container {
+            width: 100%;
+            max-width: 1400px;
+            margin-top: 4rem;
+        }
+
+        .roles-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .roles-header h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .roles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .role-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: var(--shadow-md);
+            border-top: 6px solid #ccc;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .role-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .role-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .role-description {
+            color: var(--text-sub);
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .permissions-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .permissions-list li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.9rem;
+            color: var(--text-main);
+        }
+
+        .permissions-list li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--accent-green);
+            font-weight: bold;
+        }
+
+        .permissions-list li.destructive::before {
+            content: "•";
+            color: var(--text-sub);
+        }
+
+        /* Role Specific Border Colors matching Diagram */
+        .role-card.admin {
+            border-top-color: #0ea5e9;
+        }
+
+        .role-card.reviewer {
+            border-top-color: #22c55e;
+        }
+
+        .role-card.lead {
+            border-top-color: #f97316;
+        }
+
+        .role-card.stakeholder {
+            border-top-color: #a855f7;
+        }
+
+        .role-card.admin .role-title {
+            color: #0284c7;
+        }
+
+        .role-card.reviewer .role-title {
+            color: #16a34a;
+        }
+
+        .role-card.lead .role-title {
+            color: #ea580c;
+        }
+
+        .role-card.stakeholder .role-title {
+            color: #9333ea;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <div class="logo">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            QA Review App
+        </div>
+        <h1>Review Process Workflow</h1>
+        <p class="subtitle">End-to-end visualization of the Quality Assurance review lifecycle, from project
+            configuration to strategic reporting.</p>
+    </div>
+
+    <div class="diagram-wrapper">
+        <div class="diagram-container">
+            <div class="mermaid">
+                %%{init: {'theme': 'base', 'themeVariables': { 'fontFamily': 'Inter', 'fontSize': '16px'}}}%%
+                graph TD
+                subgraph Setup [1. Configuration & Setup]
+                direction TB
+                A1(Start: Create Project)
+                A2[Assign Reviewer & Lead]
+                A3[Trigger Review Cycle]
+                A4[System: Send Notifications]
+
+                A1 --> A2
+                A2 --> A3
+                A3 --> A4
+
+                style Setup fill:#f0f9ff,stroke:#bae6fd,color:#0369a1
+                style A1 fill:#ffffff,stroke:#0ea5e9,stroke-width:2px,color:#0f172a
+                style A2 fill:#ffffff,stroke:#0ea5e9,stroke-width:2px,color:#0f172a
+                style A3 fill:#ffffff,stroke:#0ea5e9,stroke-width:2px,color:#0f172a
+                style A4 fill:#ffffff,stroke:#64748b,stroke-width:2px,stroke-dasharray: 5 5,color:#475569
+                end
+
+                subgraph Execution [2. Assessment Execution]
+                direction TB
+                R1[Reviewer: Receive Notification]
+                R2[Reviewer: Schedule Date]
+                R3[Reviewer: Conduct Assessment]
+                R4[Reviewer: Submit Review]
+
+                R1 --> R2
+                R2 --> R3
+                R3 --> R4
+
+                style Execution fill:#f0fdf4,stroke:#bbf7d0,color:#15803d
+                style R1 fill:#ffffff,stroke:#22c55e,stroke-width:2px,color:#0f172a
+                style R2 fill:#ffffff,stroke:#22c55e,stroke-width:2px,color:#0f172a
+                style R3 fill:#ffffff,stroke:#22c55e,stroke-width:2px,color:#0f172a
+                style R4 fill:#ffffff,stroke:#22c55e,stroke-width:2px,color:#0f172a
+                end
+
+                subgraph Validation [3. Validation & Feedback]
+                direction TB
+                L1[Lead: Monitor Status]
+                L2[Lead: Review Submission]
+                L3{Feedback Needed?}
+                L4[Lead: Add Comments]
+                L5[Lead: Verify & Close]
+
+                L1 --> L2
+                L2 --> L3
+                L3 -- Yes --> L4
+                L4 --> L2
+                L3 -- No --> L5
+
+                style Validation fill:#fff7ed,stroke:#fed7aa,color:#c2410c
+                style L1 fill:#ffffff,stroke:#f97316,stroke-width:2px,color:#0f172a
+                style L2 fill:#ffffff,stroke:#f97316,stroke-width:2px,color:#0f172a
+                style L3 fill:#ffffff,stroke:#f97316,stroke-width:2px,color:#0f172a
+                style L4 fill:#ffffff,stroke:#f97316,stroke-width:2px,color:#0f172a
+                style L5 fill:#ffffff,stroke:#f97316,stroke-width:2px,color:#0f172a
+                end
+
+                subgraph Insights [4. Insights & Strategy]
+                direction TB
+                S1[System: Generate Reports]
+                S2[Stakeholder: View Dashboard]
+                S3[Stakeholder: Analyze Risks]
+                S4[Stakeholder: Strategic Decisions]
+
+                S1 --> S2
+                S2 --> S3
+                S3 --> S4
+
+                style Insights fill:#faf5ff,stroke:#e9d5ff,color:#7e22ce
+                style S1 fill:#ffffff,stroke:#64748b,stroke-width:2px,stroke-dasharray: 5 5,color:#475569
+                style S2 fill:#ffffff,stroke:#a855f7,stroke-width:2px,color:#0f172a
+                style S3 fill:#ffffff,stroke:#a855f7,stroke-width:2px,color:#0f172a
+                style S4 fill:#ffffff,stroke:#a855f7,stroke-width:2px,color:#0f172a
+                end
+
+                A4 --> R1
+                R4 --> L1
+                L5 --> S1
+
+                %% Link Styling
+                linkStyle default stroke:#64748b,stroke-width:2px,fill:none
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="dot" style="background: #0ea5e9;"></div>Config & Admin
+            </div>
+            <div class="legend-item">
+                <div class="dot" style="background: #22c55e;"></div>Execution
+            </div>
+            <div class="legend-item">
+                <div class="dot" style="background: #f97316;"></div>Validation
+            </div>
+            <div class="legend-item">
+                <div class="dot" style="background: #a855f7;"></div>Strategy
+            </div>
+            <div class="legend-item">
+                <div class="dot" style="background: #64748b;"></div>System Automated
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="roles-container">
+        <div class="roles-header">
+            <h2>Role-Specific Permissions & Actions</h2>
+        </div>
+        <div class="roles-grid">
+
+            <!-- ADMIN & CONFIG -->
+            <div class="role-card admin">
+                <div class="role-title">Admin / QA Head</div>
+                <div class="role-description">Responsible for system governance, project setup, and user management.
+                    Main driver of the configuration phase.</div>
+                <ul class="permissions-list">
+                    <li><strong>Manage Projects:</strong> Create, Edit, Delete, Close</li>
+                    <li><strong>Manage Users:</strong> Invite, Assign Roles, Remove</li>
+                    <li><strong>Define Forms:</strong> Create/Edit Assessment JSON forms</li>
+                    <li><strong>Reports:</strong> View & Export Full System Reports</li>
+                    <li><strong>Trigger Cycles:</strong> Initiate review cycles manually</li>
+                </ul>
+            </div>
+
+            <!-- REVIEWER -->
+            <div class="role-card reviewer">
+                <div class="role-title">Reviewer</div>
+                <div class="role-description">Subject Matter Experts assigned to conduct technical assessments of
+                    projects.</div>
+                <ul class="permissions-list">
+                    <li><strong>Conduct Reviews:</strong> Fill out assigned forms</li>
+                    <li><strong>Schedule:</strong> Set planned review dates</li>
+                    <li><strong>View Projects:</strong> Access assigned project details</li>
+                    <li><strong>Comment:</strong> Add observations to reviews</li>
+                    <li class="destructive">Cannot delete or reassign reviews</li>
+                </ul>
+            </div>
+
+            <!-- QA LEAD -->
+            <div class="role-card lead">
+                <div class="role-title">QA Lead / Manager</div>
+                <div class="role-description">Oversees the quality process, validates reviewer submissions, and ensures
+                    loop closure.</div>
+                <ul class="permissions-list">
+                    <li><strong>Monitor Status:</strong> Track overdue/pending reviews</li>
+                    <li><strong>Validate:</strong> Review submitted assessments</li>
+                    <li><strong>Feedback:</strong> Request changes or add feedback</li>
+                    <li><strong>Close Loop:</strong> Verified & Close reviews</li>
+                    <li><strong>Manage Forms:</strong> (Manager) Edit assessment criteria</li>
+                </ul>
+            </div>
+
+            <!-- STAKEHOLDER -->
+            <div class="role-card stakeholder">
+                <div class="role-title">Stakeholder (PM/Director)</div>
+                <div class="role-description">Consumers of the QA insights for strategic decision making and risk
+                    analysis.</div>
+                <ul class="permissions-list">
+                    <li><strong>View Dashboard:</strong> High-level health metrics</li>
+                    <li><strong>Analyze Risks:</strong> Drill down into specific reports</li>
+                    <li><strong>Export Reports:</strong> (Director) Download PDF/Excel</li>
+                    <li><strong>Comment:</strong> Provide strategic input</li>
+                    <li class="destructive">Read-only access to configuration</li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="footer">
+        <span>Confidential - For Internal Management Use Only</span>
+        <span>Generated on 2026-02-17</span>
+    </div>
+
+</body>
+
+</html>
