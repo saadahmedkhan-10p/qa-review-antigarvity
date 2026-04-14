@@ -216,7 +216,7 @@ export function ProjectsTable({ projects, onInvite, onClose, onReopen, initialTy
                                                     className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 p-1 rounded hover:bg-indigo-50 dark:hover:bg-indigo-900/20 inline-flex items-center justify-center transition-colors"
                                                     title="View project report"
                                                 >
-                                                    <TrendingUp className="h-5 w-5" />
+                                                    <TrendingUp className="h-5 w-5" color="#4f46e5" />
                                                 </Link>
                                                 <ProjectStatusButton
                                                     projectId={project.id}
