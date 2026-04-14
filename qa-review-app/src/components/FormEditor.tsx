@@ -22,8 +22,7 @@ interface FormEditorProps {
     initialTitle?: string;
     initialQuestions?: any[];
     initialProjectType?: string | null;
-    initialIsSprint0?: boolean;
-    onSubmit: (title: string, questions: Section[], projectType: string | null, isSprint0: boolean) => Promise<void>;
+    onSubmit: (title: string, questions: Section[], projectType: string | null) => Promise<void>;
     submitLabel: string;
     isEditing?: boolean;
 }
@@ -51,14 +50,12 @@ export function FormEditor({
     initialTitle = "",
     initialQuestions = [],
     initialProjectType = null,
-    initialIsSprint0 = false,
     onSubmit,
     submitLabel,
     isEditing = false
 }: FormEditorProps) {
     const [title, setTitle] = useState(initialTitle);
     const [projectType, setProjectType] = useState<string | null>(initialProjectType);
-    const [isSprint0, setIsSprint0] = useState(initialIsSprint0);
     // Initialize sections. If initialQuestions is flat (legacy), wrap in a default section.
     // If it has sections (detected by check), use as is.
     const [sections, setSections] = useState<Section[]>(() => {
@@ -210,7 +207,7 @@ export function FormEditor({
 
         setIsSubmitting(true);
         try {
-            await onSubmit(title, finalSections, projectType, isSprint0);
+            await onSubmit(title, finalSections, projectType);
         } finally {
             setIsSubmitting(false);
         }
@@ -261,19 +258,6 @@ export function FormEditor({
                     </select>
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Determines which projects this form applies to.</p>
                 </div>
-            </div>
-
-            <div className="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/20 p-3 rounded-md border border-indigo-100 dark:border-indigo-900/30">
-                <input
-                    type="checkbox"
-                    id="isSprint0"
-                    checked={isSprint0}
-                    onChange={(e) => setIsSprint0(e.target.checked)}
-                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                />
-                <label htmlFor="isSprint0" className="text-sm font-bold text-indigo-900 dark:text-indigo-100">
-                    Sprint 0 Form (Target projects with no previous reviews)
-                </label>
             </div>
 
             <div className="border-t border-gray-200 dark:border-gray-700 pt-6">

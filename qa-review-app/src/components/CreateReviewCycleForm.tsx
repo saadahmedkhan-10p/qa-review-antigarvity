@@ -9,7 +9,6 @@ interface CreateReviewCycleFormProps {
 }
 
 export function CreateReviewCycleForm({ forms }: CreateReviewCycleFormProps) {
-    const [targetNewOnly, setTargetNewOnly] = useState(false);
     const [isPending, setIsPending] = useState(false);
 
     async function handleSubmit(formData: FormData) {
@@ -21,7 +20,7 @@ export function CreateReviewCycleForm({ forms }: CreateReviewCycleFormProps) {
 
         setIsPending(true);
         try {
-            await createReviewCycle(formId, targetNewOnly);
+            await createReviewCycle(formId, false);
             toast.success("Review cycle initiated and invites sent successfully");
         } catch (error) {
             console.error(error);
@@ -41,18 +40,12 @@ export function CreateReviewCycleForm({ forms }: CreateReviewCycleFormProps) {
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Select Review Form</label>
                         <select
                             name="formId"
+                            id="form"
+                            className="w-full text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             required
-                            disabled={isPending}
-                            onChange={(e) => {
-                                const selectedForm = forms.find(f => f.id === e.target.value);
-                                if (selectedForm?.isSprint0) {
-                                    setTargetNewOnly(true);
-                                }
-                            }}
-                            className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm p-2 text-gray-900 dark:text-white dark:bg-gray-700 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
                         >
-                            <option value="">Select a form...</option>
-                            {forms.map((f: any) => <option key={f.id} value={f.id}>{f.title}{f.isSprint0 ? ' (Sprint 0)' : ''}</option>)}
+                            <option value="">Select a form</option>
+                            {forms.map((f: any) => <option key={f.id} value={f.id}>{f.title}</option>)}
                         </select>
                     </div>
                     <button
@@ -70,19 +63,9 @@ export function CreateReviewCycleForm({ forms }: CreateReviewCycleFormProps) {
                         )}
                     </button>
                 </div>
-
-                <div className="flex items-center gap-2">
-                    <input
-                        type="checkbox"
-                        id="targetNewOnly"
-                        checked={targetNewOnly}
-                        onChange={(e) => setTargetNewOnly(e.target.checked)}
-                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                    />
-                    <label htmlFor="targetNewOnly" className="text-sm text-gray-600 dark:text-gray-400">
-                        Only target projects with no previous reviews (Target Sprint 0)
-                    </label>
-                </div>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Select a form to evaluate the project baseline.
+                </p>
             </form>
         </div>
     );

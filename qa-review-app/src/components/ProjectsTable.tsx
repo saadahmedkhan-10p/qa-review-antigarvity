@@ -6,7 +6,7 @@ import { DeleteProjectButton } from "@/components/DeleteProjectButton";
 import { SendInviteButton } from "@/components/SendInviteButton";
 import { ProjectStatusButton } from "@/components/ProjectStatusButton";
 import { TableSearch } from "@/components/TableSearch";
-import { Pencil, Filter } from "lucide-react";
+import { Pencil, Filter, FileText } from "lucide-react";
 import { Pagination } from "@/components/Pagination";
 import { useTableSort } from "@/hooks/useTableSort";
 import { useTableSearch } from "@/hooks/useTableSearch";
@@ -210,6 +210,16 @@ export function ProjectsTable({ projects, onInvite, onClose, onReopen, initialTy
                                                     title="Edit project"
                                                 >
                                                     <Pencil className="h-5 w-5" />
+                                                </Link>
+                                                <Link
+                                                    href={`/admin/reports/project/${project.id}`}
+                                                    className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-300 p-1 rounded hover:bg-emerald-50 dark:hover:bg-emerald-900/20 inline-flex items-center justify-center transition-colors"
+                                                    title="View project report"
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="M3 3v18h18"/>
+                                                        <path d="m19 9-5 5-4-4-3 3"/>
+                                                    </svg>
                                                 </Link>
                                                 <ProjectStatusButton
                                                     projectId={project.id}

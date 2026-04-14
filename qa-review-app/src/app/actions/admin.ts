@@ -235,28 +235,26 @@ export async function getForm(id: string) {
     return await prisma.form.findUnique({ where: { id } });
 }
 
-export async function createForm(title: string, questions: any[], projectType: string | null = null, isSprint0: boolean = false) {
+export async function createForm(title: string, questions: any[], projectType: string | null = null) {
 
     await (prisma.form as any).create({
         data: {
             title,
             questions: JSON.stringify(questions),
-            projectType,
-            isSprint0
+            projectType
         }
     });
 
     revalidatePath("/admin/forms");
 }
 
-export async function updateForm(id: string, title: string, questions: any[], projectType: string | null = null, isSprint0: boolean = false) {
+export async function updateForm(id: string, title: string, questions: any[], projectType: string | null = null) {
     await (prisma.form as any).update({
         where: { id },
         data: {
             title,
             questions: JSON.stringify(questions),
-            projectType,
-            isSprint0
+            projectType
         }
     });
 

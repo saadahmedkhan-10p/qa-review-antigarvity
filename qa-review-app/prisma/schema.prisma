@@ -65,7 +65,6 @@ model Form {
   questions   String   // Stored as JSON string: [{id, type, label, options}]
   projectType String?  // "MANUAL", "AUTOMATION_WEB", "AUTOMATION_MOBILE", "API", "DESKTOP", or null for all types
   isActive    Boolean  @default(true)
-  isSprint0   Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

@@ -192,6 +192,12 @@ export default function DevArchitectDashboard() {
                                                         View & Comment
                                                     </Link>
                                                 )}
+                                                <Link
+                                                    href={`/admin/reports/project/${review.projectId}`}
+                                                    className="px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-900/30 dark:border-indigo-800 dark:text-indigo-300 rounded-md hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-sm font-medium text-center transition-colors"
+                                                >
+                                                    Project Report
+                                                </Link>
                                                 {review.status !== 'SUBMITTED' && (
                                                     <span className="px-4 py-2 bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 rounded-md text-sm text-center">
                                                         Not Available

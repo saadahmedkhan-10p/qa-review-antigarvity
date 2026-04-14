@@ -12,7 +12,6 @@ export default function EditFormPage({ params }: { params: Promise<{ id: string 
     const [title, setTitle] = useState("");
     const [questions, setQuestions] = useState<any[]>([]);
     const [projectType, setProjectType] = useState<string | null>(null);
-    const [isSprint0, setIsSprint0] = useState(false);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
@@ -30,7 +29,6 @@ export default function EditFormPage({ params }: { params: Promise<{ id: string 
             }
             setTitle(form.title);
             setProjectType(form.projectType || null);
-            setIsSprint0((form as any).isSprint0 || false);
             // Filter out the Project Health section from initial questions (if present) 
             // since it gets auto-appended on save
             const parsedQuestions = JSON.parse(form.questions);
@@ -43,9 +41,9 @@ export default function EditFormPage({ params }: { params: Promise<{ id: string 
         }
     };
 
-    const handleUpdate = async (updatedTitle: string, updatedQuestions: Section[], updatedProjectType: string | null, updatedIsSprint0: boolean) => {
+    const handleUpdate = async (updatedTitle: string, updatedQuestions: Section[], updatedProjectType: string | null) => {
         try {
-            await updateForm(id, updatedTitle, updatedQuestions, updatedProjectType, updatedIsSprint0);
+            await updateForm(id, updatedTitle, updatedQuestions, updatedProjectType);
             toast.success("Form updated successfully!");
             router.push("/admin/forms");
         } catch (error) {
@@ -76,7 +74,6 @@ export default function EditFormPage({ params }: { params: Promise<{ id: string 
                     initialTitle={title}
                     initialQuestions={questions}
                     initialProjectType={projectType}
-                    initialIsSprint0={isSprint0}
                     onSubmit={handleUpdate}
                     submitLabel="Update Form"
                     isEditing={true}

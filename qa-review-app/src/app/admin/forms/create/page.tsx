@@ -25,9 +25,9 @@ function CreateFormContent() {
         }
     }, [user, loading, router]);
 
-    const handleCreate = async (title: string, questions: Section[], updatedProjectType: string | null, isSprint0: boolean) => {
+    const handleCreate = async (title: string, questions: Section[], updatedProjectType: string | null) => {
         try {
-            await createForm(title, questions, updatedProjectType, isSprint0);
+            await createForm(title, questions, updatedProjectType);
             toast.success("Form created successfully!");
             router.push(`/admin/forms${updatedProjectType ? `?type=${updatedProjectType}` : ''}`);
         } catch (error) {

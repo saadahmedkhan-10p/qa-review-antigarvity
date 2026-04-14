@@ -37,38 +37,18 @@ export async function sendProjectInvites(projectId: string) {
     // If NO pending reviews exist, automatically create one so the reviewer can schedule it
     if (pendingReviews.length === 0) {
         // Find an active form for this project type
-        // If it's the first review (count 0), prefer Sprint 0 form.
-        // If it's 1+ reviews, strictly use Regular (isSprint0: false) forms.
         let form = await prisma.form.findFirst({
             where: {
                 OR: [
                     { projectType: (project as any).type },
                     { projectType: null }
                 ],
-                isActive: true,
-                isSprint0: totalReviewsCount === 0
+                isActive: true
             },
             orderBy: {
                 createdAt: 'desc'
             }
         });
-
-        // Fallback for new projects: if no Sprint 0 form exists, try regular form
-        if (!form && totalReviewsCount === 0) {
-            form = await prisma.form.findFirst({
-                where: {
-                    OR: [
-                        { projectType: (project as any).type },
-                        { projectType: null }
-                    ],
-                    isActive: true,
-                    isSprint0: false
-                },
-                orderBy: {
-                    createdAt: 'desc'
-                }
-            });
-        }
 
         if (form) {
             const newReview = await prisma.review.create({
