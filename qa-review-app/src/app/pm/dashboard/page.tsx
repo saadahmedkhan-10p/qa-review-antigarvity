@@ -3,7 +3,7 @@
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { FolderKanban, FileText, Clock, CheckCircle2 } from "lucide-react";
+import { FolderKanban, FileText, Clock, CheckCircle2, TrendingUp } from "lucide-react";
 
 export default function PMDashboard() {
     const { user, loading: authLoading } = useAuth();
@@ -198,10 +198,7 @@ export default function PMDashboard() {
                                                     <div className="flex items-center gap-3">
                                                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{project.name}</h3>
                                                         <Link href={`/admin/reports/project/${project.id}`} className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 px-2 py-1 bg-indigo-50 dark:bg-indigo-900/30 rounded-md">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                                <path d="M3 3v18h18"/>
-                                                                <path d="m19 9-5 5-4-4-3 3"/>
-                                                            </svg> Full Report
+                                                            <TrendingUp className="h-3 w-3" /> Full Report
                                                         </Link>
                                                     </div>
                                                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{project.description}</p>
