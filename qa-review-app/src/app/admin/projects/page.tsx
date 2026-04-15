@@ -38,8 +38,8 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
 
     const leads = users.filter((u: any) => {
         try {
-            const roles = JSON.parse(u.roles);
-            return roles.includes("REVIEW_LEAD");
+            const roles = typeof u.roles === 'string' ? JSON.parse(u.roles || "[]") : (u.roles || []);
+            return Array.isArray(roles) && roles.includes("REVIEW_LEAD");
         } catch {
             return false;
         }
@@ -47,19 +47,17 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
 
     const reviewers = users.filter((u: any) => {
         try {
-            const roles = JSON.parse(u.roles);
-            return roles.includes("REVIEWER") || roles.includes("REVIEW_LEAD");
+            const roles = typeof u.roles === 'string' ? JSON.parse(u.roles || "[]") : (u.roles || []);
+            return Array.isArray(roles) && (roles.includes("REVIEWER") || roles.includes("REVIEW_LEAD"));
         } catch {
             return false;
         }
     });
 
-    // Contacts filtering removed as we now use ContactPerson entity
-
     const pms = users.filter((u: any) => {
         try {
-            const roles = JSON.parse(u.roles);
-            return roles.includes("PM");
+            const roles = typeof u.roles === 'string' ? JSON.parse(u.roles || "[]") : (u.roles || []);
+            return Array.isArray(roles) && roles.includes("PM");
         } catch {
             return false;
         }
@@ -67,8 +65,8 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
 
     const devArchitects = users.filter((u: any) => {
         try {
-            const roles = JSON.parse(u.roles);
-            return roles.includes("DEV_ARCHITECT");
+            const roles = typeof u.roles === 'string' ? JSON.parse(u.roles || "[]") : (u.roles || []);
+            return Array.isArray(roles) && roles.includes("DEV_ARCHITECT");
         } catch {
             return false;
         }

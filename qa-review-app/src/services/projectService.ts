@@ -108,54 +108,81 @@ export class ProjectService {
      * Update an existing project
      */
     static async update(id: string, data: Partial<ProjectInput>, currentUser: SessionUser) {
-        // Validation
-        const validatedData = projectSchema.partial().parse(data);
+        // Validation with improved logging
+        console.log(`[ProjectService] Updating Project ${id}`, data);
+        
+        let validatedData;
+        try {
+            validatedData = projectSchema.partial().parse(data);
+        } catch (error: any) {
+            console.error("[ProjectService] Validation Error:", error.errors);
+            throw new Error(`Validation failed: ${error.errors?.[0]?.message || error.message}`);
+        }
 
         const oldProject = await this.getById(id);
         if (!oldProject) throw new Error("Project not found");
 
-        const project = await prisma.project.update({
-            where: { id },
-            data: {
-                name: validatedData.name,
-                description: validatedData.description,
-                type: validatedData.type,
-                leadId: validatedData.leadId,
-                reviewerId: validatedData.reviewerId,
-                secondaryReviewerId: validatedData.secondaryReviewerId,
-                contactPersonId: validatedData.contactPersonId,
-                pmId: validatedData.pmId,
-                devArchitectId: validatedData.devArchitectId,
-            },
-            include: {
-                lead: true,
-                reviewer: true,
-                secondaryReviewer: true,
-                contactPerson: true
+        try {
+            const project = await prisma.project.update({
+                where: { id },
+                data: {
+                    name: validatedData.name,
+                    description: validatedData.description,
+                    type: validatedData.type,
+                    leadId: validatedData.leadId,
+                    reviewerId: validatedData.reviewerId,
+                    secondaryReviewerId: validatedData.secondaryReviewerId,
+                    contactPersonId: validatedData.contactPersonId,
+                    pmId: validatedData.pmId,
+                    devArchitectId: validatedData.devArchitectId,
+                },
+                include: {
+                    lead: true,
+                    reviewer: true,
+                    secondaryReviewer: true,
+                    contactPerson: true,
+                    pm: true,
+                    devArchitect: true
+                }
+            });
+
+            // Log Activity
+            await logActivity({
+                userId: currentUser.id,
+                userName: currentUser.name,
+                userEmail: currentUser.email,
+                action: 'UPDATE_PROJECT',
+                entity: 'Project',
+                entityId: id,
+                projectId: id,
+                projectName: project.name,
+                details: { 
+                    updatedFields: Object.keys(validatedData),
+                    timestamp: new Date().toISOString()
+                }
+            });
+
+            // Handle notifications defensively
+            try {
+                const leadsChanged = oldProject.leadId !== project.leadId;
+                const reviewersChanged = oldProject.reviewerId !== project.reviewerId;
+                const secondaryReviewersChanged = oldProject.secondaryReviewerId !== project.secondaryReviewerId;
+
+                if (leadsChanged || reviewersChanged || secondaryReviewersChanged) {
+                    await this.handleProjectAssignmentsEmails(project as any, oldProject as any);
+                }
+            } catch (notifyError) {
+                console.error("[ProjectService] Notification Error (Non-blocking):", notifyError);
             }
-        });
 
-        // Log Activity (Simplified for service layer)
-        await logActivity({
-            userId: currentUser.id,
-            userName: currentUser.name,
-            userEmail: currentUser.email,
-            action: 'UPDATE_PROJECT',
-            entity: 'Project',
-            entityId: id,
-            projectId: id,
-            projectName: project.name,
-            details: { updatedFields: Object.keys(validatedData) }
-        });
-
-        // Handle notifications if roles changed
-        if (oldProject.reviewerId !== project.reviewerId || 
-            oldProject.leadId !== project.leadId ||
-            oldProject.secondaryReviewerId !== project.secondaryReviewerId) {
-            await this.handleProjectAssignmentsEmails(project, oldProject);
+            return project;
+        } catch (error: any) {
+            console.error("[ProjectService] Database Update Error:", error);
+            if (error.code === 'P2002') {
+                throw new Error("A project with this name already exists.");
+            }
+            throw new Error(`Failed to update project: ${error.message}`);
         }
-
-        return project;
     }
 
     /**

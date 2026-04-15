@@ -270,7 +270,11 @@ export function UsersTable({ users, projects = [] }: { users: User[]; projects?:
                                                 <DeleteUserButton
                                                     userId={user.id}
                                                     userName={user.name}
-                                                    isProtected={(() => { const r = user.roles; const arr = typeof r === 'string' ? JSON.parse(r || '[]') : (r || []); return (arr as string[]).includes('ADMIN'); })()}
+                                                    isProtected={(() => { 
+                                                        const r = user.roles; 
+                                                        const arr = typeof r === 'string' ? JSON.parse(r || '[]') : (r || []); 
+                                                        return Array.isArray(arr) && arr.includes('ADMIN'); 
+                                                    })()}
                                                 />
                                             </div>
                                         </td>

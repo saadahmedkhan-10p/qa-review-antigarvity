@@ -55,24 +55,34 @@ export async function createProject(formData: FormData) {
     revalidatePath("/admin/projects");
 }
 
-export async function updateProject(projectId: string, formData: FormData) {
+export async function updateProject(projectId: string, data: any) {
     const user = await getCurrentUser();
-    if (!user) throw new Error("Unauthorized");
+    if (!user) return { success: false, error: "Unauthorized" };
 
-    const data = {
-        name: formData.get("name") as string,
-        description: formData.get("description") as string,
-        type: (formData.get("type") as string || "MANUAL") as "MANUAL" | "AUTOMATION_WEB" | "AUTOMATION_MOBILE" | "API" | "DESKTOP",
-        leadId: formData.get("leadId") as string,
-        reviewerId: formData.get("reviewerId") as string,
-        secondaryReviewerId: formData.get("secondaryReviewerId") as string || null,
-        contactPersonId: formData.get("contactPersonId") as string,
-        pmId: formData.get("pmId") as string || null,
-        devArchitectId: formData.get("devArchitectId") as string || null,
+    // Support both direct data and potentially any remaining FormData processing
+    const payload = {
+        name: data.name?.trim(),
+        description: data.description,
+        type: data.type || "MANUAL",
+        leadId: data.leadId || null,
+        reviewerId: data.reviewerId || null,
+        secondaryReviewerId: data.secondaryReviewerId || null,
+        contactPersonId: data.contactPersonId || null,
+        pmId: data.pmId || null,
+        devArchitectId: data.devArchitectId || null,
     };
 
-    await ProjectService.update(projectId, data, user);
-    revalidatePath("/admin/projects");
+    try {
+        await ProjectService.update(projectId, payload, user);
+        revalidatePath("/admin/projects");
+        return { success: true };
+    } catch (error: any) {
+        console.error("Failed to update project:", error);
+        return { 
+            success: false, 
+            error: error.message || "An unexpected error occurred while updating the project." 
+        };
+    }
 }
 
 export async function deleteProject(projectId: string) {

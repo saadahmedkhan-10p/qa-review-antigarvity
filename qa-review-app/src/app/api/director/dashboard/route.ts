@@ -17,9 +17,13 @@ export async function GET() {
         const users = await prisma.user.findMany();
         const reviewers = users.filter((u: any) => {
             try {
-                const roles = JSON.parse(u.roles);
-                return roles.includes('REVIEWER') || roles.includes('REVIEW_LEAD') ||
-                    roles.includes('QA_MANAGER') || roles.includes('QA_ARCHITECT');
+                const roles = typeof u.roles === 'string' ? JSON.parse(u.roles || "[]") : (u.roles || []);
+                return Array.isArray(roles) && (
+                    roles.includes('REVIEWER') || 
+                    roles.includes('REVIEW_LEAD') ||
+                    roles.includes('QA_MANAGER') || 
+                    roles.includes('QA_ARCHITECT')
+                );
             } catch {
                 return false;
             }
