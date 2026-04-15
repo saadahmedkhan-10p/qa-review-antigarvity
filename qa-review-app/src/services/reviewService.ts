@@ -217,7 +217,7 @@ export class ReviewService {
                 ...validatedData,
                 status: validatedData.status as string | undefined,
                 healthStatus: validatedData.healthStatus as string | undefined,
-                answers: validatedData.answers || undefined,
+                answers: validatedData.answers ? JSON.stringify(validatedData.answers) : undefined,
             },
             include: { project: true }
         });
@@ -248,7 +248,7 @@ export class ReviewService {
             where: { id },
             data: {
                 ...validatedData,
-                answers: validatedData.answers || undefined,
+                answers: validatedData.answers ? JSON.stringify(validatedData.answers) : undefined,
                 status: "SUBMITTED",
                 submittedDate: new Date()
             },
