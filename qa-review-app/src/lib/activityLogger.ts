@@ -29,7 +29,7 @@ export async function logActivity(params: LogActivityParams) {
                 entityId: params.entityId,
                 projectId: params.projectId,
                 projectName: params.projectName,
-                details: params.details ? JSON.stringify(params.details) : null,
+                details: params.details ? JSON.stringify(params.details) : undefined,
                 ipAddress: params.ipAddress,
                 userAgent: params.userAgent,
             },
