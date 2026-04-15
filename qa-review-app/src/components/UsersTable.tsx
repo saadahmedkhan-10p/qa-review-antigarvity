@@ -16,7 +16,7 @@ interface User {
     id: string;
     name: string;
     email: string;
-    roles: string; // JSON stringified array, e.g. "[\"ADMIN\",\"REVIEWER\"]"
+    roles: string | unknown; // Prisma Json column returns JsonValue; component handles both string and array
 }
 
 interface Project {
@@ -51,7 +51,8 @@ export function UsersTable({ users, projects = [] }: { users: User[]; projects?:
             let matchesRole = true;
             if (roleFilter !== "ALL") {
                 try {
-                    const rolesArray: string[] = JSON.parse(user.roles);
+                    const rolesRaw = user.roles;
+                    const rolesArray: string[] = typeof rolesRaw === 'string' ? JSON.parse(rolesRaw) : (rolesRaw as string[]);
                     matchesRole = rolesArray.includes(roleFilter);
                 } catch {
                     matchesRole = false;
@@ -235,7 +236,8 @@ export function UsersTable({ users, projects = [] }: { users: User[]; projects?:
                                             <div className="flex flex-wrap gap-1">
                                                 {(() => {
                                                     try {
-                                                        const rolesArray = JSON.parse(user.roles || "[]") as string[];
+                                                        const rolesRaw = user.roles;
+                                                        const rolesArray = (typeof rolesRaw === 'string' ? JSON.parse(rolesRaw || "[]") : (rolesRaw || [])) as string[];
 
                                                         return rolesArray.map((role: string) => {
                                                             const label = getRoleLabel(role as Role);
@@ -268,7 +270,7 @@ export function UsersTable({ users, projects = [] }: { users: User[]; projects?:
                                                 <DeleteUserButton
                                                     userId={user.id}
                                                     userName={user.name}
-                                                    isProtected={JSON.parse(user.roles).includes("ADMIN")}
+                                                    isProtected={(() => { const r = user.roles; const arr = typeof r === 'string' ? JSON.parse(r || '[]') : (r || []); return (arr as string[]).includes('ADMIN'); })()}
                                                 />
                                             </div>
                                         </td>

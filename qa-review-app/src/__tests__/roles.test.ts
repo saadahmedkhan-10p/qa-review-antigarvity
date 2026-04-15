@@ -100,9 +100,9 @@ describe("Role System Tests", () => {
 
     describe("Role Utilities", () => {
         it("should return correct badge colors", () => {
-            expect(getRoleBadgeColor("ADMIN")).toContain("bg-purple-600");
-            expect(getRoleBadgeColor("QA_MANAGER")).toContain("bg-indigo-600");
-            expect(getRoleBadgeColor("REVIEWER")).toContain("bg-green-600");
+            expect(getRoleBadgeColor("ADMIN")).toContain("bg-purple-100");
+            expect(getRoleBadgeColor("QA_MANAGER")).toContain("bg-indigo-100");
+            expect(getRoleBadgeColor("REVIEWER")).toContain("bg-green-100");
         });
 
         it("should return correct labels", () => {

@@ -48,6 +48,7 @@ describe('ConfirmationModal Component', () => {
                 message="Test message"
                 onConfirm={mockOnConfirm}
                 onCancel={mockOnCancel}
+                confirmText="Delete"
             />
         );
 
@@ -65,6 +66,7 @@ describe('ConfirmationModal Component', () => {
                 message="Test message"
                 onConfirm={mockOnConfirm}
                 onCancel={mockOnCancel}
+                confirmText="Delete"
             />
         );
 
@@ -85,6 +87,7 @@ describe('ConfirmationModal Component', () => {
                 message="Test message"
                 onConfirm={mockOnConfirm}
                 onCancel={mockOnCancel}
+                confirmText="Delete"
             />
         );
 
@@ -103,6 +106,7 @@ describe('ConfirmationModal Component', () => {
                 message="This action cannot be undone"
                 onConfirm={mockOnConfirm}
                 onCancel={mockOnCancel}
+                confirmText="Delete"
             />
         );
 
@@ -118,6 +122,7 @@ describe('ConfirmationModal Component', () => {
                 message="Test message"
                 onConfirm={mockOnConfirm}
                 onCancel={mockOnCancel}
+                confirmText="Delete"
             />
         );
 

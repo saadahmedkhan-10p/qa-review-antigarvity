@@ -1,27 +1,20 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/auth';
+import { ProjectService } from '@/services/projectService';
+import { withErrorHandler } from '@/lib/apiErrorHandler';
 
-export async function GET() {
-    try {
-        const session = await getSession();
-        if (!session) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+/**
+ * Standardized Project List API
+ */
+export const GET = withErrorHandler(async () => {
+    // We use a simplified fetch here for lightweight selection,
+    // but we could also use ProjectService.getAll() if full relations were needed.
+    const projects = await ProjectService.getAll();
+    
+    // Architect preference: Return only what's needed for the consumer
+    const simplified = projects.map(p => ({
+        id: p.id,
+        name: p.name
+    }));
 
-        const projects = await prisma.project.findMany({
-            select: {
-                id: true,
-                name: true,
-            },
-            orderBy: {
-                name: 'asc',
-            },
-        });
-
-        return NextResponse.json(projects);
-    } catch (error) {
-        console.error('Error fetching projects:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-    }
-}
+    return NextResponse.json(simplified);
+}, { requiredRole: ['ADMIN', 'QA_HEAD', 'QA_MANAGER', 'QA_ARCHITECT'] });

@@ -11,6 +11,7 @@ const customJestConfig = {
     testEnvironment: 'jest-environment-jsdom',
     moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1',
+        '^jose$': '<rootDir>/src/__mocks__/jose.ts',
     },
     collectCoverageFrom: [
         'src/**/*.{js,jsx,ts,tsx}',

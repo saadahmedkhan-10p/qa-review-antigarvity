@@ -72,8 +72,8 @@ export default function ViewReviewPage({ params }: { params: Promise<{ id: strin
         );
     }
 
-    const questionsData = JSON.parse(review.form.questions || "[]");
-    const answers = JSON.parse(review.answers || "{}");
+    const questionsData = typeof review.form.questions === 'string' ? JSON.parse(review.form.questions || "[]") : (review.form.questions || []);
+    const answers = typeof review.answers === 'string' ? JSON.parse(review.answers || "{}") : (review.answers || {});
 
     // Flatten questions from sections structure
     // Questions are organized as: [{title: "Section", questions: [...]}]

@@ -241,7 +241,10 @@ export default function QAArchitectDashboard() {
                                                 <div className="flex-1">
                                                     <h3 className="font-medium text-gray-900 dark:text-white">{form.title}</h3>
                                                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                                        {JSON.parse(form.questions).length} questions
+                                                        {(() => {
+                                                            const qs = typeof form.questions === 'string' ? JSON.parse(form.questions || "[]") : (form.questions || []);
+                                                            return qs.length;
+                                                        })()} questions
                                                     </p>
                                                 </div>
                                                 <span className={`px-2 py-1 text-xs font-semibold rounded-full ${form.isActive

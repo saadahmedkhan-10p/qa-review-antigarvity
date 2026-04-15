@@ -45,15 +45,10 @@ export default function ActivityLogsPage() {
     useEffect(() => {
         async function checkAuth() {
             try {
-                const response = await fetch('/api/auth/session');
+                const response = await fetch('/api/user');
                 if (response.ok) {
-                    const session = await response.json();
-                    const roles = Array.isArray(session?.user?.roles)
-                        ? session.user.roles
-                        : (typeof session?.user?.roles === 'string' && session.user.roles.startsWith('['))
-                            ? JSON.parse(session.user.roles)
-                            : [session?.user?.roles];
-
+                    const user = await response.json();
+                    const roles = Array.isArray(user?.roles) ? user.roles : [];
                     const isAdmin = roles.includes('ADMIN');
 
                     if (!isAdmin) {
@@ -391,7 +386,9 @@ export default function ActivityLogsPage() {
                                                         <div className="mt-2 text-xs bg-gray-50 dark:bg-gray-900 p-3 rounded max-w-md">
                                                             {(() => {
                                                                 try {
-                                                                    const details = JSON.parse(log.details);
+                                                                    // Handle both string and object types for log.details
+                                                                    const details = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
+                                                                    
                                                                     if (details.changes && typeof details.changes === 'object') {
                                                                         const changes = details.changes;
                                                                         if (Object.keys(changes).length === 0) {
@@ -409,11 +406,11 @@ export default function ActivityLogsPage() {
                                                                                             <div className="ml-2 text-gray-600 dark:text-gray-400">
                                                                                                 <div className="flex items-center gap-2">
                                                                                                     <span className="text-red-600 dark:text-red-400">From:</span>
-                                                                                                    <span className="font-mono">{value.from || '(empty)'}</span>
+                                                                                                    <span className="font-mono">{typeof value.from === 'object' ? JSON.stringify(value.from) : String(value.from || '(empty)')}</span>
                                                                                                 </div>
                                                                                                 <div className="flex items-center gap-2">
                                                                                                     <span className="text-green-600 dark:text-green-400">To:</span>
-                                                                                                    <span className="font-mono">{value.to || '(empty)'}</span>
+                                                                                                    <span className="font-mono">{typeof value.to === 'object' ? JSON.stringify(value.to) : String(value.to || '(empty)')}</span>
                                                                                                 </div>
                                                                                             </div>
                                                                                         ) : (
@@ -440,8 +437,8 @@ export default function ActivityLogsPage() {
                                                                             ))}
                                                                         </div>
                                                                     );
-                                                                } catch {
-                                                                    return <pre className="whitespace-pre-wrap">{log.details}</pre>;
+                                                                } catch (e) {
+                                                                    return <pre className="whitespace-pre-wrap">{typeof log.details === 'string' ? log.details : JSON.stringify(log.details)}</pre>;
                                                                 }
                                                             })()}
                                                         </div>

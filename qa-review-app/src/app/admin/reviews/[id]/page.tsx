@@ -51,7 +51,7 @@ export default function AdminReviewPage({ params }: { params: Promise<{ id: stri
                 });
 
                 if (reviewData.answers) {
-                    setAnswers(JSON.parse(reviewData.answers));
+                    setAnswers(typeof reviewData.answers === 'string' ? JSON.parse(reviewData.answers) : reviewData.answers);
                 }
             }
             setLoading(false);
@@ -76,7 +76,7 @@ export default function AdminReviewPage({ params }: { params: Promise<{ id: stri
         </div>
     );
 
-    const rawQuestions = JSON.parse(review.form.questions || "[]");
+    const rawQuestions = typeof review.form.questions === 'string' ? JSON.parse(review.form.questions || "[]") : (review.form.questions || []);
     let sections: any[] = [];
     if (rawQuestions.length > 0) {
         if (rawQuestions[0].questions || rawQuestions[0].items) {

@@ -133,7 +133,7 @@ function FormsListContent() {
                                 </thead>
                                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                     {forms.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((form) => {
-                                        const questions = JSON.parse(form.questions || "[]");
+                                        const questions = typeof form.questions === 'string' ? JSON.parse(form.questions || "[]") : (form.questions || []);
                                         return (
                                             <tr key={form.id}>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">

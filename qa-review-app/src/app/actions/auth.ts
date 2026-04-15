@@ -32,7 +32,8 @@ export async function loginAction(prevState: any, formData: FormData) {
         id: user.id,
         name: user.name,
         email: user.email,
-        roles: user.roles, // Keep as JSON string for session
+        // user.roles is a Prisma JsonValue (string|array at runtime); parseRoles in auth.ts handles both
+        roles: user.roles as unknown as string,
     });
 
     // Log the login activity
@@ -44,7 +45,8 @@ export async function loginAction(prevState: any, formData: FormData) {
     });
 
     // Return success and roles for client-side handling
-    const roles = JSON.parse(user.roles);
+    const rolesRaw = user.roles;
+    const roles = typeof rolesRaw === 'string' ? JSON.parse(rolesRaw) : rolesRaw;
     return { success: true, roles };
 }
 

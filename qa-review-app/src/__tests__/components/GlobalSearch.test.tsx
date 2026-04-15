@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { act } from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import GlobalSearch from '@/components/search/GlobalSearch';
 import '@testing-library/jest-dom';
@@ -45,15 +45,19 @@ describe('GlobalSearch', () => {
         expect(screen.getByText('⌘')).toBeInTheDocument();
     });
 
-    it('opens the modal when button is clicked', () => {
+    it('opens the modal when button is clicked', async () => {
         render(<GlobalSearch />);
-        fireEvent.click(screen.getByText('Search...'));
+        await act(async () => {
+            fireEvent.click(screen.getByText('Search...'));
+        });
         expect(screen.getByPlaceholderText('Search projects, reviews, users...')).toBeInTheDocument();
     });
 
     it('fetches data when modal opens', async () => {
         render(<GlobalSearch />);
-        fireEvent.click(screen.getByText('Search...'));
+        await act(async () => {
+            fireEvent.click(screen.getByText('Search...'));
+        });
 
         await waitFor(() => {
             expect(global.fetch).toHaveBeenCalledWith('/api/search/data');
@@ -62,13 +66,21 @@ describe('GlobalSearch', () => {
 
     it('displays search results when typing', async () => {
         render(<GlobalSearch />);
-        fireEvent.click(screen.getByText('Search...'));
+        
+        // Open modal
+        const searchBtn = screen.getByText('Search...');
+        await act(async () => {
+            fireEvent.click(searchBtn);
+        });
 
-        // Wait for data load
+        // Wait for initial data load
         await waitFor(() => expect(global.fetch).toHaveBeenCalled());
 
         const input = screen.getByPlaceholderText('Search projects, reviews, users...');
-        fireEvent.change(input, { target: { value: 'Test' } });
+        
+        await act(async () => {
+            fireEvent.change(input, { target: { value: 'Test' } });
+        });
 
         await waitFor(() => {
             expect(screen.getByText('Test Project')).toBeInTheDocument();
@@ -76,14 +88,18 @@ describe('GlobalSearch', () => {
         });
     });
 
-    it('closes modal when Escape is pressed', () => {
+    it('closes modal when Escape is pressed', async () => {
         render(<GlobalSearch />);
-        fireEvent.click(screen.getByText('Search...'));
+        await act(async () => {
+            fireEvent.click(screen.getByText('Search...'));
+        });
         expect(screen.getByPlaceholderText('Search projects, reviews, users...')).toBeInTheDocument();
 
-        fireEvent.keyDown(screen.getByPlaceholderText('Search projects, reviews, users...'), {
-            key: 'Escape',
-            code: 'Escape',
+        await act(async () => {
+            fireEvent.keyDown(screen.getByPlaceholderText('Search projects, reviews, users...'), {
+                key: 'Escape',
+                code: 'Escape',
+            });
         });
 
         expect(screen.queryByPlaceholderText('Search projects, reviews, users...')).not.toBeInTheDocument();

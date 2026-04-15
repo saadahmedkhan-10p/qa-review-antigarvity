@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
 
   // Empty turbopack config to silence the warning
   turbopack: {},
+  experimental: {
+    turbopackUseSystemTlsCerts: true,
+  },
 };
 
 export default nextConfig;

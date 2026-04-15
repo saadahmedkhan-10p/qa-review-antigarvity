@@ -31,7 +31,7 @@ export default function EditFormPage({ params }: { params: Promise<{ id: string 
             setProjectType(form.projectType || null);
             // Filter out the Project Health section from initial questions (if present) 
             // since it gets auto-appended on save
-            const parsedQuestions = JSON.parse(form.questions);
+            const parsedQuestions = typeof form.questions === 'string' ? JSON.parse(form.questions || "[]") : (form.questions || []);
             const filteredQuestions = parsedQuestions.filter((s: any) => s.id !== 'project-health');
             setQuestions(filteredQuestions);
         } catch (error) {

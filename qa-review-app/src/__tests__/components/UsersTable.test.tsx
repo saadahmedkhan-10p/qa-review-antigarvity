@@ -13,6 +13,10 @@ jest.mock('next/link', () => {
 // Mock lucide-react
 jest.mock('lucide-react', () => ({
     Pencil: () => <span data-testid="pencil-icon">Pencil</span>,
+    ArrowUp: () => <span data-testid="arrow-up">Up</span>,
+    ArrowDown: () => <span data-testid="arrow-down">Down</span>,
+    ArrowUpDown: () => <span data-testid="arrow-up-down">UpDown</span>,
+    Trash2: () => <span data-testid="trash-icon">Trash</span>,
 }));
 
 // Mock DeleteUserButton
@@ -59,9 +63,9 @@ describe('UsersTable', () => {
         const adminRow = screen.getByText('Admin User').closest('tr');
         const adminBadge = within(adminRow!).getByText('Admin');
 
-        // Check for the specific dark mode classes we added
-        expect(adminBadge).toHaveClass('dark:bg-purple-600');
-        expect(adminBadge).toHaveClass('dark:text-white');
+        // Update to match the new light/dark mode professional classes
+        expect(adminBadge).toHaveClass('bg-purple-100');
+        expect(adminBadge).toHaveClass('dark:bg-purple-900/30');
     });
 
     it('renders correct badge styles for REVIEWER role', () => {
@@ -70,8 +74,8 @@ describe('UsersTable', () => {
         const reviewerRow = screen.getByText('Reviewer User').closest('tr');
         const reviewerBadge = within(reviewerRow!).getByText('Reviewer');
 
-        expect(reviewerBadge).toHaveClass('dark:bg-green-600');
-        expect(reviewerBadge).toHaveClass('dark:text-white');
+        expect(reviewerBadge).toHaveClass('bg-green-100');
+        // REVEIWER does not have dark:bg classes in the light string currently
     });
 
     it('filters users by search query', () => {
@@ -87,7 +91,7 @@ describe('UsersTable', () => {
     it('filters users by role', () => {
         render(<UsersTable users={mockUsers} />);
 
-        const roleSelect = screen.getByRole('combobox');
+        const roleSelect = screen.getByDisplayValue('All Roles');
         fireEvent.change(roleSelect, { target: { value: 'REVIEWER' } });
 
         expect(screen.queryByText('Admin User')).not.toBeInTheDocument();

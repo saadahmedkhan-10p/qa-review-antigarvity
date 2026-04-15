@@ -17,6 +17,14 @@ jest.mock('react-hot-toast', () => ({
     },
 }));
 
+// Mock useAuth
+jest.mock('@/context/AuthContext', () => ({
+    useAuth: () => ({
+        user: { id: 'admin-id', roles: ['ADMIN'] },
+        isAdmin: true,
+    }),
+}));
+
 describe('DeleteUserButton Component', () => {
     const mockUserId = 'user-123';
     const mockUserName = 'John Doe';

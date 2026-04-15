@@ -39,7 +39,7 @@ export default function ConductReviewPage({ params }: { params: Promise<{ id: st
                 });
 
                 if (data.answers) {
-                    const parsedAnswers = JSON.parse(data.answers);
+                    const parsedAnswers = typeof data.answers === 'string' ? JSON.parse(data.answers) : data.answers;
                     // Sync top-level fields into dynamic form answers if not present (Legacy Support)
                     if (data.healthStatus && !parsedAnswers['health-status']) {
                         parsedAnswers['health-status'] = data.healthStatus;
@@ -93,7 +93,7 @@ export default function ConductReviewPage({ params }: { params: Promise<{ id: st
         );
     }
 
-    const rawQuestions = JSON.parse(review.form.questions || "[]");
+    const rawQuestions = typeof review.form.questions === 'string' ? JSON.parse(review.form.questions || "[]") : (review.form.questions || []);
     let sections: any[] = [];
     if (rawQuestions.length > 0) {
         if (rawQuestions[0].questions || rawQuestions[0].items) {

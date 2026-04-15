@@ -14,12 +14,16 @@ async function main() {
         return;
     }
 
-    const lead = await prisma.user.findFirst({
-        where: { roles: { contains: 'REVIEW_LEAD' } }
+    const allUsers = await prisma.user.findMany();
+    
+    const lead = allUsers.find(u => {
+        const roles = typeof u.roles === 'string' ? JSON.parse(u.roles) : u.roles;
+        return Array.isArray(roles) && roles.includes('REVIEW_LEAD');
     });
 
-    const contact = await prisma.user.findFirst({
-        where: { roles: { contains: 'CONTACT_PERSON' } }
+    const contact = allUsers.find(u => {
+        const roles = typeof u.roles === 'string' ? JSON.parse(u.roles) : u.roles;
+        return Array.isArray(roles) && roles.includes('CONTACT_PERSON');
     });
 
     const form = await prisma.form.findFirst();

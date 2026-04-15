@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { ReportsView } from "./ReportsView";
-import { getSession } from "@/lib/auth";
+import { getSession, parseRoles } from "@/lib/auth";
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -55,7 +55,7 @@ export default async function AdminReportsPage({ searchParams }: PageProps) {
     // Get current user session
     const session = await getSession();
     const userId = session?.user?.id;
-    const userRoles = session?.user?.roles ? JSON.parse(session.user.roles) : [];
+    const userRoles = session?.user?.roles ? parseRoles(session.user.roles) : [];
 
     const reviews = await getReviews(typeFilter, userId, userRoles);
 
