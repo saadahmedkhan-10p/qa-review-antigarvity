@@ -4,6 +4,14 @@ import { hash } from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
+    // M-11: Block accidental production seeding
+    if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_PROD_SEED) {
+        throw new Error(
+            "Refusing to seed a production database. " +
+            "Set ALLOW_PROD_SEED=1 only if you are absolutely certain."
+        );
+    }
+
     console.log('🌱 Starting minimal database seed...');
 
     // 1. Clean up existing data

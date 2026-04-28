@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -14,7 +14,7 @@ model User {
   id                 String    @id @default(cuid())
   name               String
   email              String    @unique
-  password           String    @default("$2a$10$cw/7jS5.k.z.Q.q.q.q.q.q.q.q.q.q.q.q.q.q.q.q.q.q.q.q")
+  password           String
   roles              String    @default("[\"REVIEWER\"]")
   passwordResetToken String?
   passwordResetExpiry DateTime?

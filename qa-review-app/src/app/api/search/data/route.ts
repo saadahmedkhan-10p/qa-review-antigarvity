@@ -7,66 +7,103 @@ export const dynamic = "force-dynamic";
 export async function GET() {
     try {
         const session = await getSession();
-        if (!session) {
+        if (!session || !session.user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // Fetch all searchable data
-        const [projects, reviews, users, forms] = await Promise.all([
-            prisma.project.findMany({
-                include: {
-                    lead: true,
-                    contactPerson: true
-                }
-            }),
-            prisma.review.findMany({
-                include: {
-                    project: true,
-                    form: true,
-                    reviewer: true
-                }
-            }),
-            prisma.user.findMany(),
-            prisma.form.findMany()
-        ]);
+        const userId = session.user.id;
+        const roles: string[] = Array.isArray(session.user.roles)
+            ? session.user.roles
+            : [];
+        const isAdminOrHead = roles.includes("ADMIN") || roles.includes("QA_HEAD");
+        const isReviewer = roles.includes("REVIEWER");
+        const isLead = roles.includes("REVIEW_LEAD");
 
-        // Transform data into search results
+        // C-06: Filter data by the caller's role — never dump the full DB
+
+        // Projects: admins see all; reviewers/leads see only their own
+        const projects = await prisma.project.findMany({
+            where: isAdminOrHead
+                ? {}
+                : isReviewer
+                ? { OR: [{ reviewerId: userId }, { secondaryReviewerId: userId }] }
+                : isLead
+                ? { leadId: userId }
+                : { id: "no-match" }, // unknown role: no results
+            select: {
+                id: true,
+                name: true,
+                lead: { select: { name: true } },
+                contactPerson: { select: { name: true } },
+            },
+        });
+
+        // Reviews: admins see all; reviewers see their own; leads see their projects' reviews
+        const reviews = await prisma.review.findMany({
+            where: isAdminOrHead
+                ? {}
+                : isReviewer
+                ? { OR: [{ reviewerId: userId }, { secondaryReviewerId: userId }] }
+                : isLead
+                ? { project: { leadId: userId } }
+                : { id: "no-match" },
+            select: {
+                id: true,
+                status: true,
+                project: { select: { name: true } },
+                form: { select: { title: true } },
+                reviewer: { select: { name: true } },
+            },
+        });
+
+        // Users: only admins / QA heads see the directory
+        const users = isAdminOrHead
+            ? await prisma.user.findMany({
+                  select: { id: true, name: true, email: true },
+                  take: 200,
+              })
+            : [];
+
+        // Forms: only admins / QA heads see all forms
+        const forms = isAdminOrHead
+            ? await prisma.form.findMany({
+                  select: { id: true, title: true, isActive: true },
+                  take: 100,
+              })
+            : [];
+
         const searchData = [
-            // Projects
-            ...projects.map(p => ({
-                type: 'project' as const,
+            ...projects.map((p) => ({
+                type: "project" as const,
                 id: p.id,
                 title: p.name,
-                subtitle: `Lead: ${p.lead?.name || 'Unassigned'} • Contact: ${p.contactPerson?.name || 'Unassigned'}`,
-                url: `/admin/projects`
+                subtitle: `Lead: ${p.lead?.name || "Unassigned"} • Contact: ${p.contactPerson?.name || "Unassigned"}`,
+                url: `/admin/projects`,
             })),
-
-            // Reviews
-            ...reviews.map(r => ({
-                type: 'review' as const,
+            ...reviews.map((r) => ({
+                type: "review" as const,
                 id: r.id,
                 title: `${r.project.name} - ${r.form.title}`,
                 subtitle: `Reviewer: ${r.reviewer.name} • Status: ${r.status}`,
-                url: r.status === 'SUBMITTED' ? `/reviews/${r.id}/view` : `/reviews/${r.id}/conduct`
+                url:
+                    r.status === "SUBMITTED"
+                        ? `/reviews/${r.id}/view`
+                        : `/reviews/${r.id}/conduct`,
             })),
-
-            // Users
-            ...users.map(u => ({
-                type: 'user' as const,
+            ...users.map((u) => ({
+                type: "user" as const,
                 id: u.id,
                 title: u.name,
                 subtitle: u.email,
-                url: `/admin/users`
+                url: `/admin/users`,
             })),
-
-            // Forms
-            ...forms.map(f => ({
-                type: 'form' as const,
+            ...forms.map((f) => ({
+                type: "form" as const,
                 id: f.id,
                 title: f.title,
-                subtitle: f.isActive ? 'Active' : 'Inactive',
-                url: `/admin/forms`
-            }))
+                subtitle: f.isActive ? "Active" : "Inactive",
+                url: `/admin/forms`,
+            })),
         ];
 
         return NextResponse.json(searchData);

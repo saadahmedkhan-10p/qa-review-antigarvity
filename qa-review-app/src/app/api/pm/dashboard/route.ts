@@ -9,6 +9,12 @@ export async function GET() {
         if (!session || !session.user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
+        const roles: string[] = Array.isArray(session.user.roles) ? session.user.roles : [];
+
+        // H-03: Verify role (PM, ADMIN, or QA_HEAD)
+        if (!roles.includes("PM") && !roles.includes("ADMIN") && !roles.includes("QA_HEAD")) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
 
         const userId = session.user.id;
 
