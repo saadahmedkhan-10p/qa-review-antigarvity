@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getCurrentUser } from "@/lib/auth";
 import { requireRole } from "@/lib/withAuth";
 import { ProjectService } from "@/services/projectService";
 import { UserService } from "@/services/userService";
@@ -147,8 +146,8 @@ export async function deleteUser(userId: string) {
         await UserService.delete(userId, user);
         revalidatePath("/admin/users");
         return { success: true };
-    } catch (error: any) {
-        return { error: error.message };
+    } catch {
+        return { error: "Failed to delete user" };
     }
 }
 
