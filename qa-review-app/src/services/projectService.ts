@@ -89,7 +89,6 @@ export class ProjectService {
         await logActivity({
             userId: currentUser.id,
             userName: currentUser.name,
-            userEmail: currentUser.email,
             action: 'CREATE_PROJECT',
             entity: 'Project',
             entityId: project.id,
@@ -150,7 +149,6 @@ export class ProjectService {
             await logActivity({
                 userId: currentUser.id,
                 userName: currentUser.name,
-                userEmail: currentUser.email,
                 action: 'UPDATE_PROJECT',
                 entity: 'Project',
                 entityId: id,
@@ -200,7 +198,6 @@ export class ProjectService {
         await logActivity({
             userId: currentUser.id,
             userName: currentUser.name,
-            userEmail: currentUser.email,
             action: 'CLOSE_PROJECT',
             entity: 'Project',
             entityId: id,
@@ -226,7 +223,6 @@ export class ProjectService {
         await logActivity({
             userId: currentUser.id,
             userName: currentUser.name,
-            userEmail: currentUser.email,
             action: 'REOPEN_PROJECT',
             entity: 'Project',
             entityId: id,
@@ -251,7 +247,6 @@ export class ProjectService {
         await logActivity({
             userId: currentUser.id,
             userName: currentUser.name,
-            userEmail: currentUser.email,
             action: 'DELETE_PROJECT',
             entity: 'Project',
             entityId: id,

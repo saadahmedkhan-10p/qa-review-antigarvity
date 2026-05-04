@@ -73,7 +73,6 @@ export async function submitReview(
     await logActivity({
         userId: user?.id || review.reviewerId,
         userName: user?.name || review.reviewer.name,
-        userEmail: user?.email || review.reviewer.email,
         action: isSubmission ? 'SUBMIT_REVIEW' : 'UPDATE_REVIEW',
         entity: 'Review',
         entityId: reviewId,

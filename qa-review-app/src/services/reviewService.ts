@@ -52,7 +52,6 @@ export class ReviewService {
         await logActivity({
             userId: currentUser.id,
             userName: currentUser.name,
-            userEmail: currentUser.email,
             action: 'CREATE_FORM',
             entity: 'Form',
             entityId: form.id,
@@ -78,7 +77,6 @@ export class ReviewService {
         await logActivity({
             userId: currentUser.id,
             userName: currentUser.name,
-            userEmail: currentUser.email,
             action: 'UPDATE_FORM',
             entity: 'Form',
             entityId: id,
@@ -108,7 +106,6 @@ export class ReviewService {
         await logActivity({
             userId: currentUser.id,
             userName: currentUser.name,
-            userEmail: currentUser.email,
             action: 'DELETE_FORM',
             entity: 'Form',
             entityId: id,
@@ -195,7 +192,6 @@ export class ReviewService {
         await logActivity({
             userId: currentUser.id,
             userName: currentUser.name,
-            userEmail: currentUser.email,
             action: 'CREATE_REVIEW', // Cycle creation
             entity: 'Review',
             details: { formId, formTitle: form.title, projectsCount: initiatedReviews.length }
@@ -225,7 +221,6 @@ export class ReviewService {
         await logActivity({
             userId: currentUser.id,
             userName: currentUser.name,
-            userEmail: currentUser.email,
             action: 'UPDATE_REVIEW',
             entity: 'Review',
             entityId: id,
@@ -258,7 +253,6 @@ export class ReviewService {
         await logActivity({
             userId: currentUser.id,
             userName: currentUser.name,
-            userEmail: currentUser.email,
             action: 'SUBMIT_REVIEW',
             entity: 'Review',
             entityId: id,
