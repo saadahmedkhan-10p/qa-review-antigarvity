@@ -4,7 +4,7 @@ import { useActionState, useEffect } from "react";
 import { loginAction } from "@/app/actions/auth";
 import toast from "react-hot-toast";
 import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { getDashboardPath, Role } from "@/types/roles";
 import Image from "next/image";
 import Link from "next/link";
@@ -13,6 +13,17 @@ const heroImg = "/login_hero.jpg";
 import { LoadingButton } from "@/components/LoadingComponents";
 import { useFormStatus } from "react-dom";
 import { User, Key, Check } from "lucide-react";
+
+const SSO_ERROR_MESSAGES: Record<string, string> = {
+  not_provisioned: "Your Microsoft account is not provisioned in this app. Please contact an administrator.",
+  sso_state_mismatch: "Sign-in session expired or invalid. Please try again.",
+  sso_session_expired: "Sign-in session expired. Please try again.",
+  sso_token_invalid: "We couldn't verify your Microsoft sign-in. Please try again.",
+  sso_idp_error: "Microsoft sign-in was cancelled or failed.",
+  sso_missing_params: "Sign-in response was incomplete. Please try again.",
+};
+
+const ssoEnabled = process.env.NEXT_PUBLIC_SSO_MICROSOFT_ENABLED === "true";
 
 const initialState = {
   error: "",
@@ -39,6 +50,7 @@ export default function LoginPage() {
   const [state, formAction] = useActionState(loginAction, initialState);
   const { login } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     if (state?.error) {
@@ -52,6 +64,16 @@ export default function LoginPage() {
       });
     }
   }, [state, login, router]);
+
+  useEffect(() => {
+    const errorCode = searchParams.get("error");
+    if (errorCode && SSO_ERROR_MESSAGES[errorCode]) {
+      toast.error(SSO_ERROR_MESSAGES[errorCode]);
+      const url = new URL(window.location.href);
+      url.searchParams.delete("error");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, [searchParams]);
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-white dark:bg-gray-900 overflow-hidden font-sans">
@@ -109,22 +131,28 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Microsoft Social Login (MOCK) */}
-          <button disabled={true}
-            type="button"
-            className="w-full flex items-center justify-center gap-4 bg-[#737373] text-white py-3 px-4 rounded-lg font-bold transition-colors mb-8 shadow-md opacity-50 cursor-not-allowed"
-          >
-            <svg className="w-5 h-5" viewBox="0 0 23 23">
-              <path fill="#f3f3f3" d="M0 0h11v11H0zM12 0h11v11H12zM0 12h11v11H0zM12 12h11v11H12z" />
-            </svg>
-            Sign in with Microsoft
-          </button>
+          {ssoEnabled && (
+            <>
+              <a
+                href="/api/auth/sso/microsoft/start"
+                className="w-full flex items-center justify-center gap-4 bg-[#2f2f2f] hover:bg-[#1f1f1f] text-white py-3 px-4 rounded-lg font-bold transition-colors mb-8 shadow-md"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 23 23">
+                  <path fill="#f25022" d="M0 0h11v11H0z" />
+                  <path fill="#7fba00" d="M12 0h11v11H12z" />
+                  <path fill="#00a4ef" d="M0 12h11v11H0z" />
+                  <path fill="#ffb900" d="M12 12h11v11H12z" />
+                </svg>
+                Sign in with Microsoft
+              </a>
 
-          <div className="relative flex items-center mb-8">
-            <div className="flex-grow border-t border-gray-300 dark:border-gray-700"></div>
-            <span className="flex-shrink mx-4 text-gray-400 text-xs font-bold uppercase">OR</span>
-            <div className="flex-grow border-t border-gray-300 dark:border-gray-700"></div>
-          </div>
+              <div className="relative flex items-center mb-8">
+                <div className="flex-grow border-t border-gray-300 dark:border-gray-700"></div>
+                <span className="flex-shrink mx-4 text-gray-400 text-xs font-bold uppercase">OR</span>
+                <div className="flex-grow border-t border-gray-300 dark:border-gray-700"></div>
+              </div>
+            </>
+          )}
 
           <form action={formAction} className="space-y-6">
             <div className="space-y-4">
