@@ -197,7 +197,7 @@ export async function createForm(title: string, questions: any, projectType: str
     });
     if (!parsed.success) throw new Error("Invalid input");
 
-    await ReviewService.createForm(parsed.data, user);
+    await ReviewService.createForm(parsed.data as { title: string, questions: any, projectType: string | null }, user);
     revalidatePath("/admin/forms");
 }
 
@@ -212,7 +212,7 @@ export async function updateForm(id: string, title: string, questions: any, proj
     });
     if (!parsed.success) throw new Error("Invalid input");
 
-    await ReviewService.updateForm(id, parsed.data, user);
+    await ReviewService.updateForm(id, parsed.data as { title: string, questions: any, projectType: string | null }, user);
     revalidatePath("/admin/forms");
 }
 
