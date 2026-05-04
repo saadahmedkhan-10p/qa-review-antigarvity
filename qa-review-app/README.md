@@ -1,36 +1,98 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# QA Review Intelligence Platform
 
-## Getting Started
+A comprehensive quality assurance review management system built with Next.js, tailored for enterprise QA teams. It features dynamic review form building, role-based access control, AI-powered review analysis, and robust activity auditing.
 
-First, run the development server:
+## 🚀 Key Features
 
+*   **Role-Based Access Control (RBAC):** Distinct dashboards and permissions for Admins, QA Heads, QA Managers, QA Architects, Review Leads, Reviewers, PMs, Dev Architects, Contact Persons, and Directors.
+*   **Dynamic Form Builder:** Admins can create and customize review forms with various question types (Text, Checkbox, Select, Radio, Number) tailored to different project types (Manual, Automation, API, etc.).
+*   **AI-Powered Analysis:** Integration with OpenAI (GPT-4o) to automatically generate comprehensive summaries, identify critical risks, and suggest actionable improvements based on reviewer input and project health.
+*   **Comprehensive Audit Trails:** Every major action (logging in, creating forms, submitting reviews, etc.) is logged securely for compliance and tracking.
+*   **Advanced Reporting:** Filterable dashboards, CSV exports, and dynamic data tables with sorting and pagination for efficient project oversight.
+*   **Secure Authentication:** Custom JWT-based session management using `jose` and `bcryptjs`.
+
+## 🛠 Tech Stack
+
+*   **Framework:** [Next.js](https://nextjs.org/) (App Router)
+*   **Styling:** [Tailwind CSS](https://tailwindcss.com/) & [Lucide Icons](https://lucide.dev/)
+*   **Database:** PostgreSQL (hosted on [Neon](https://neon.tech/))
+*   **ORM:** [Prisma](https://www.prisma.io/)
+*   **AI Integration:** [OpenAI API](https://openai.com/api/)
+*   **Authentication:** Custom JWT with `jose`
+*   **Charting:** [Recharts](https://recharts.org/)
+
+## ⚙️ Local Development Setup
+
+### 1. Clone the repository
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repository-url>
+cd qa-review-app
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Install dependencies
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Configure Environment Variables
+Create a `.env.local` file in the root directory and add the following keys:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```env
+# Database connection string (PostgreSQL)
+DATABASE_URL="postgresql://user:password@host/dbname?sslmode=require"
 
-## Learn More
+# Generate a strong 32+ character random string for JWT session encryption
+JWT_SECRET="your-super-secret-jwt-key-minimum-32-chars-long"
 
-To learn more about Next.js, take a look at the following resources:
+# SMTP Configuration for Email Notifications (Optional for local dev)
+SMTP_HOST="smtp.yourprovider.com"
+SMTP_PORT="587"
+SMTP_USER="your-email@domain.com"
+SMTP_PASS="your-app-password"
+SMTP_FROM="noreply@yourdomain.com"
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 4. Initialize the Database
+Push the Prisma schema to your configured database. (Note: We use `db push` instead of migrations for flexible schema prototyping).
+```bash
+npx prisma generate
+npx prisma db push
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 5. Seed Initial Data
+Create an initial Admin user (or QA Head) to access the system:
+```bash
+npx tsx scripts/create-qa-head.ts
+```
 
-## Deploy on Vercel
+### 6. Run the Development Server
+```bash
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🤖 Configuring AI Features
+To enable AI Analysis generation:
+1. Log in to the application as an **Admin**.
+2. Navigate to **Settings** (`/admin/settings`) using the navigation bar.
+3. Enter your **OpenAI API Key** and click Save.
+4. Reviewers and Admins will now see a "Generate AI Analysis" button when conducting or editing a review.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🚀 Deployment (Vercel)
+
+This application is optimized for deployment on [Vercel](https://vercel.com).
+
+1. Push your code to a Git repository.
+2. Import the project into Vercel.
+3. In the Vercel project settings, set the following **Environment Variables**:
+    *   `DATABASE_URL` (Points to your production PostgreSQL DB)
+    *   `JWT_SECRET` (A strong, securely generated string)
+4. The custom `vercel.json` ensures the correct build step is run (`npx prisma db push`) to provision database tables automatically on the first deployment.
+
+## 🔒 Security Best Practices
+*   **Never commit `.env` files.**
+*   The `JWT_SECRET` must be kept entirely secret. If compromised, change it immediately (this will invalidate all current user sessions).
+*   API keys (like OpenAI) are stored securely in the database, not in flat configuration files or environment variables, allowing dynamic updates by Administrators.
+
+---
+*Built with ❤️ by the QA Team*
