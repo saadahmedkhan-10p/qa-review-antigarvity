@@ -18,13 +18,13 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
     const params = await searchParams;
     const typeFilter = ['MANUAL', 'AUTOMATION_WEB', 'AUTOMATION_MOBILE', 'API', 'DESKTOP'].includes(params.type || '') ? params.type : 'ALL';
 
+    // M-03: Hoist auth check BEFORE any data fetching
     const session = await getSession();
     const user = session?.user;
     const roles = (user?.roles as string[]) || [];
     const isAdmin = roles.includes("ADMIN");
     const isQAHead = roles.includes("QA_HEAD");
 
-    // Redirect non-authorized users (e.g. Leads) back to their dashboard
     if (!isAdmin && !isQAHead) {
         return redirect(getDashboardPath(roles as any));
     }

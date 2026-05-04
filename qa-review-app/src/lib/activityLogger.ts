@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 interface LogActivityParams {
     userId?: string;
     userName?: string;
-    userEmail?: string;
+    // H-10: userEmail removed from interface — do NOT log email addresses
     action: string;
     entity?: string;
     entityId?: string;
@@ -23,7 +23,8 @@ export async function logActivity(params: LogActivityParams) {
             data: {
                 userId: params.userId,
                 userName: params.userName,
-                userEmail: params.userEmail,
+                // H-10: Never persist email — store userId for correlation instead
+                userEmail: undefined,
                 action: params.action.toString(),
                 entity: params.entity?.toString(),
                 entityId: params.entityId,
@@ -36,7 +37,7 @@ export async function logActivity(params: LogActivityParams) {
         });
     } catch (error) {
         // Silently log failure to avoid breaking main flow, but announce in console
-        console.error('Audit Log Failure:', error);
+        console.error('Audit Log Failure (no PII)');
     }
 }
 

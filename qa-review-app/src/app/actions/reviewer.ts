@@ -4,8 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { logActivity } from "@/lib/activityLogger";
 import { sendEmail, emailTemplates } from "@/lib/email";
 import { revalidatePath } from "next/cache";
+import { requireAuth } from "@/lib/withAuth";
 
 export async function updateReviewStatus(reviewId: string, status: string, options?: { reason?: string; date?: Date }) {
+    // H-04: Require authentication; verify ownership before updating
+    const caller = await requireAuth();
+
     // Validate status
     const validStatuses = ['PENDING', 'SCHEDULED', 'DEFERRED', 'ON_HOLD', 'PROJECT_ENDED'];
     if (!validStatuses.includes(status)) {
@@ -16,6 +20,13 @@ export async function updateReviewStatus(reviewId: string, status: string, optio
         const currentReview = await prisma.review.findUnique({
             where: { id: reviewId }
         });
+
+        // H-04: Verify the caller is associated with this review (unless admin)
+        const callerRoles = caller.roles as string[];
+        const isAdmin = callerRoles.includes("ADMIN") || callerRoles.includes("QA_HEAD");
+        if (!isAdmin && currentReview?.reviewerId !== caller.id && currentReview?.secondaryReviewerId !== caller.id) {
+            throw new Error("Forbidden");
+        }
 
         const data: any = { status };
 
@@ -69,9 +80,12 @@ export async function updateReviewStatus(reviewId: string, status: string, optio
 }
 
 
-export async function getReviewerProjects(reviewerId: string) {
-    console.log('[getReviewerProjects] Called with reviewerId:', reviewerId);
-    console.log('[getReviewerProjects] DATABASE_URL:', process.env.DATABASE_URL);
+// H-04: reviewerId param removed — always derived from the authenticated session
+export async function getReviewerProjects() {
+    const caller = await requireAuth();
+    const reviewerId = caller.id;
+
+    console.log('[getReviewerProjects] Called for authenticated user:', reviewerId);
 
     try {
         const projects = await prisma.project.findMany({
@@ -130,6 +144,15 @@ export async function debugReviewer(reviewerId: string) {
 }
 
 export async function scheduleReview(reviewId: string, date: Date) {
+    // H-04: Require auth and verify the caller owns this review
+    const caller = await requireAuth();
+    const reviewRecord = await prisma.review.findUnique({ where: { id: reviewId } });
+    const callerRoles = caller.roles as string[];
+    const isAdmin = callerRoles.includes("ADMIN") || callerRoles.includes("QA_HEAD");
+    if (!isAdmin && reviewRecord?.reviewerId !== caller.id && reviewRecord?.secondaryReviewerId !== caller.id) {
+        throw new Error("Forbidden");
+    }
+
     const review = await prisma.review.update({
         where: { id: reviewId },
         data: {

@@ -46,3 +46,15 @@ next-env.d.ts
 
 data_dump.json
 .env*.local
+
+# M-09: Never commit logs, exports, or local data files
+error_log.txt
+error_log*
+link.txt
+*_output.txt
+users.json
+*.log
+dev.db
+dev.db-journal
+debug_*.js
+take-screenshots*.js

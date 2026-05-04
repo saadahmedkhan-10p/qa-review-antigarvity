@@ -75,7 +75,6 @@ export class UserService {
         await logActivity({
             userId: currentUser.id,
             userName: currentUser.name,
-            userEmail: currentUser.email,
             action: 'CREATE_USER',
             entity: 'User',
             entityId: user.id,
@@ -109,7 +108,6 @@ export class UserService {
         await logActivity({
             userId: currentUser.id,
             userName: currentUser.name,
-            userEmail: currentUser.email,
             action: 'UPDATE_USER',
             entity: 'User',
             entityId: id,
@@ -146,7 +144,6 @@ export class UserService {
         await logActivity({
             userId: currentUser.id,
             userName: currentUser.name,
-            userEmail: currentUser.email,
             action: 'DELETE_USER',
             entity: 'User',
             entityId: id

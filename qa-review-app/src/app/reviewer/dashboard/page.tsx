@@ -21,8 +21,8 @@ export default function ReviewerDashboard() {
     const loadData = async () => {
         if (!authLoading && user?.id) {
             try {
-                // Use the ID from auth context directly
-                const projectData = await getReviewerProjects(user.id);
+                // H-04: ID is no longer passed — derived from session server-side
+                const projectData = await getReviewerProjects();
                 setProjects(projectData);
             } catch (error) {
                 console.error("Error loading reviewer data:", error);

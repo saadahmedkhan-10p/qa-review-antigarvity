@@ -4,7 +4,6 @@ import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
 import { getLeadProjects } from "@/app/actions/lead";
 import { format } from "date-fns";
-import { getUsers } from "@/app/actions/admin";
 import Link from "next/link";
 import { FolderKanban, FileText, BarChart3, CheckCircle2, Clock, Calendar, AlertCircle, XCircle } from "lucide-react";
 import { useMemo } from "react";
@@ -18,14 +17,9 @@ export default function LeadDashboard() {
     useEffect(() => {
         async function loadData() {
             if (user) {
-                // Get the actual user from database by email
-                const users = await getUsers();
-                const dbUser = users.find((u: any) => u.email === user.email);
-
-                if (dbUser) {
-                    const projectData = await getLeadProjects(dbUser.id);
-                    setProjects(projectData);
-                }
+                // H-04: ID is derived from session server-side — no longer passed as parameter
+                const projectData = await getLeadProjects();
+                setProjects(projectData);
                 setLoading(false);
             }
         }

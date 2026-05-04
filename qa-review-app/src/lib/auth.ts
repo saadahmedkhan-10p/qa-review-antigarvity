@@ -3,8 +3,15 @@ import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { Role } from "@/types/roles";
 
-const secretKey = process.env.JWT_SECRET || "your-secret-key"; 
-const key = new TextEncoder().encode(secretKey);
+// C-01: Require JWT_SECRET at startup — no hardcoded fallback
+const rawSecret = process.env.JWT_SECRET;
+if (!rawSecret || rawSecret.length < 32) {
+    throw new Error(
+        "FATAL: JWT_SECRET environment variable is missing or too short (minimum 32 characters). " +
+        "Set it in your .env.local file or deployment environment."
+    );
+}
+const key = new TextEncoder().encode(rawSecret);
 
 export interface SessionUser {
     id: string;
@@ -64,8 +71,9 @@ export async function login(userData: Omit<SessionUser, 'roles'> & { roles: stri
     (await cookies()).set("session", session, { 
         expires, 
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        // M-04: Secure on all non-localhost environments
+        secure: process.env.NODE_ENV !== "development",
+        sameSite: "strict",
         path: "/"
     });
 }
@@ -116,8 +124,9 @@ export async function updateSession(request: NextRequest) {
         name: "session",
         value: await encrypt(parsed),
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        // M-04: Secure on all non-localhost environments
+        secure: process.env.NODE_ENV !== "development",
+        sameSite: "strict",
         path: "/",
         expires: parsed.expires,
     });

@@ -14,7 +14,7 @@ model User {
   id                 String    @id @default(cuid())
   name               String
   email              String    @unique
-  password           String    @default("$2a$10$cw/7jS5.k.z.Q.q.q.q.q.q.q.q.q.q.q.q.q.q.q.q.q.q.q.q")
+  password           String
   roles              String    @default("[\"REVIEWER\"]")
   passwordResetToken String?
   passwordResetExpiry DateTime?
@@ -86,6 +86,7 @@ model Review {
   observations        String?
   recommendedActions  String?
   followUpComment     String?
+  aiAnalysis          String?
   scheduledDate       DateTime?
   submittedDate       DateTime?
   answers             String?
@@ -131,4 +132,12 @@ model ActivityLog {
   @@index([entity])
   @@index([projectId])
   @@index([createdAt])
+}
+
+model SystemSettings {
+  id    String @id @default("system_settings")
+  key   String @unique
+  value String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

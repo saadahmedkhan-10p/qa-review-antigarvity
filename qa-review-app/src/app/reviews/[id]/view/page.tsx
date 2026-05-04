@@ -167,6 +167,15 @@ export default function ViewReviewPage({ params }: { params: Promise<{ id: strin
                             </div>
                         </div>
 
+                        {review.aiAnalysis && (
+                            <div>
+                                <h3 className="text-sm font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 mb-2">AI Analysis</h3>
+                                <div className="bg-indigo-50/30 dark:bg-indigo-900/10 p-4 rounded-xl border border-indigo-100/50 dark:border-indigo-900/50">
+                                    <p className="text-gray-900 dark:text-gray-200 whitespace-pre-wrap">{review.aiAnalysis}</p>
+                                </div>
+                            </div>
+                        )}
+
                         {review.recommendedActions && (
                             <div>
                                 <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Recommended Actions</h3>

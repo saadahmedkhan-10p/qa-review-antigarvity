@@ -25,8 +25,12 @@ export async function setPassword(token: string, password: string) {
         return { error: "Expired token" };
     }
 
+    if (!password || password.length < 12) {
+        return { error: "Password must be at least 12 characters" };
+    }
+
     // Hash the new password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     // Update user password and clear reset token
     await prisma.user.update({

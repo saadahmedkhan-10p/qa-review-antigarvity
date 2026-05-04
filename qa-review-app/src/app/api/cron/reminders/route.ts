@@ -18,9 +18,14 @@ function getEffectiveReminderDate(baseDate: Date, targetDay: number): Date {
 
 export async function GET(request: Request) {
     try {
-        // Optional: Verify CRON_SECRET if you set one up in Vercel/environment
+        // M-01: CRON_SECRET is mandatory — reject if missing or mismatched
+        const cronSecret = process.env.CRON_SECRET;
+        if (!cronSecret) {
+            console.error("CRON_SECRET is not configured");
+            return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
+        }
         const authHeader = request.headers.get('authorization');
-        if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+        if (authHeader !== `Bearer ${cronSecret}`) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
@@ -80,7 +85,8 @@ export async function GET(request: Request) {
                 const needsScheduling = !currentReview || (currentReview.status === 'PENDING' && !currentReview.scheduledDate);
 
                 if (needsScheduling) {
-                    console.log(`Sending Scheduling Reminder to ${project.reviewer.email} for ${project.name}`);
+                    // M-02: Log reviewer ID instead of email to avoid PII in logs
+                    console.log(`Sending Scheduling Reminder to reviewer:${project.reviewer.id} for project:${project.id}`);
                     const template = emailTemplates.reminderScheduling(project.reviewer.name, project.name);
                     const result = await sendEmail(project.reviewer.email, template);
                     if (result.success) emailsSent++;

@@ -1,7 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/auth";
 
 export async function GET() {
+    // H-02: Require DIRECTOR or ADMIN session
+    const session = await getSession();
+    if (!session || !session.user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const roles: string[] = Array.isArray(session.user.roles) ? session.user.roles : [];
+    if (!roles.includes("DIRECTOR") && !roles.includes("ADMIN") && !roles.includes("QA_HEAD")) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     try {
         // Get all projects with reviews
         const projects = await prisma.project.findMany({

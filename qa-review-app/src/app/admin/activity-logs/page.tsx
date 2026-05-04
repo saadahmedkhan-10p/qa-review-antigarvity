@@ -8,7 +8,6 @@ interface ActivityLog {
     id: string;
     userId: string | null;
     userName: string | null;
-    userEmail: string | null;
     action: string;
     entity: string | null;
     entityId: string | null;
@@ -117,7 +116,6 @@ export default function ActivityLogsPage() {
         const searchLower = filters.search.toLowerCase();
         return (
             log.userName?.toLowerCase().includes(searchLower) ||
-            log.userEmail?.toLowerCase().includes(searchLower) ||
             log.action.toLowerCase().includes(searchLower) ||
             log.entity?.toLowerCase().includes(searchLower) ||
             log.projectName?.toLowerCase().includes(searchLower)
@@ -125,11 +123,10 @@ export default function ActivityLogsPage() {
     });
 
     const exportToCSV = () => {
-        const headers = ['Date', 'User', 'Email', 'Action', 'Entity', 'Project', 'Details'];
+        const headers = ['Date', 'User', 'Action', 'Entity', 'Project', 'Details'];
         const rows = filteredLogs.map(log => [
             new Date(log.createdAt).toLocaleString(),
             log.userName || 'System',
-            log.userEmail || '',
             log.action,
             log.entity || '',
             log.projectName || '',
@@ -356,9 +353,6 @@ export default function ActivityLogsPage() {
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="text-sm font-medium text-gray-900 dark:text-white">
                                                     {log.userName || 'System'}
-                                                </div>
-                                                <div className="text-sm text-gray-500 dark:text-gray-400">
-                                                    {log.userEmail}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">

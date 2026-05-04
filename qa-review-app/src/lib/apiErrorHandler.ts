@@ -54,9 +54,8 @@ export function withErrorHandler(handler: ApiHandler, options?: { requiredRole?:
                 }, { status: 400 });
             }
 
-            // Generic Error
-            const message = error instanceof Error ? error.message : "Internal Server Error";
-            return NextResponse.json({ error: message }, { status: 500 });
+            // L-03: Never expose raw error.message to client
+            return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
         }
     };
 }

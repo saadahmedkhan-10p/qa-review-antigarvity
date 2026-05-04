@@ -20,10 +20,12 @@ export const roleSchema = z.enum([
 
 export const userSchema = z.object({
     id: z.string().cuid().optional(),
-    name: z.string().min(2, "Name must be at least 2 characters"),
+    // M-07: Cap name length
+    name: z.string().min(2, "Name must be at least 2 characters").max(200),
     email: z.string().email("Invalid email address"),
     roles: z.array(roleSchema).min(1, "At least one role is required"),
-    password: z.string().min(8, "Password must be at least 8 characters").optional(),
+    // H-06: Minimum 12 characters
+    password: z.string().min(12, "Password must be at least 12 characters").optional(),
 });
 
 // --- Project Schemas ---
@@ -35,8 +37,9 @@ export const projectStatusSchema = z.enum(["ACTIVE", "CLOSED"]);
 
 export const projectSchema = z.object({
     id: z.string().cuid().optional(),
-    name: z.string().min(2, "Project name must be at least 2 characters"),
-    description: z.string().optional().nullable(),
+    // M-07: Cap name and description length
+    name: z.string().min(2, "Project name must be at least 2 characters").max(200),
+    description: z.string().max(2000).optional().nullable(),
     type: projectTypeSchema.default("MANUAL"),
     leadId: z.string().cuid().optional().nullable(),
     reviewerId: z.string().cuid().optional().nullable(),
@@ -51,8 +54,9 @@ export const projectSchema = z.object({
 export const formQuestionSchema = z.object({
     id: z.string(),
     type: z.enum(["TEXT", "TEXTAREA", "SELECT", "RADIO", "CHECKBOX", "NUMBER"]),
-    label: z.string(),
-    options: z.array(z.string()).optional(),
+    // L-02: Cap label and options to prevent DB bloat / stored-XSS amplification
+    label: z.string().min(1).max(500),
+    options: z.array(z.string().max(200)).max(20).optional(),
     required: z.boolean().default(true),
 });
 
@@ -88,6 +92,7 @@ export const reviewSchema = z.object({
     observations: z.string().optional().nullable(),
     recommendedActions: z.string().optional().nullable(),
     followUpComment: z.string().optional().nullable(),
+    aiAnalysis: z.string().optional().nullable(),
     scheduledDate: z.coerce.date().optional().nullable(),
     submittedDate: z.coerce.date().optional().nullable(),
     answers: z.record(z.string(), z.any()).optional().nullable(),

@@ -128,9 +128,14 @@ export default function Navbar() {
                                         Reports
                                     </Link>
                                     {roles.includes("ADMIN") && (
-                                        <Link href="/admin/activity-logs" className={`px-3 py-2 text-sm font-medium rounded-md transition-colors flex-shrink-0 ${isPathActive('/admin/activity-logs') ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
-                                            Activity Logs
-                                        </Link>
+                                        <>
+                                            <Link href="/admin/activity-logs" className={`px-3 py-2 text-sm font-medium rounded-md transition-colors flex-shrink-0 ${isPathActive('/admin/activity-logs') ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
+                                                Activity Logs
+                                            </Link>
+                                            <Link href="/admin/settings" className={`px-3 py-2 text-sm font-medium rounded-md transition-colors flex-shrink-0 ${isPathActive('/admin/settings') ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
+                                                Settings
+                                            </Link>
+                                        </>
                                     )}
                                 </>
                             )}

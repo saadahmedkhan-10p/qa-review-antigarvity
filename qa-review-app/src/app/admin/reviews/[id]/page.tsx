@@ -3,6 +3,7 @@
 import { use, useEffect, useState } from "react";
 import { getReview } from "@/app/actions/review";
 import { updateReview } from "@/app/actions/admin";
+import { generateAIAnalysis } from "@/app/actions/ai";
 import { getUserSession } from "@/app/actions/auth";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -21,10 +22,12 @@ export default function AdminReviewPage({ params }: { params: Promise<{ id: stri
         followUpComment: "",
         deferredReason: "",
         endedReason: "",
-        onHoldReason: ""
+        onHoldReason: "",
+        aiAnalysis: ""
     });
 
     const [loading, setLoading] = useState(true);
+    const [generatingAI, setGeneratingAI] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -47,7 +50,8 @@ export default function AdminReviewPage({ params }: { params: Promise<{ id: stri
                     followUpComment: reviewData.followUpComment || "",
                     deferredReason: reviewData.deferredReason || "",
                     endedReason: reviewData.endedReason || "",
-                    onHoldReason: reviewData.onHoldReason || ""
+                    onHoldReason: reviewData.onHoldReason || "",
+                    aiAnalysis: reviewData.aiAnalysis || ""
                 });
 
                 if (reviewData.answers) {
@@ -109,6 +113,20 @@ export default function AdminReviewPage({ params }: { params: Promise<{ id: stri
             handleAnswerChange(qId, [...current, option]);
         } else {
             handleAnswerChange(qId, current.filter((o: string) => o !== option));
+        }
+    };
+
+    const handleGenerateAI = async () => {
+        setGeneratingAI(true);
+        try {
+            const result = await generateAIAnalysis(review.id);
+            setSummary(prev => ({ ...prev, aiAnalysis: result.analysis || "" }));
+            toast.success("AI Analysis generated!");
+        } catch (error: any) {
+            toast.error(error.message || "Failed to generate AI analysis");
+            console.error(error);
+        } finally {
+            setGeneratingAI(false);
         }
     };
 
@@ -239,6 +257,32 @@ export default function AdminReviewPage({ params }: { params: Promise<{ id: stri
                                 value={summary.recommendedActions}
                                 onChange={(e) => setSummary(prev => ({ ...prev, recommendedActions: e.target.value }))}
                             />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 mb-3">AI Analysis (External/Auto-Generated)</label>
+                            <textarea
+                                rows={4}
+                                className="w-full p-4 border-2 border-indigo-200 dark:border-indigo-900/50 bg-indigo-50/10 dark:bg-indigo-900/5 rounded-xl text-gray-900 dark:text-white font-medium focus:ring-4 focus:ring-indigo-500/50 transition-all outline-none placeholder-gray-400 dark:placeholder-gray-500"
+                                placeholder="AI generated feedback or external analysis summary..."
+                                value={summary.aiAnalysis}
+                                onChange={(e) => setSummary(prev => ({ ...prev, aiAnalysis: e.target.value }))}
+                            />
+                            <div className="mt-2 flex justify-end">
+                                <button
+                                    type="button"
+                                    onClick={handleGenerateAI}
+                                    disabled={generatingAI}
+                                    className="flex items-center gap-2 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-lg text-xs font-bold transition-all border border-indigo-200 dark:border-indigo-800 disabled:opacity-50"
+                                >
+                                    {generatingAI ? (
+                                        <span className="animate-spin rounded-full h-3 w-3 border-b-2 border-indigo-600"></span>
+                                    ) : (
+                                        <span>✨</span>
+                                    )}
+                                    {generatingAI ? "Generating..." : "Generate AI Analysis"}
+                                </button>
+                            </div>
                         </div>
 
                         {/* Admin/Head Only Section */}

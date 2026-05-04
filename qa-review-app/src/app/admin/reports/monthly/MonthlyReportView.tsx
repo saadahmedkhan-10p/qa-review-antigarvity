@@ -385,9 +385,10 @@ export default function MonthlyReportView({ reviews }: MonthlyReportViewProps) {
                                 <tr>
                                     <th className="text-left px-4 py-3 font-bold text-gray-700 dark:text-gray-300 w-1/5">ProjectName</th>
                                     <th className="text-left px-4 py-3 font-bold text-gray-700 dark:text-gray-300 w-1/6">Overall Health</th>
-                                    <th className="text-left px-4 py-3 font-bold text-gray-700 dark:text-gray-300 w-1/4">Observations</th>
-                                    <th className="text-left px-4 py-3 font-bold text-gray-700 dark:text-gray-300 w-1/4">Recommended Actions</th>
-                                    <th className="text-left px-4 py-3 font-bold text-gray-700 dark:text-gray-300 w-1/4">Follow up Comment</th>
+                                    <th className="text-left px-4 py-3 font-bold text-gray-700 dark:text-gray-300 w-1/5">Observations</th>
+                                    <th className="text-left px-4 py-3 font-bold text-gray-700 dark:text-gray-300 w-1/5">AI Analysis</th>
+                                    <th className="text-left px-4 py-3 font-bold text-gray-700 dark:text-gray-300 w-1/5">Recommended Actions</th>
+                                    <th className="text-left px-4 py-3 font-bold text-gray-700 dark:text-gray-300 w-1/5">Follow up Comment</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -403,6 +404,7 @@ export default function MonthlyReportView({ reviews }: MonthlyReportViewProps) {
                                             </td>
                                             <td className="px-4 py-3 text-gray-700 dark:text-gray-300 align-top">{r.healthStatus}</td>
                                             <td className="px-4 py-3 text-gray-600 dark:text-gray-300 align-top whitespace-pre-line">{r.observations || '-'}</td>
+                                            <td className="px-4 py-3 text-indigo-600 dark:text-indigo-400 align-top whitespace-pre-line font-medium bg-indigo-50/20 dark:bg-indigo-900/10">{r.aiAnalysis || '-'}</td>
                                             <td className="px-4 py-3 text-gray-600 dark:text-gray-300 align-top whitespace-pre-line">{r.recommendedActions || '-'}</td>
                                             <td className="px-4 py-3 text-gray-600 dark:text-gray-300 align-top whitespace-pre-line">{r.followUpComment || '-'}</td>
                                         </tr>

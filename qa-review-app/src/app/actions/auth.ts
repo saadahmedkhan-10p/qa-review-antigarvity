@@ -40,7 +40,6 @@ export async function loginAction(prevState: any, formData: FormData) {
     await logActivity({
         userId: user.id,
         userName: user.name,
-        userEmail: user.email,
         action: 'LOGIN',
     });
 
@@ -83,7 +82,6 @@ export async function requestPasswordReset(prevState: any, formData: FormData) {
         await logActivity({
             userId: user.id,
             userName: user.name,
-            userEmail: user.email,
             action: 'PASSWORD_RESET_REQUESTED',
         });
 

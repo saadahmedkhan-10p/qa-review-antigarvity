@@ -2,13 +2,38 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 
-// GET - Fetch all comments for a review
+// Helper: verify the caller is associated with this review (reviewer, secondary, lead, or admin)
+async function canAccessReview(reviewId: string, userId: string, roles: string[]): Promise<boolean> {
+    if (roles.includes("ADMIN") || roles.includes("QA_HEAD")) return true;
+    const review = await prisma.review.findUnique({
+        where: { id: reviewId },
+        include: { project: true },
+    });
+    if (!review) return false;
+    return (
+        review.reviewerId === userId ||
+        review.secondaryReviewerId === userId ||
+        review.project.leadId === userId ||
+        review.project.contactPersonId === userId
+    );
+}
+
+// GET - Fetch all comments for a review (H-01: requires auth + access check)
 export async function GET(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const session = await getSession();
+        if (!session || !session.user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
         const { id } = await params;
+        const roles: string[] = Array.isArray(session.user.roles) ? session.user.roles : [];
+        if (!(await canAccessReview(id, session.user.id, roles))) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
         const comments = await prisma.comment.findMany({
             where: { reviewId: id },
             include: {
@@ -34,7 +59,7 @@ export async function GET(
     }
 }
 
-// POST - Add a new comment
+// POST - Add a new comment (H-01: requires auth + record-level access check)
 export async function POST(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
@@ -42,11 +67,15 @@ export async function POST(
     try {
         const { id } = await params;
         const session = await getSession();
-        if (!session) {
+        if (!session || !session.user) {
             return NextResponse.json(
                 { error: "Unauthorized" },
                 { status: 401 }
             );
+        }
+        const roles: string[] = Array.isArray(session.user.roles) ? session.user.roles : [];
+        if (!(await canAccessReview(id, session.user.id, roles))) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
         const body = await request.json();
@@ -55,6 +84,13 @@ export async function POST(
         if (!content || content.trim().length === 0) {
             return NextResponse.json(
                 { error: "Comment content is required" },
+                { status: 400 }
+            );
+        }
+        // M-07: Cap comment length
+        if (content.trim().length > 5000) {
+            return NextResponse.json(
+                { error: "Comment must be 5000 characters or fewer" },
                 { status: 400 }
             );
         }

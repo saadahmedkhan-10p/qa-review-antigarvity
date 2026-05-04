@@ -8,6 +8,6 @@ export default defineConfig({
   },
   engine: "classic",
   datasource: {
-    url: process.env.DATABASE_URL || "postgresql://mock:mock@localhost:5432/mock",
+    url: process.env.DATABASE_URL || "file:./dev.db",
   },
 });
