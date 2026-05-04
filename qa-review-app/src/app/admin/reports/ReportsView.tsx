@@ -25,7 +25,9 @@ interface Review {
     updatedAt: string;
     observations: string | null;
     deferredReason: string | null;
+    endedReason: string | null;
     onHoldReason: string | null;
+    notCompletedReason: string | null;
     followUpComment: string | null;
     aiAnalysis: string | null;
     project: {
