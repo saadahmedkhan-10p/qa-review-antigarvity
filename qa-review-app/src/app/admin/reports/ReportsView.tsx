@@ -26,7 +26,8 @@ interface Review {
     observations: string | null;
     deferredReason: string | null;
     onHoldReason: string | null;
-    endedReason: string | null;
+    followUpComment: string | null;
+    aiAnalysis: string | null;
     project: {
         id: string;
         name: string;
@@ -444,8 +445,8 @@ export function ReportsView({ reviews, pageTitle, typeFilter, initialMonth, init
                                                         {review.status}
                                                     </span>
                                                 </td>
-                                                <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate" title={review.deferredReason || review.onHoldReason || review.endedReason || review.observations || ""}>
-                                                    {review.deferredReason || review.onHoldReason || review.endedReason || review.observations || "-"}
+                                                <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate" title={review.deferredReason || review.onHoldReason || review.endedReason || review.observations || review.aiAnalysis || ""}>
+                                                    {review.deferredReason || review.onHoldReason || review.endedReason || review.observations || review.aiAnalysis || "-"}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                                     {review.scheduledDate ? format(new Date(review.scheduledDate), 'MMM d, yyyy') : '-'}

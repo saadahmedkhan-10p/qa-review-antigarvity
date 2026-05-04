@@ -1,4 +1,4 @@
-"use server";
+
 
 import { getCurrentUser, SessionUser } from "@/lib/auth";
 import { Role } from "@/types/roles";

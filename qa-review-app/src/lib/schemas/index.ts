@@ -92,6 +92,7 @@ export const reviewSchema = z.object({
     observations: z.string().optional().nullable(),
     recommendedActions: z.string().optional().nullable(),
     followUpComment: z.string().optional().nullable(),
+    aiAnalysis: z.string().optional().nullable(),
     scheduledDate: z.coerce.date().optional().nullable(),
     submittedDate: z.coerce.date().optional().nullable(),
     answers: z.record(z.string(), z.any()).optional().nullable(),

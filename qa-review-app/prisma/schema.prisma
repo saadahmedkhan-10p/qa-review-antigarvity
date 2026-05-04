@@ -86,6 +86,7 @@ model Review {
   observations        String?
   recommendedActions  String?
   followUpComment     String?
+  aiAnalysis          String?
   scheduledDate       DateTime?
   submittedDate       DateTime?
   answers             String?
@@ -131,4 +132,12 @@ model ActivityLog {
   @@index([entity])
   @@index([projectId])
   @@index([createdAt])
+}
+
+model SystemSettings {
+  id    String @id @default("system_settings")
+  key   String @unique
+  value String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

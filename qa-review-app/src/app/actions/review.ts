@@ -34,6 +34,7 @@ export async function submitReview(
         observations?: string;
         recommendedActions?: string;
         followUpComment?: string;
+        aiAnalysis?: string;
         status?: string;
         scheduledDate?: string; // ISO string
     }
@@ -59,7 +60,8 @@ export async function submitReview(
             onHoldReason: summary.onHoldReason,
             observations: summary.observations,
             recommendedActions: summary.recommendedActions,
-            followUpComment: summary.followUpComment
+            followUpComment: summary.followUpComment,
+            aiAnalysis: summary.aiAnalysis
         } as any,
         include: {
             project: true,
