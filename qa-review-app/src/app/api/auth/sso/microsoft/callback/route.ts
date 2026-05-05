@@ -63,9 +63,19 @@ export async function GET(req: NextRequest) {
 
     if (!user) {
         user = await prisma.user.findUnique({ where: { email } });
-        if (!user) return redirectWithError(req, "not_provisioned");
-
-        if (!user.ssoSubject) {
+        
+        if (!user) {
+            const name = (claims.name || email.split("@")[0]).toString();
+            user = await prisma.user.create({
+                data: {
+                    email,
+                    name,
+                    ssoProvider: PROVIDER,
+                    ssoSubject: subject,
+                    roles: JSON.stringify(["REVIEWER"]),
+                },
+            });
+        } else if (!user.ssoSubject) {
             user = await prisma.user.update({
                 where: { id: user.id },
                 data: { ssoProvider: PROVIDER, ssoSubject: subject },
