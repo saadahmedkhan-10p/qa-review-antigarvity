@@ -66,10 +66,13 @@ export async function GET(req: NextRequest) {
         
         if (!user) {
             const name = (claims.name || email.split("@")[0]).toString();
+            // Provide a random password since this is an SSO user and the schema requires it
+            const dummyPassword = Math.random().toString(36).slice(-10);
             user = await prisma.user.create({
                 data: {
                     email,
                     name,
+                    password: dummyPassword,
                     ssoProvider: PROVIDER,
                     ssoSubject: subject,
                     roles: JSON.stringify(["REVIEWER"]),
