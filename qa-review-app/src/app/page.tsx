@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, Suspense } from "react";
 import { loginAction } from "@/app/actions/auth";
 import toast from "react-hot-toast";
 import { useAuth } from "@/context/AuthContext";
@@ -45,7 +45,7 @@ function SubmitButton() {
   );
 }
 
-export default function LoginPage() {
+function LoginContent() {
   // @ts-ignore
   const [state, formAction] = useActionState(loginAction, initialState);
   const { login } = useAuth();
@@ -230,5 +230,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div >
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 text-gray-500">Loading...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }
