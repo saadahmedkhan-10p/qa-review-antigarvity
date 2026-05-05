@@ -73,7 +73,7 @@ export async function login(userData: Omit<SessionUser, 'roles'> & { roles: stri
         httpOnly: true,
         // M-04: Secure on all non-localhost environments
         secure: process.env.NODE_ENV !== "development",
-        sameSite: "strict",
+        sameSite: "lax",
         path: "/"
     });
 }
@@ -126,7 +126,7 @@ export async function updateSession(request: NextRequest) {
         httpOnly: true,
         // M-04: Secure on all non-localhost environments
         secure: process.env.NODE_ENV !== "development",
-        sameSite: "strict",
+        sameSite: "lax",
         path: "/",
         expires: parsed.expires,
     });
