@@ -9,7 +9,7 @@ export async function proxy(request: NextRequest) {
     const isApiRoute = path.startsWith("/api");
 
     // Public paths
-    const publicPaths = ["/", "/set-password", "/forgot-password", "/documentation"];
+    const publicPaths = ["/", "/set-password", "/forgot-password", "/documentation", "/api/auth/sso"];
     const isPublicPath = publicPaths.some(publicPath => 
         path === publicPath || path.startsWith(`${publicPath}/`)
     );
