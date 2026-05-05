@@ -98,7 +98,6 @@ export async function GET(req: NextRequest) {
     await logActivity({
         userId: user.id,
         userName: user.name,
-        userEmail: user.email,
         action: "LOGIN_SSO",
         details: { provider: PROVIDER },
     });
