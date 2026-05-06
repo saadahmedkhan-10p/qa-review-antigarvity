@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { NotificationService } from "@/services/notificationService";
+import { sendEmail, emailTemplates } from "@/lib/email";
 
 // Helper: verify the caller is associated with this review (reviewer, secondary, lead, or admin)
 async function canAccessReview(reviewId: string, userId: string, roles: string[]): Promise<boolean> {
@@ -112,6 +114,40 @@ export async function POST(
                 }
             }
         });
+
+        // Background: Detect mentions
+        (async () => {
+            const mentions = content.match(/@(\w+)/g);
+            if (mentions) {
+                // Get unique mentions
+                const uniqueMentions = [...new Set(mentions.map(m => m.substring(1)))];
+                
+                for (const targetName of uniqueMentions) {
+                    const targetUser = await prisma.user.findFirst({
+                        where: { 
+                            OR: [
+                                { name: { contains: targetName } },
+                                { email: { startsWith: targetName } }
+                            ]
+                        }
+                    });
+
+                    if (targetUser && targetUser.id !== session.user.id) {
+                        await NotificationService.create(
+                            targetUser.id,
+                            "MENTION",
+                            `${session.user.name} tagged you in a comment.`,
+                            `/reviews/${id}`
+                        );
+
+                        await sendEmail(
+                            targetUser.email,
+                            emailTemplates.mentionNotification(targetUser.name, session.user.name, content, id)
+                        );
+                    }
+                }
+            }
+        })().catch(err => console.error("Mention processing error:", err));
 
         return NextResponse.json(comment, { status: 201 });
     } catch (error) {

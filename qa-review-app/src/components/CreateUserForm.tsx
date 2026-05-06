@@ -68,6 +68,7 @@ export function CreateUserForm({ projects }: { projects: Project[] }) {
                     <option value="PM">Project Manager</option>
                     <option value="CONTACT_PERSON">Contact Person</option>
                     <option value="DIRECTOR">Director</option>
+                    <option value="GUEST">Guest</option>
                 </select>
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     Select one or more roles. Users can have multiple roles.

@@ -213,6 +213,47 @@ export const emailTemplates = {
       </div>
     `,
   }),
+
+  mentionNotification: (targetName: string, authorName: string, comment: string, reviewId: string) => ({
+    subject: `You were mentioned in a QA Review`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #4F46E5;">New Mention</h2>
+        <p>Hello <strong>${esc(targetName)}</strong>,</p>
+        <p><strong>${esc(authorName)}</strong> tagged you in a comment:</p>
+        <div style="background-color: #F3F4F6; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4F46E5;">
+          <p style="font-style: italic; color: #4B5563;">"${esc(comment)}"</p>
+        </div>
+        <a href="${APP_URL}/reviews/${reviewId}" 
+           style="display: inline-block; background-color: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px;">
+          View Comment
+        </a>
+      </div>
+    `,
+  }),
+
+  aiAlert: (name: string, projectName: string, riskLevel: string, riskScore: number, actionItems: string[], reviewId: string) => ({
+    subject: `⚠️ AI Risk Alert: ${esc(projectName)} [${riskLevel}]`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #EF4444;">AI Risk Evaluation: ${riskLevel}</h2>
+        <p>Hello <strong>${esc(name)}</strong>,</p>
+        <p>The AI Analysis Engine has flagged a high-risk project state for <strong>${esc(projectName)}</strong>.</p>
+        <div style="background-color: #FEE2E2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #EF4444;">
+          <p><strong>Risk Score:</strong> ${riskScore}/10</p>
+          <p><strong>Status:</strong> ${riskLevel}</p>
+          <p><strong>Action Items:</strong></p>
+          <ul>
+            ${actionItems.map(item => `<li>${esc(item)}</li>`).join('')}
+          </ul>
+        </div>
+        <a href="${APP_URL}/reviews/${reviewId}" 
+           style="display: inline-block; background-color: #EF4444; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px;">
+          Investigate Review
+        </a>
+      </div>
+    `,
+  }),
 };
 
 // Send email function

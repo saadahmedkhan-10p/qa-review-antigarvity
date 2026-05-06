@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { NotificationBell } from "@/components/NotificationBell";
 import { Role, getRoleLabel, canViewReports, getDashboardPath } from "@/types/roles";
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
@@ -157,7 +158,8 @@ export default function Navbar() {
                             )}
                         </div>
                     </div>
-                    <div className="flex items-center gap-4 flex-shrink-0 ml-4">
+                    <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0 ml-4">
+                        <NotificationBell />
                         <ThemeToggle />
                         <div className="hidden lg:flex flex-col items-end leading-tight mr-2">
                             <span className="text-sm font-bold text-gray-700 dark:text-gray-200">

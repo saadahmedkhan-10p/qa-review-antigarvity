@@ -151,4 +151,27 @@ export class UserService {
 
         return true;
     }
+
+    /**
+     * Bulk update roles for multiple users
+     */
+    static async bulkUpdateRoles(userIds: string[], roles: string[], currentUser: SessionUser) {
+        // Validate roles
+        const validatedRoles = z.array(z.string()).parse(roles);
+        
+        await prisma.user.updateMany({
+            where: { id: { in: userIds } },
+            data: { roles: JSON.stringify(validatedRoles) }
+        });
+
+        await logActivity({
+            userId: currentUser.id,
+            userName: currentUser.name,
+            action: 'BULK_UPDATE_USERS',
+            entity: 'User',
+            details: { userCount: userIds.length, newRoles: validatedRoles }
+        });
+
+        return { count: userIds.length };
+    }
 }

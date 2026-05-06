@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
                     password: dummyPassword,
                     ssoProvider: PROVIDER,
                     ssoSubject: subject,
-                    roles: JSON.stringify(["REVIEWER"]),
+                    roles: JSON.stringify(["GUEST"]),
                 },
             });
         } else if (!user.ssoSubject) {

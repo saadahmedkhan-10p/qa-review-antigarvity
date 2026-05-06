@@ -10,7 +10,6 @@ import { Pagination } from "@/components/Pagination";
 import { useTableSort } from "@/hooks/useTableSort";
 import { useTableSearch } from "@/hooks/useTableSearch";
 import { SortIcon } from "@/components/table/SortIcon";
-import { ColumnFilter } from "@/components/table/ColumnFilter";
 
 interface User {
     id: string;
@@ -31,6 +30,9 @@ export function UsersTable({ users, projects = [] }: { users: User[]; projects?:
     const [roleFilter, setRoleFilter] = useState<string>("ALL");
     const [projectCountFilter, setProjectCountFilter] = useState<string>("ALL");
     const [currentPage, setCurrentPage] = useState(1);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [bulkRoles, setBulkRoles] = useState<Role[]>(["GUEST"]);
     const itemsPerPage = 10;
 
     // Calculate project counts for each user
@@ -85,7 +87,7 @@ export function UsersTable({ users, projects = [] }: { users: User[]; projects?:
     }, [users, searchQuery, roleFilter, projectCountFilter]);
 
     // Apply column filters
-    const { filteredData: columnFilteredUsers, searchFilters, handleSearch } = useTableSearch(filteredUsers);
+    const { filteredData: columnFilteredUsers } = useTableSearch(filteredUsers);
 
     // Apply sorting
     const { sortedData, sortConfig, handleSort } = useTableSort(columnFilteredUsers);
@@ -100,6 +102,43 @@ export function UsersTable({ users, projects = [] }: { users: User[]; projects?:
         setCurrentPage(1);
     }, [searchQuery, roleFilter, projectCountFilter]);
 
+    const toggleSelectAll = () => {
+        if (selectedIds.length === paginatedUsers.length && paginatedUsers.length > 0) {
+            setSelectedIds([]);
+        } else {
+            setSelectedIds(paginatedUsers.map(u => u.id));
+        }
+    };
+
+    const toggleSelect = (id: string) => {
+        setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+    };
+
+    const handleBulkUpdate = async () => {
+        if (selectedIds.length === 0) return;
+        
+        setIsUpdating(true);
+        try {
+            const res = await fetch("/api/users/bulk-update", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    userIds: selectedIds,
+                    roles: bulkRoles
+                })
+            });
+
+            if (!res.ok) throw new Error("Failed to update users");
+
+            setSelectedIds([]);
+            window.location.reload(); 
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
     return (
         <div className="md:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-lg shadow transition-colors duration-200">
             <div className="flex justify-between items-center mb-4">
@@ -107,6 +146,76 @@ export function UsersTable({ users, projects = [] }: { users: User[]; projects?:
                     All Users ({filteredUsers.length})
                 </h2>
             </div>
+
+            {/* Bulk Update Bar */}
+            {selectedIds.length > 0 && (
+                <div className="mb-8 p-5 bg-gradient-to-r from-indigo-50 to-white dark:from-indigo-950/20 dark:to-gray-800 border border-indigo-100 dark:border-indigo-800 rounded-2xl flex flex-wrap items-center justify-between gap-6 animate-in fade-in slide-in-from-top-4 duration-500 shadow-md">
+                    <div className="flex flex-wrap items-center gap-8">
+                        {/* Selection Counter */}
+                        <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-sm font-black shadow-indigo-200 dark:shadow-none shadow-lg rotate-3">
+                                {selectedIds.length}
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-sm font-bold text-gray-800 dark:text-white leading-none">Users Selected</span>
+                                <span className="text-[10px] text-gray-500 dark:text-gray-400 mt-1 uppercase tracking-tighter">Ready for batch action</span>
+                            </div>
+                        </div>
+
+                        <div className="hidden lg:block h-12 w-[1px] bg-gray-200 dark:bg-gray-700/50"></div>
+
+                        {/* Role Selection Grid */}
+                        <div className="flex flex-col gap-3">
+                            <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em] ml-1">Apply New Roles:</span>
+                            <div className="flex flex-wrap gap-2 max-w-2xl">
+                                {getAllRoles().map(role => {
+                                    const isSelected = bulkRoles.includes(role as Role);
+                                    return (
+                                        <button
+                                            key={role}
+                                            type="button"
+                                            onClick={() => {
+                                                setBulkRoles(prev => 
+                                                    prev.includes(role as Role) 
+                                                        ? prev.filter(r => r !== role) 
+                                                        : [...prev, role as Role]
+                                                );
+                                            }}
+                                            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all duration-300 border ${
+                                                isSelected 
+                                                    ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-none -translate-y-0.5' 
+                                                    : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-gray-50 dark:hover:bg-gray-800'
+                                            }`}
+                                        >
+                                            {getRoleLabel(role as Role)}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Action Button */}
+                    <button
+                        onClick={handleBulkUpdate}
+                        disabled={isUpdating}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl text-sm font-black shadow-lg shadow-indigo-200 dark:shadow-none transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2 group"
+                    >
+                        {isUpdating ? (
+                            <>
+                                <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                Updating...
+                            </>
+                        ) : (
+                            <>
+                                Update Selection
+                                <span className="group-hover:translate-x-1 transition-transform">→</span>
+                            </>
+                        )}
+                    </button>
+                </div>
+            )}
+
 
             <div className="mb-4 flex gap-4 flex-wrap">
                 <div className="flex-1 min-w-[200px]">
@@ -119,16 +228,9 @@ export function UsersTable({ users, projects = [] }: { users: User[]; projects?:
                         className="block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm p-2 text-gray-900 dark:text-white dark:bg-gray-700 focus:ring-indigo-500 focus:border-indigo-500"
                     >
                         <option value="ALL">All Roles</option>
-                        <option value="ADMIN">Admin</option>
-                        <option value="QA_HEAD">QA Head</option>
-                        <option value="QA_MANAGER">QA Manager</option>
-                        <option value="QA_ARCHITECT">QA Architect</option>
-                        <option value="REVIEW_LEAD">Review Lead</option>
-                        <option value="REVIEWER">Reviewer</option>
-                        <option value="PM">Project Manager</option>
-                        <option value="DEV_ARCHITECT">Dev Architect</option>
-                        <option value="DIRECTOR">Director</option>
-                        <option value="CONTACT_PERSON">Contact Person</option>
+                        {getAllRoles().map(role => (
+                            <option key={role} value={role}>{getRoleLabel(role)}</option>
+                        ))}
                     </select>
                 </div>
                 <div className="min-w-[150px]">
@@ -153,6 +255,14 @@ export function UsersTable({ users, projects = [] }: { users: User[]; projects?:
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead className="bg-gray-50 dark:bg-gray-700">
                             <tr>
+                                <th className="px-6 py-3 text-left">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedIds.length === paginatedUsers.length && paginatedUsers.length > 0}
+                                        onChange={toggleSelectAll}
+                                        className="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-800"
+                                    />
+                                </th>
                                 <th
                                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
                                     onClick={() => handleSort('name')}
@@ -181,34 +291,23 @@ export function UsersTable({ users, projects = [] }: { users: User[]; projects?:
                                     Actions
                                 </th>
                             </tr>
-                            {/* Search Row */}
-                            <tr className="bg-gray-50 dark:bg-gray-700">
-                                <th className="px-6 py-2">
-                                    <ColumnFilter
-                                        value={searchFilters['name']}
-                                        onChange={(val) => handleSearch('name', val)}
-                                        placeholder="Search name..."
-                                    />
-                                </th>
-                                <th className="px-6 py-2"></th>
-                                <th className="px-6 py-2">
-                                    <ColumnFilter
-                                        value={searchFilters['email']}
-                                        onChange={(val) => handleSearch('email', val)}
-                                        placeholder="Search email..."
-                                    />
-                                </th>
-                                <th className="px-6 py-2"></th>
-                                <th className="px-6 py-2"></th>
-                            </tr>
                         </thead>
                         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                             {paginatedUsers.map((user) => {
                                 const projectCounts = getUserProjectCounts(user.id);
                                 const totalProjects = projectCounts.reviewer + projectCounts.secondaryReviewer + projectCounts.lead;
+                                const isSelected = selectedIds.includes(user.id);
 
                                 return (
-                                    <tr key={user.id}>
+                                    <tr key={user.id} className={isSelected ? "bg-indigo-50/30 dark:bg-indigo-900/10 transition-colors" : ""}>
+                                        <td className="px-6 py-4">
+                                            <input
+                                                type="checkbox"
+                                                checked={isSelected}
+                                                onChange={() => toggleSelect(user.id)}
+                                                className="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-800"
+                                            />
+                                        </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                                             {user.name}
                                         </td>

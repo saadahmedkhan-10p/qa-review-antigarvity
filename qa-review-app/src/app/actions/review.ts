@@ -22,6 +22,7 @@ export async function getReview(id: string) {
 
 import { logActivity } from "@/lib/activityLogger";
 import { getSession } from "@/lib/auth";
+import { AIAnalysisService } from "@/services/aiAnalysisService";
 
 export async function submitReview(
     reviewId: string,
@@ -68,6 +69,15 @@ export async function submitReview(
             reviewer: true
         }
     }) as any;
+
+    // Trigger AI Analysis if project is challenged or critical
+    const highRiskStatuses = ["Challenged", "Critical", "Risk", "Behind Schedule"];
+    if (highRiskStatuses.includes(summary.healthStatus)) {
+        // Run in background
+        AIAnalysisService.analyzeReview(reviewId).catch(err => 
+            console.error("Background AI analysis failed:", err)
+        );
+    }
 
     // Log the activity
     await logActivity({

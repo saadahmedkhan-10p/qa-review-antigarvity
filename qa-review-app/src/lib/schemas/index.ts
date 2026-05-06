@@ -15,7 +15,7 @@ export const dateRangeSchema = z.object({
 export const roleSchema = z.enum([
     "ADMIN", "QA_HEAD", "QA_MANAGER", "QA_ARCHITECT", 
     "REVIEW_LEAD", "REVIEWER", "PM", "DEV_ARCHITECT", 
-    "CONTACT_PERSON", "DIRECTOR"
+    "CONTACT_PERSON", "DIRECTOR", "GUEST"
 ]);
 
 export const userSchema = z.object({
@@ -23,7 +23,10 @@ export const userSchema = z.object({
     // M-07: Cap name length
     name: z.string().min(2, "Name must be at least 2 characters").max(200),
     email: z.string().email("Invalid email address"),
-    roles: z.array(roleSchema).min(1, "At least one role is required"),
+    roles: z.preprocess(
+        (val) => (Array.isArray(val) && val.length === 0 ? undefined : val),
+        z.array(roleSchema).default(["GUEST"])
+    ),
     // H-06: Minimum 12 characters
     password: z.string().min(12, "Password must be at least 12 characters").optional(),
 });

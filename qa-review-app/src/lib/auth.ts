@@ -38,7 +38,8 @@ export function parseRoles(roles: any): Role[] {
             return [roles as Role];
         }
     }
-    return ["REVIEWER"]; // Default fallback
+    return ["GUEST"]; // Default fallback
+
 }
 
 export async function encrypt(payload: any) {

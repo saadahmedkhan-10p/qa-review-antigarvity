@@ -9,7 +9,8 @@ export type Role =
     | "PM"
     | "DEV_ARCHITECT"
     | "CONTACT_PERSON"
-    | "DIRECTOR";
+    | "DIRECTOR"
+    | "GUEST";
 
 // Permission levels
 export enum PermissionLevel {
@@ -230,6 +231,26 @@ export const ROLE_CONFIG: Record<Role, {
             dark: "bg-rose-600 text-white"
         }
     },
+    GUEST: {
+        label: "Guest",
+        description: "Read-only access to basic information",
+        dashboardPath: "/guest", 
+
+        permissions: {
+            viewReviews: true,
+            commentOnReviews: false,
+            manageReviews: false,
+            manageProjects: false,
+            manageUsers: false,
+            manageForms: false,
+            viewReports: false,
+            exportReports: false,
+        },
+        badgeColor: {
+            light: "bg-gray-100 text-gray-800 border border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600",
+            dark: "bg-gray-600 text-white"
+        }
+    },
 }
 
 // Permission helper functions
@@ -284,7 +305,8 @@ export function getPrimaryRole(roles: Role[]): Role {
         "PM",
         "DEV_ARCHITECT",
         "CONTACT_PERSON",
-        "REVIEWER"
+        "REVIEWER",
+        "GUEST"
     ];
 
     for (const role of priority) {
@@ -293,7 +315,7 @@ export function getPrimaryRole(roles: Role[]): Role {
         }
     }
 
-    return roles[0] || "REVIEWER";
+    return roles[0] || "GUEST";
 }
 
 export function getDashboardPath(roles: Role[]): string {
@@ -327,3 +349,4 @@ export function hasAnyRole(userRoles: Role[], requiredRoles: Role[]): boolean {
 export function hasAllRoles(userRoles: Role[], requiredRoles: Role[]): boolean {
     return requiredRoles.every(role => userRoles.includes(role));
 }
+
