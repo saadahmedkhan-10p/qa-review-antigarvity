@@ -120,7 +120,8 @@ export async function POST(
             const mentions = content.match(/@(\w+)/g);
             if (mentions) {
                 // Get unique mentions
-                const uniqueMentions = [...new Set(mentions.map(m => m.substring(1)))];
+                const uniqueMentions = [...new Set(mentions.map((m: string) => m.substring(1)))];
+
                 
                 for (const targetName of uniqueMentions) {
                     const targetUser = await prisma.user.findFirst({
