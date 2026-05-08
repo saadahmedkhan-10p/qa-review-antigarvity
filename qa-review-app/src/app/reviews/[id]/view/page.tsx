@@ -20,18 +20,7 @@ export default function ViewReviewPage({ params }: { params: Promise<{ id: strin
 
                 if (response.ok) {
                     const data = await response.json();
-                    console.log('Review data received:', {
-                        hasData: !!data,
-                        hasForm: !!data.form,
-                        hasQuestions: !!data.form?.questions,
-                        hasAnswers: !!data.answers,
-                        questionsType: typeof data.form?.questions,
-                        answersType: typeof data.answers,
-                        questionsLength: data.form?.questions?.length,
-                        answersLength: data.answers?.length,
-                        questionsPreview: data.form?.questions?.substring(0, 100),
-                        answersPreview: data.answers?.substring(0, 100)
-                    });
+                    console.log('Review data received:', data.id);
                     setReview(data);
                 } else {
                     const errorData = await response.json();
@@ -72,14 +61,23 @@ export default function ViewReviewPage({ params }: { params: Promise<{ id: strin
         );
     }
 
-    const questionsData = typeof review.form.questions === 'string' ? JSON.parse(review.form.questions || "[]") : (review.form.questions || []);
+    let questionsData = [];
+    try {
+        questionsData = typeof review.form?.questions === 'string' 
+            ? JSON.parse(review.form.questions || "[]") 
+            : (review.form?.questions || []);
+    } catch (e) {
+        console.error("Failed to parse form questions:", e);
+    }
     const answers = typeof review.answers === 'string' ? JSON.parse(review.answers || "{}") : (review.answers || {});
 
-    // Flatten questions from sections structure
-    // Questions are organized as: [{title: "Section", questions: [...]}]
-    const allQuestions = questionsData.flatMap((section: any) =>
-        section.questions || []
-    );
+    // Flatten questions from sections structure or flat structure
+    // Handling: [{title: "Section", questions: [...]}] OR [{id: "q1", label: "..."}]
+    const allQuestions = questionsData.flatMap((item: any) => {
+        if (item.questions && Array.isArray(item.questions)) return item.questions;
+        if (item.items && Array.isArray(item.items)) return item.items;
+        return [item];
+    });
 
     console.log('Parsed questions:', {
         sectionsCount: questionsData.length,
@@ -114,7 +112,7 @@ export default function ViewReviewPage({ params }: { params: Promise<{ id: strin
                         </div>
                         <div>
                             <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase">Review Lead</h3>
-                            <p className="text-gray-900 dark:text-white mt-1">{review.project.lead.name}</p>
+                            <p className="text-gray-900 dark:text-white mt-1">{review.project.lead?.name || 'Not assigned'}</p>
                         </div>
                         <div>
                             <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase">QA Contact</h3>
@@ -168,10 +166,64 @@ export default function ViewReviewPage({ params }: { params: Promise<{ id: strin
                         </div>
 
                         {review.aiAnalysis && (
-                            <div>
-                                <h3 className="text-sm font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 mb-2">AI Analysis</h3>
-                                <div className="bg-indigo-50/30 dark:bg-indigo-900/10 p-4 rounded-xl border border-indigo-100/50 dark:border-indigo-900/50">
-                                    <p className="text-gray-900 dark:text-gray-200 whitespace-pre-wrap">{review.aiAnalysis}</p>
+                            <div className="mt-8 pt-8 border-t border-gray-100 dark:border-gray-800">
+                                <h3 className="text-sm font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 mb-4 flex items-center gap-2">
+                                    <span className="p-1 bg-indigo-100 dark:bg-indigo-900/50 rounded-md">✨</span>
+                                    AI Analysis Assessment
+                                </h3>
+                                <div className="bg-indigo-50/30 dark:bg-indigo-900/10 p-6 rounded-2xl border border-indigo-100/50 dark:border-indigo-900/50">
+                                    {(() => {
+                                        try {
+                                            const analysis = JSON.parse(review.aiAnalysis);
+                                            if (analysis && typeof analysis === 'object' && (analysis.riskLevel || analysis.summary)) {
+                                                return (
+                                                    <div className="space-y-4">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest ${
+                                                                analysis.riskLevel === 'CRITICAL' ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' :
+                                                                analysis.riskLevel === 'HIGH' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' :
+                                                                analysis.riskLevel === 'MEDIUM' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' :
+                                                                'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                                                            }`}>
+                                                                {analysis.riskLevel || 'ANALYZED'}
+                                                            </div>
+                                                            {analysis.riskScore !== undefined && (
+                                                                <div className="text-sm font-bold text-gray-500 dark:text-gray-400">
+                                                                    Risk Score: <span className="text-gray-900 dark:text-white">{analysis.riskScore}/10</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-gray-900 dark:text-gray-200 whitespace-pre-wrap leading-relaxed font-medium">
+                                                            {analysis.summary}
+                                                        </p>
+                                                        {analysis.observations && Array.isArray(analysis.observations) && analysis.observations.length > 0 && (
+                                                            <div className="mt-4">
+                                                                <h4 className="text-xs font-bold uppercase text-gray-400 dark:text-gray-500 mb-2">Key Observations</h4>
+                                                                <ul className="list-disc list-inside space-y-1 text-sm text-gray-700 dark:text-gray-300">
+                                                                    {analysis.observations.map((obs: string, idx: number) => (
+                                                                        <li key={idx}>{obs}</li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                        )}
+                                                        {analysis.actionItems && Array.isArray(analysis.actionItems) && analysis.actionItems.length > 0 && (
+                                                            <div className="mt-4">
+                                                                <h4 className="text-xs font-bold uppercase text-gray-400 dark:text-gray-500 mb-2">Recommended Steps</h4>
+                                                                <ul className="list-disc list-inside space-y-1 text-sm text-gray-700 dark:text-gray-300">
+                                                                    {analysis.actionItems.map((item: string, idx: number) => (
+                                                                        <li key={idx}>{item}</li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            }
+                                        } catch (e) {
+                                            // Not JSON or malformed, render as plain text
+                                        }
+                                        return <p className="text-gray-900 dark:text-gray-200 whitespace-pre-wrap leading-relaxed">{review.aiAnalysis}</p>;
+                                    })()}
                                 </div>
                             </div>
                         )}
@@ -212,13 +264,13 @@ export default function ViewReviewPage({ params }: { params: Promise<{ id: strin
 
                                         {q.type === "text" && (
                                             <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                                                <p className="text-gray-900 dark:text-gray-200 whitespace-pre-wrap">{answers[q.id] || 'No answer provided'}</p>
+                                                <p className="text-gray-900 dark:text-gray-200 whitespace-pre-wrap">{typeof answers[q.id] === 'string' ? answers[q.id] : (answers[q.id] ? JSON.stringify(answers[q.id]) : 'No answer provided')}</p>
                                             </div>
                                         )}
 
                                         {q.type === "radio" && (
                                             <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                                                <p className="text-gray-900 dark:text-gray-200 font-medium">{answers[q.id] || 'No answer provided'}</p>
+                                                <p className="text-gray-900 dark:text-gray-200 font-medium">{typeof answers[q.id] === 'string' ? answers[q.id] : (answers[q.id] ? JSON.stringify(answers[q.id]) : 'No answer provided')}</p>
                                             </div>
                                         )}
 
@@ -226,12 +278,14 @@ export default function ViewReviewPage({ params }: { params: Promise<{ id: strin
                                             <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                                                 {Array.isArray(answers[q.id]) && answers[q.id].length > 0 ? (
                                                     <ul className="list-disc list-inside space-y-1">
-                                                        {answers[q.id].map((answer: string, i: number) => (
-                                                            <li key={i} className="text-gray-900 dark:text-gray-200">{answer}</li>
+                                                        {answers[q.id].map((answer: any, i: number) => (
+                                                            <li key={i} className="text-gray-900 dark:text-gray-200">{typeof answer === 'string' ? answer : JSON.stringify(answer)}</li>
                                                         ))}
                                                     </ul>
                                                 ) : (
-                                                    <p className="text-gray-500 dark:text-gray-400">No answers selected</p>
+                                                    <p className="text-gray-500 dark:text-gray-400">
+                                                        {typeof answers[q.id] === 'string' ? answers[q.id] : 'No answers selected'}
+                                                    </p>
                                                 )}
                                             </div>
                                         )}

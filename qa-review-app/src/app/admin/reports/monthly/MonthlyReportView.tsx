@@ -404,7 +404,29 @@ export default function MonthlyReportView({ reviews }: MonthlyReportViewProps) {
                                             </td>
                                             <td className="px-4 py-3 text-gray-700 dark:text-gray-300 align-top">{r.healthStatus}</td>
                                             <td className="px-4 py-3 text-gray-600 dark:text-gray-300 align-top whitespace-pre-line">{r.observations || '-'}</td>
-                                            <td className="px-4 py-3 text-indigo-600 dark:text-indigo-400 align-top whitespace-pre-line font-medium bg-indigo-50/20 dark:bg-indigo-900/10">{r.aiAnalysis || '-'}</td>
+                                            <td className="px-4 py-3 text-indigo-600 dark:text-indigo-400 align-top whitespace-pre-line font-medium bg-indigo-50/20 dark:bg-indigo-900/10">
+                                                {(() => {
+                                                    if (!r.aiAnalysis) return '-';
+                                                    try {
+                                                        const analysis = JSON.parse(r.aiAnalysis);
+                                                        if (analysis && typeof analysis === 'object') {
+                                                            return (
+                                                                <div className="flex flex-col gap-1">
+                                                                    <span className="text-[10px] font-black uppercase tracking-tighter opacity-70">
+                                                                        {typeof analysis.riskLevel === 'string' ? analysis.riskLevel : 'ANALYZED'} {analysis.riskScore !== undefined ? `(${analysis.riskScore}/10)` : ''}
+                                                                    </span>
+                                                                    <span className="text-xs line-clamp-3" title={typeof analysis.summary === 'string' ? analysis.summary : ''}>
+                                                                        {typeof analysis.summary === 'string' ? analysis.summary : JSON.stringify(analysis.summary)}
+                                                                    </span>
+                                                                </div>
+                                                            );
+                                                        }
+                                                    } catch (e) {
+                                                        // Fallback to plain text
+                                                    }
+                                                    return r.aiAnalysis;
+                                                })()}
+                                            </td>
                                             <td className="px-4 py-3 text-gray-600 dark:text-gray-300 align-top whitespace-pre-line">{r.recommendedActions || '-'}</td>
                                             <td className="px-4 py-3 text-gray-600 dark:text-gray-300 align-top whitespace-pre-line">{r.followUpComment || '-'}</td>
                                         </tr>

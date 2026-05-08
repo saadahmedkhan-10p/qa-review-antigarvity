@@ -3,6 +3,7 @@
 import { use, useEffect, useState } from "react";
 import { getReview, submitReview } from "@/app/actions/review";
 import { generateAIAnalysis } from "@/app/actions/ai";
+import CommentsList from "@/components/comments/CommentsList";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useAuth } from "@/context/AuthContext";
@@ -24,7 +25,7 @@ export default function ConductReviewPage({ params }: { params: Promise<{ id: st
     });
 
     const { user: authUser } = useAuth();
-    const isAdmin = authUser?.roles ? authUser.roles.includes("ADMIN") : false;
+    const isAdmin = authUser?.roles ? (authUser.roles.includes("ADMIN") || authUser.roles.includes("QA_HEAD") || authUser.roles.includes("DIRECTOR")) : false;
 
     const [loading, setLoading] = useState(true);
     const [generatingAI, setGeneratingAI] = useState(false);
@@ -299,11 +300,60 @@ export default function ConductReviewPage({ params }: { params: Promise<{ id: st
 
                             <div>
                                 <div className="block text-sm font-bold uppercase tracking-wider !text-indigo-600 dark:!text-indigo-400 mb-2">AI Analysis</div>
+                                
+                                {(() => {
+                                    try {
+                                        if (!summary.aiAnalysis) return null;
+                                        const analysis = JSON.parse(summary.aiAnalysis);
+                                        if (analysis && typeof analysis === 'object' && (analysis.summary || analysis.riskLevel)) {
+                                            return (
+                                                <div className="mb-4 p-6 bg-indigo-50/30 dark:bg-indigo-900/20 rounded-2xl border-2 border-indigo-100 dark:border-indigo-800/50">
+                                                    <div className="flex justify-between items-start mb-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                                                                analysis.riskLevel === 'CRITICAL' ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' :
+                                                                analysis.riskLevel === 'HIGH' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' :
+                                                                analysis.riskLevel === 'MEDIUM' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' :
+                                                                'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                                                            }`}>
+                                                                {analysis.riskLevel || 'ANALYZED'} RISK
+                                                            </span>
+                                                            {analysis.riskScore !== undefined && (
+                                                                <span className="text-sm font-bold text-gray-500 dark:text-gray-400">
+                                                                    Score: {analysis.riskScore}/10
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <p className="text-gray-800 dark:text-gray-200 font-bold mb-3 leading-relaxed">
+                                                        {analysis.summary}
+                                                    </p>
+                                                    {analysis.observations && Array.isArray(analysis.observations) && analysis.observations.length > 0 && (
+                                                        <div className="mb-3">
+                                                            <h4 className="text-[10px] font-black uppercase text-indigo-500 mb-1">Key Observations</h4>
+                                                            <ul className="space-y-0.5">
+                                                                {analysis.observations.map((obs: string, idx: number) => (
+                                                                    <li key={idx} className="text-xs text-gray-600 dark:text-gray-400 flex gap-2">
+                                                                        <span className="text-indigo-400">•</span> {obs}
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        }
+                                    } catch (e) {
+                                        // Fallback to textarea
+                                    }
+                                    return null;
+                                })()}
+
                                 <textarea
                                     disabled={isLocked}
                                     rows={4}
-                                    className="w-full p-4 border-2 border-indigo-200 dark:border-indigo-800/50 bg-indigo-50/10 dark:bg-indigo-900/5 rounded-xl text-gray-900 dark:text-white font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none placeholder-gray-400 dark:placeholder-gray-500 resize-none disabled:opacity-60"
-                                    placeholder="AI generated analysis or external AI feedback..."
+                                    className="w-full p-4 border-2 border-indigo-200 dark:border-indigo-800/50 bg-indigo-50/10 dark:bg-indigo-900/5 rounded-xl text-gray-900 dark:text-white font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none placeholder-gray-400 dark:placeholder-gray-500 resize-none disabled:opacity-60 text-xs font-mono"
+                                    placeholder="AI generated analysis or external AI feedback (JSON supported)..."
                                     value={summary.aiAnalysis}
                                     onChange={(e) => setSummary(prev => ({ ...prev, aiAnalysis: e.target.value }))}
                                 />
@@ -312,10 +362,10 @@ export default function ConductReviewPage({ params }: { params: Promise<{ id: st
                                         type="button"
                                         onClick={handleGenerateAI}
                                         disabled={generatingAI || isLocked}
-                                        className="flex items-center gap-2 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-lg text-xs font-bold transition-all border border-indigo-200 dark:border-indigo-800 disabled:opacity-50"
+                                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-all shadow-md disabled:opacity-50"
                                     >
                                         {generatingAI ? (
-                                            <span className="animate-spin rounded-full h-3 w-3 border-b-2 border-indigo-600"></span>
+                                            <span className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></span>
                                         ) : (
                                             <span>✨</span>
                                         )}
@@ -340,8 +390,13 @@ export default function ConductReviewPage({ params }: { params: Promise<{ id: st
                         )}
                     </div>
 
+                    {/* Comments Section */}
+                    <div className="mt-16">
+                        <CommentsList reviewId={review.id} />
+                    </div>
+
                     {!isLocked && (
-                        <div className="flex justify-end pt-8">
+                        <div className="flex justify-end pt-12">
                             <button
                                 type="submit"
                                 className="bg-green-600 hover:bg-green-500 text-white px-12 py-5 rounded-2xl font-black text-xl shadow-xl hover:shadow-green-500/30 transition-all transform hover:-translate-y-1 active:scale-95 flex items-center gap-3"

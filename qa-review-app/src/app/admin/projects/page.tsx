@@ -24,12 +24,14 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
     const roles = (user?.roles as string[]) || [];
     const isAdmin = roles.includes("ADMIN");
     const isQAHead = roles.includes("QA_HEAD");
+    const isDirector = roles.includes("DIRECTOR");
+    const isQAManager = roles.includes("QA_MANAGER");
 
-    if (!isAdmin && !isQAHead) {
+    if (!isAdmin && !isQAHead && !isDirector && !isQAManager) {
         return redirect(getDashboardPath(roles as any));
     }
 
-    const canCreate = (isAdmin || isQAHead || roles.length === 0);
+    const canCreate = (isAdmin || isQAHead || isQAManager);
 
     const projects = await getProjects();
     const users = await getUsers();

@@ -18,8 +18,25 @@ export async function updateSetting(key: string, value: string) {
     await prisma.systemSettings.upsert({
         where: { key },
         update: { value },
-        create: { key, value }
+        create: { id: key, key, value }
     });
+
+    revalidatePath("/admin/settings");
+    return { success: true };
+}
+
+export async function updateSettings(settings: Record<string, string>) {
+    await requireRole("ADMIN");
+    
+    const updates = Object.entries(settings).map(([key, value]) => 
+        prisma.systemSettings.upsert({
+            where: { key },
+            update: { value },
+            create: { id: key, key, value }
+        })
+    );
+
+    await prisma.$transaction(updates);
 
     revalidatePath("/admin/settings");
     return { success: true };

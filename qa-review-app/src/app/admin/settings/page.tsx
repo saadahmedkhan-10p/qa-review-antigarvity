@@ -1,32 +1,46 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getSetting, updateSetting } from "@/app/actions/settings";
+import { getSetting, updateSettings } from "@/app/actions/settings";
 import toast from "react-hot-toast";
 import { Settings, Key, Save, Lock } from "lucide-react";
 
 export default function AdminSettingsPage() {
-    const [apiKey, setApiKey] = useState("");
+    const [provider, setProvider] = useState("openai");
+    const [openaiKey, setOpenaiKey] = useState("");
+    const [grokKey, setGrokKey] = useState("");
+    const [aiModel, setAiModel] = useState("");
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
-        getSetting("OPENAI_API_KEY")
-            .then(val => {
-                if (val) setApiKey(val);
-                setLoading(false);
-            })
-            .catch(() => {
-                toast.error("Failed to load settings");
-                setLoading(false);
-            });
+        Promise.all([
+            getSetting("AI_PROVIDER"),
+            getSetting("OPENAI_API_KEY"),
+            getSetting("GROK_API_KEY"),
+            getSetting("AI_MODEL")
+        ]).then(([prov, oai, grk, mdl]) => {
+            if (prov) setProvider(prov);
+            if (oai) setOpenaiKey(oai);
+            if (grk) setGrokKey(grk);
+            if (mdl) setAiModel(mdl);
+            setLoading(false);
+        }).catch(() => {
+            toast.error("Failed to load settings");
+            setLoading(false);
+        });
     }, []);
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
         try {
-            await updateSetting("OPENAI_API_KEY", apiKey);
+            await updateSettings({
+                "AI_PROVIDER": provider,
+                "OPENAI_API_KEY": openaiKey,
+                "GROK_API_KEY": grokKey,
+                "AI_MODEL": aiModel
+            });
             toast.success("Settings saved successfully!");
         } catch (error) {
             toast.error("Failed to save settings");
@@ -59,33 +73,83 @@ export default function AdminSettingsPage() {
                     <div className="p-8 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
                         <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                             <Key className="h-5 w-5 text-indigo-500" />
-                            AI Integration (OpenAI)
+                            AI Integration
                         </h2>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">This key is used for generating AI analysis on challenged projects.</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Configure your preferred AI provider for generating project analysis.</p>
                     </div>
 
                     <form onSubmit={handleSave} className="p-8 space-y-8">
                         <div>
                             <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">
-                                OpenAI API Key
+                                AI Provider
                             </label>
-                            <div className="relative group">
-                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-indigo-500 transition-colors">
-                                    <Lock className="h-5 w-5" />
+                            <select
+                                className="block w-full px-4 py-4 bg-gray-50 dark:bg-gray-900 border-2 border-gray-100 dark:border-gray-700 rounded-2xl text-gray-900 dark:text-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:focus:border-indigo-600 transition-all outline-none"
+                                value={provider}
+                                onChange={(e) => setProvider(e.target.value)}
+                            >
+                                <option value="openai">OpenAI (ChatGPT)</option>
+                                <option value="grok">xAI (Grok)</option>
+                            </select>
+                        </div>
+
+                        {provider === "openai" ? (
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">
+                                    OpenAI API Key
+                                </label>
+                                <div className="relative group">
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-indigo-500 transition-colors">
+                                        <Lock className="h-5 w-5" />
+                                    </div>
+                                    <input
+                                        type="password"
+                                        placeholder="sk-..."
+                                        className="block w-full pl-12 pr-4 py-4 bg-gray-50 dark:bg-gray-900 border-2 border-gray-100 dark:border-gray-700 rounded-2xl text-gray-900 dark:text-white font-mono focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:focus:border-indigo-600 transition-all outline-none"
+                                        value={openaiKey}
+                                        onChange={(e) => setOpenaiKey(e.target.value)}
+                                    />
                                 </div>
-                                <input
-                                    type="password"
-                                    placeholder="sk-..."
-                                    className="block w-full pl-12 pr-4 py-4 bg-gray-50 dark:bg-gray-900 border-2 border-gray-100 dark:border-gray-700 rounded-2xl text-gray-900 dark:text-white font-mono focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:focus:border-indigo-600 transition-all outline-none"
-                                    value={apiKey}
-                                    onChange={(e) => setApiKey(e.target.value)}
-                                />
                             </div>
+                        ) : (
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">
+                                    Grok API Key
+                                </label>
+                                <div className="relative group">
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-indigo-500 transition-colors">
+                                        <Lock className="h-5 w-5" />
+                                    </div>
+                                    <input
+                                        type="password"
+                                        placeholder="xai-..."
+                                        className="block w-full pl-12 pr-4 py-4 bg-gray-50 dark:bg-gray-900 border-2 border-gray-100 dark:border-gray-700 rounded-2xl text-gray-900 dark:text-white font-mono focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:focus:border-indigo-600 transition-all outline-none"
+                                        value={grokKey}
+                                        onChange={(e) => setGrokKey(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">
+                                AI Model (Optional)
+                            </label>
+                            <input
+                                type="text"
+                                placeholder={provider === "openai" ? "gpt-4o" : "grok-beta"}
+                                className="block w-full px-4 py-4 bg-gray-50 dark:bg-gray-900 border-2 border-gray-100 dark:border-gray-700 rounded-2xl text-gray-900 dark:text-white font-mono focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:focus:border-indigo-600 transition-all outline-none"
+                                value={aiModel}
+                                onChange={(e) => setAiModel(e.target.value)}
+                            />
+                            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                Leave blank to use default model ({provider === "openai" ? "gpt-4o" : "grok-beta"}).
+                            </p>
+                        </div>
                             <p className="mt-3 text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
                                 <span className="inline-block w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse"></span>
                                 Key is encrypted at rest and never shared with client-side code except for this admin panel.
                             </p>
-                        </div>
 
                         <div className="flex justify-end pt-4">
                             <button

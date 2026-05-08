@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { NotificationService } from "@/services/notificationService";
 
 export async function getReview(id: string) {
     return await prisma.review.findUnique({
@@ -65,18 +66,75 @@ export async function submitReview(
             aiAnalysis: summary.aiAnalysis
         } as any,
         include: {
-            project: true,
-            reviewer: true
+            project: {
+                include: { lead: true }
+            },
+            reviewer: true,
+            secondaryReviewer: true,
         }
     }) as any;
 
     // Trigger AI Analysis if project is challenged or critical
     const highRiskStatuses = ["Challenged", "Critical", "Risk", "Behind Schedule"];
     if (highRiskStatuses.includes(summary.healthStatus)) {
-        // Run in background
-        AIAnalysisService.analyzeReview(reviewId).catch(err => 
+        AIAnalysisService.analyzeReview(reviewId).catch(err =>
             console.error("Background AI analysis failed:", err)
         );
+    }
+
+    // REVIEW_SUBMITTED notification — notify all admins / QA heads / project lead
+    if (isSubmission) {
+        (async () => {
+            try {
+                const adminUsers = await prisma.user.findMany({
+                    where: {
+                        OR: [
+                            { roles: { contains: "ADMIN" } },
+                            { roles: { contains: "QA_HEAD" } },
+                            { roles: { contains: "QA_MANAGER" } },
+                        ]
+                    },
+                    select: { id: true }
+                });
+                const recipientIds = [
+                    ...adminUsers.map((u: { id: string }) => u.id),
+                    review.project.lead?.id,
+                ].filter((id): id is string => !!id);
+
+                await NotificationService.onReviewSubmitted(
+                    reviewId,
+                    review.project.name,
+                    user?.name || review.reviewer?.name || "Reviewer",
+                    recipientIds
+                );
+            } catch (e) {
+                console.error("REVIEW_SUBMITTED notification failed:", e);
+            }
+        })();
+    }
+
+    // REVIEW_SCHEDULED notification — notify reviewer + secondary reviewer
+    if (summary.scheduledDate) {
+        (async () => {
+            try {
+                const scheduled = new Date(summary.scheduledDate!).toLocaleDateString("en-US", {
+                    year: "numeric", month: "long", day: "numeric"
+                });
+                const reviewerIds = [
+                    review.reviewerId,
+                    review.secondaryReviewer?.id,
+                ].filter((id): id is string => !!id);
+
+                await NotificationService.onReviewScheduled(
+                    reviewId,
+                    review.project.name,
+                    scheduled,
+                    reviewerIds
+                );
+            } catch (e) {
+                console.error("REVIEW_SCHEDULED notification failed:", e);
+            }
+        })();
     }
 
     // Log the activity

@@ -3,6 +3,7 @@ import { reviewSchema } from "@/lib/schemas";
 import { logActivity } from "@/lib/activityLogger";
 import { sendEmail, emailTemplates } from "@/lib/email";
 import { SessionUser } from "@/lib/auth";
+import { NotificationService } from "@/services/notificationService";
 import { User, Form } from "@prisma/client";
 import { z } from "zod";
 
@@ -183,8 +184,15 @@ export class ReviewService {
                     }
                 });
 
-                // Send Invitations
+                // Send invitations (email)
                 await this.sendReviewCycleEmails(project, form);
+
+                // In-app REVIEW_ASSIGNED notifications
+                await NotificationService.onReviewAssigned(review.id, project.name, project.reviewerId!);
+                if (project.secondaryReviewerId) {
+                    await NotificationService.onReviewAssigned(review.id, project.name, project.secondaryReviewerId);
+                }
+
                 initiatedReviews.push(review);
             }
         }

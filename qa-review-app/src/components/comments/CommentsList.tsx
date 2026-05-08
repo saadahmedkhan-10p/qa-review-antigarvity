@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { MessageSquare, Send, User, Clock } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import toast from "react-hot-toast";
-import { getRoleLabel } from "@/types/roles";
+import { getRoleLabel, canCommentOnReviews, Role } from "@/types/roles";
 
 interface Comment {
     id: string;
@@ -29,10 +29,29 @@ export default function CommentsList({ reviewId }: CommentsListProps) {
     const [newComment, setNewComment] = useState("");
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [users, setUsers] = useState<any[]>([]);
+    const [showMentions, setShowMentions] = useState(false);
+    const [mentionFilter, setMentionFilter] = useState("");
+    const [mentionIndex, setMentionIndex] = useState(-1);
+
+    const canComment = user?.roles ? canCommentOnReviews(user.roles as Role[]) : false;
 
     useEffect(() => {
         fetchComments();
+        fetchUsers();
     }, [reviewId]);
+
+    const fetchUsers = async () => {
+        try {
+            const response = await fetch('/api/users');
+            if (response.ok) {
+                const data = await response.json();
+                setUsers(data);
+            }
+        } catch (error) {
+            console.error("Error fetching users for mentions:", error);
+        }
+    };
 
     const fetchComments = async () => {
         try {
@@ -117,14 +136,77 @@ export default function CommentsList({ reviewId }: CommentsListProps) {
                             </div>
                         </div>
                         <div className="flex-1">
-                            <textarea
-                                value={newComment}
-                                onChange={(e) => setNewComment(e.target.value)}
-                                placeholder="Add a comment..."
-                                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
-                                rows={3}
-                                disabled={isSubmitting}
-                            />
+                            <div className="relative">
+                                <textarea
+                                    value={newComment}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        setNewComment(value);
+
+                                        // Detect @ for mentions
+                                        const lastAt = value.lastIndexOf("@");
+                                        if (lastAt !== -1 && lastAt >= value.length - 20) {
+                                            const query = value.substring(lastAt + 1).split(/\s/)[0];
+                                            if (!value.substring(lastAt + 1).includes(" ")) {
+                                                setMentionFilter(query);
+                                                setShowMentions(true);
+                                                return;
+                                            }
+                                        }
+                                        setShowMentions(false);
+                                    }}
+                                    placeholder="Add a comment... (Use @ to mention someone)"
+                                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                                    rows={3}
+                                    disabled={isSubmitting}
+                                />
+                                
+                                {showMentions && (
+                                    <div className="absolute bottom-full left-0 mb-2 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50">
+                                        <div className="p-2 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Mention User</span>
+                                        </div>
+                                        <div className="max-h-48 overflow-y-auto">
+                                            {(() => {
+                                                const filteredUsers = users
+                                                    .filter(u => 
+                                                        (u.name?.toLowerCase() || "").includes(mentionFilter.toLowerCase()) || 
+                                                        (u.email?.toLowerCase() || "").includes(mentionFilter.toLowerCase())
+                                                    )
+                                                    .slice(0, 10);
+                                                
+                                                if (filteredUsers.length === 0) {
+                                                    return (
+                                                        <div className="p-4 text-center">
+                                                            <p className="text-xs text-gray-500 dark:text-gray-400">No users match "{mentionFilter}"</p>
+                                                            <p className="text-[10px] text-gray-400 mt-1">Available: {users.length} users</p>
+                                                        </div>
+                                                    );
+                                                }
+
+                                                return filteredUsers.map((u, i) => (
+                                                    <button
+                                                        key={u.id}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const lastAt = newComment.lastIndexOf("@");
+                                                            const before = newComment.substring(0, lastAt);
+                                                            const after = newComment.substring(lastAt).split(/\s/)[0];
+                                                            const rest = newComment.substring(lastAt + after.length);
+                                                            setNewComment(`${before}@${u.email.split('@')[0]} ${rest}`);
+                                                            setShowMentions(false);
+                                                        }}
+                                                        className="w-full text-left px-4 py-3 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 flex flex-col transition-colors border-b last:border-0 dark:border-gray-700"
+                                                    >
+                                                        <span className="text-sm font-bold text-gray-900 dark:text-white">{u.name}</span>
+                                                        <span className="text-[10px] text-gray-500 dark:text-gray-400">{u.email}</span>
+                                                    </button>
+                                                ));
+                                            })()}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                             <div className="mt-2 flex justify-end">
                                 <button
                                     type="submit"
@@ -174,7 +256,16 @@ export default function CommentsList({ reviewId }: CommentsListProps) {
                                     </div>
                                 </div>
                                 <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words">
-                                    {comment.content}
+                                    {comment.content.split(/(@[a-zA-Z0-9._-]+)/g).map((part, index) => {
+                                        if (part.startsWith('@')) {
+                                            return (
+                                                <span key={index} className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline cursor-pointer">
+                                                    {part}
+                                                </span>
+                                            );
+                                        }
+                                        return part;
+                                    })}
                                 </p>
                             </div>
                         </div>

@@ -308,24 +308,26 @@ export function ReviewsTable({ reviews, initialType = 'ALL' }: { reviews: Review
                                                 <span className="text-gray-400">-</span>
                                             )}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <Link
-                                                href={`/admin/reviews/${review.id}`}
-                                                className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 inline-flex items-center gap-1"
-                                            >
-                                                <Pencil className="h-4 w-4" />
-                                                Manage
-                                            </Link>
-                                            {canMarkNotCompleted && review.status !== 'SUBMITTED' && review.status !== 'NOT_COMPLETED' && review.status !== 'PROJECT_ENDED' && (
-                                                <button
-                                                    onClick={() => setNotCompletedModal({ isOpen: true, reviewId: review.id, projectName: review.project.name, reason: "" })}
-                                                    className="text-orange-600 dark:text-orange-400 hover:text-orange-900 dark:hover:text-orange-300 inline-flex items-center gap-1"
-                                                    title="Mark as Not Completed on Time"
+                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <div className="flex items-center gap-4">
+                                                <Link
+                                                    href={`/admin/reviews/${review.id}`}
+                                                    className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 inline-flex items-center gap-1"
                                                 >
-                                                    <Clock className="h-4 w-4" />
-                                                    Mark Overdue
-                                                </button>
-                                            )}
+                                                    <Pencil className="h-4 w-4" />
+                                                    Manage
+                                                </Link>
+                                                {canMarkNotCompleted && review.status !== 'SUBMITTED' && review.status !== 'NOT_COMPLETED' && review.status !== 'PROJECT_ENDED' && (
+                                                    <button
+                                                        onClick={() => setNotCompletedModal({ isOpen: true, reviewId: review.id, projectName: review.project.name, reason: "" })}
+                                                        className="text-orange-600 dark:text-orange-400 hover:text-orange-900 dark:hover:text-orange-300 inline-flex items-center gap-1"
+                                                        title="Mark as Not Completed on Time"
+                                                    >
+                                                        <Clock className="h-4 w-4" />
+                                                        Mark Overdue
+                                                    </button>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))

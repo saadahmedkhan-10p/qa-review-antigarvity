@@ -5,13 +5,33 @@ import { NotificationService } from "@/services/notificationService";
 import { sendEmail, emailTemplates } from "@/lib/email";
 
 // Helper: verify the caller is associated with this review (reviewer, secondary, lead, or admin)
-async function canAccessReview(reviewId: string, userId: string, roles: string[]): Promise<boolean> {
-    if (roles.includes("ADMIN") || roles.includes("QA_HEAD")) return true;
+// Helper: verify the caller is associated with this review (reviewer, secondary, lead, or admin)
+async function canAccessReview(reviewId: string, userId: string, roles: string[], isWrite: boolean = false): Promise<boolean> {
+    const roleList = roles as any[];
+    
+    // Admin, QA Head/Manager, Director, and PM have global comment access
+    const hasGlobalAccess = roleList.some(r => 
+        ["ADMIN", "QA_HEAD", "QA_MANAGER", "QA_ARCHITECT", "DIRECTOR", "PM"].includes(r)
+    );
+    
+    if (hasGlobalAccess) return true;
+    
+    // Check if user has comment permission at all if this is a write
+    const hasCommentPermission = roleList.some(r => 
+        ["REVIEW_LEAD", "REVIEWER", "DEV_ARCHITECT"].includes(r)
+    );
+
+    // If it's a write and they don't even have the permission, block early
+    if (isWrite && !hasCommentPermission) return false;
+
+    // For assigned roles (Lead, Reviewer, Dev Arch), verify they are linked to this specific review/project
     const review = await prisma.review.findUnique({
         where: { id: reviewId },
         include: { project: true },
     });
+    
     if (!review) return false;
+    
     return (
         review.reviewerId === userId ||
         review.secondaryReviewerId === userId ||
@@ -32,7 +52,7 @@ export async function GET(
         }
         const { id } = await params;
         const roles: string[] = Array.isArray(session.user.roles) ? session.user.roles : [];
-        if (!(await canAccessReview(id, session.user.id, roles))) {
+        if (!(await canAccessReview(id, session.user.id, roles, false))) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
@@ -76,7 +96,7 @@ export async function POST(
             );
         }
         const roles: string[] = Array.isArray(session.user.roles) ? session.user.roles : [];
-        if (!(await canAccessReview(id, session.user.id, roles))) {
+        if (!(await canAccessReview(id, session.user.id, roles, true))) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
@@ -115,22 +135,49 @@ export async function POST(
             }
         });
 
-        // Background: Detect mentions
+        // Background: notify stakeholders + detect mentions
         (async () => {
-            const mentions = content.match(/@(\w+)/g);
+            // 1. Load review relations to find all stakeholders
+            const reviewWithProject = await prisma.review.findUnique({
+                where: { id },
+                include: {
+                    project: {
+                        include: { lead: true, contactPerson: true }
+                    },
+                    reviewer: true,
+                    secondaryReviewer: true,
+                }
+            });
+
+            if (reviewWithProject) {
+                const stakeholderIds = [
+                    reviewWithProject.reviewerId,
+                    reviewWithProject.secondaryReviewerId,
+                    reviewWithProject.project.leadId,
+                    reviewWithProject.project.contactPersonId,
+                ].filter((uid): uid is string => !!uid);
+
+                // COMMENT notification for all stakeholders (excluding the commenter)
+                await NotificationService.onComment(
+                    id,
+                    reviewWithProject.project.name,
+                    session.user.name,
+                    stakeholderIds,
+                    session.user.id
+                );
+            }
+
+            // 2. MENTION detection — @handle lookup
+            const mentions = content.match(/@([a-zA-Z0-9._-]+)/g);
             if (mentions) {
-                // Get unique mentions
-                const uniqueMentions = Array.from(new Set(mentions.map((m: string) => m.substring(1)))) as string[];
+                const uniqueHandles = Array.from(new Set(mentions.map((m: string) => m.substring(1)))) as string[];
 
-
-
-                
-                for (const targetName of uniqueMentions) {
+                for (const handle of uniqueHandles) {
                     const targetUser = await prisma.user.findFirst({
-                        where: { 
+                        where: {
                             OR: [
-                                { name: { contains: targetName } },
-                                { email: { startsWith: targetName } }
+                                { name: { contains: handle, mode: 'insensitive' } },
+                                { email: { startsWith: handle, mode: 'insensitive' } }
                             ]
                         }
                     });
@@ -139,7 +186,7 @@ export async function POST(
                         await NotificationService.create(
                             targetUser.id,
                             "MENTION",
-                            `${session.user.name} tagged you in a comment.`,
+                            `${session.user.name} tagged you in a comment on a review.`,
                             `/reviews/${id}`
                         );
 
@@ -150,7 +197,7 @@ export async function POST(
                     }
                 }
             }
-        })().catch(err => console.error("Mention processing error:", err));
+        })().catch(err => console.error("Notification processing error:", err));
 
         return NextResponse.json(comment, { status: 201 });
     } catch (error) {

@@ -77,7 +77,7 @@ export const reviewStatusSchema = z.enum([
 ]);
 
 export const healthStatusSchema = z.enum([
-    "On Track", "Slightly Challenged", "Extremely Challenged", "N/A"
+    "On Track", "Slightly Challenged", "Extremely Challenged", "Critical", "N/A"
 ]);
 
 export const reviewSchema = z.object({

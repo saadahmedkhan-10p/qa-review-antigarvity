@@ -1,11 +1,7 @@
-import OpenAI from "openai";
+import { getAIClient } from "@/lib/ai";
 import { prisma } from "@/lib/prisma";
 import { NotificationService } from "./notificationService";
 import { sendEmail, emailTemplates } from "@/lib/email";
-
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
 
 export interface AIAnalysisResult {
     riskScore: number; // 0-10
@@ -54,8 +50,12 @@ export class AIAnalysisService {
                 Provide a structured risk assessment.
             `;
 
+            const { client: openai, model } = await getAIClient();
+
+            // Note: response_format is NOT used because some providers (e.g. Grok/xAI)
+            // do not support it. JSON is extracted from the response text instead.
             const response = await openai.chat.completions.create({
-                model: "gpt-4o",
+                model: model,
                 messages: [
                     {
                         role: "system",
@@ -69,7 +69,7 @@ export class AIAnalysisService {
                         - "CRITICAL": Major blockers, immediate intervention required.
                         
                         OUTPUT REQUIREMENTS:
-                        - Return JSON ONLY.
+                        - Return JSON ONLY, no markdown, no code fences.
                         - riskScore: 0 to 10 (10 being highest risk).
                         - riskLevel: "LOW", "MEDIUM", "HIGH", or "CRITICAL".
                         - observations: Array of key risks identified.
@@ -77,7 +77,7 @@ export class AIAnalysisService {
                         - summary: A 2-3 sentence overview.
                         
                         PRIVACY:
-                        - Stripp all PII (names, emails, phones) from the output.
+                        - Strip all PII (names, emails, phones) from the output.
                         `
                     },
                     {
@@ -85,10 +85,30 @@ export class AIAnalysisService {
                         content: prompt
                     }
                 ],
-                response_format: { type: "json_object" }
             });
 
-            const analysis = JSON.parse(response.choices[0].message.content || "{}") as AIAnalysisResult;
+            const rawContent = response.choices[0].message.content || "{}";
+
+            // Robustly extract JSON from the response (handles markdown code fences)
+            let jsonString = rawContent;
+            const jsonMatch = rawContent.match(/(\{[\s\S]*\})/);
+            if (jsonMatch) {
+                jsonString = jsonMatch[1];
+            }
+
+            let analysis: AIAnalysisResult;
+            try {
+                analysis = JSON.parse(jsonString) as AIAnalysisResult;
+            } catch {
+                // Fallback: wrap plain text in a minimal valid structure
+                analysis = {
+                    riskScore: 5,
+                    riskLevel: "MEDIUM",
+                    summary: rawContent,
+                    observations: [],
+                    actionItems: []
+                };
+            }
 
             // Persist the analysis
             await prisma.review.update({

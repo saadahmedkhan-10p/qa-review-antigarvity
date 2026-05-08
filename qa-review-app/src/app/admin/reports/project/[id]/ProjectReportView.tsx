@@ -11,12 +11,15 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
+import { Role } from "@/types/roles";
 
 interface ProjectReportViewProps {
     project: any;
 }
 
 export default function ProjectReportView({ project }: ProjectReportViewProps) {
+    const { user } = useAuth();
     const [activeTab, setActiveTab] = useState<'overview' | 'reviews'>('overview');
 
     // Data processing for charts
@@ -238,6 +241,7 @@ export default function ProjectReportView({ project }: ProjectReportViewProps) {
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Scheduled</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Submitted</th>
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -275,6 +279,29 @@ export default function ProjectReportView({ project }: ProjectReportViewProps) {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                             {review.submittedDate ? format(new Date(review.submittedDate), 'MMM d, yyyy') : '-'}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            {(() => {
+                                                const roles = (user?.roles || []) as Role[];
+                                                const isDirector = roles.includes('DIRECTOR');
+                                                const isAdminOrHead = roles.some(r => ['ADMIN', 'QA_HEAD', 'QA_MANAGER'].includes(r));
+                                                const viewHref = isDirector && !isAdminOrHead 
+                                                    ? `/reviews/${review.id}/view` 
+                                                    : `/admin/reviews/${review.id}`;
+
+                                                return (
+                                                    <Link
+                                                        href={viewHref}
+                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all shadow-sm transform hover:-translate-y-0.5 active:scale-95"
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                        </svg>
+                                                        <span className="font-bold uppercase tracking-tighter text-[10px]">View Form</span>
+                                                    </Link>
+                                                );
+                                            })()}
                                         </td>
                                     </tr>
                                 ))}
