@@ -326,7 +326,7 @@ export default function DirectorDashboard() {
                                     </thead>
                                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                         {projectSummary
-                                            .filter((p: any) => activeType === 'ALL' || p.type === activeType)
+                                            .filter((p: any) => activeType === 'ALL' || (p.type || 'MANUAL') === activeType)
                                             .map((project: any) => (
                                                 <tr key={project.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                                                     <td className="px-6 py-4 whitespace-nowrap">

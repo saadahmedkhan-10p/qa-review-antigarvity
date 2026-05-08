@@ -92,19 +92,19 @@ export default function ViewReviewPage({ params }: { params: Promise<{ id: strin
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 transition-colors duration-200">
                     <div className="flex justify-between items-start mb-4">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-800 dark:text-white">{review.form.title}</h1>
-                            <p className="text-gray-600 dark:text-gray-400 mt-2">Project: {review.project.name}</p>
+                            <h1 className="text-3xl font-bold text-gray-800 dark:text-white">{review.form?.title || 'Unknown Form'}</h1>
+                            <p className="text-gray-600 dark:text-gray-400 mt-2">Project: {review.project?.name || 'Unknown Project'}</p>
                         </div>
                         <span className="px-4 py-2 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded-full text-sm font-semibold">
-                            SUBMITTED
+                            {review.status}
                         </span>
                     </div>
 
                     {/* Project & Review Info */}
-                    <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                         <div>
                             <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase">Reviewer</h3>
-                            <p className="text-gray-900 dark:text-white mt-1">{review.reviewer.name}</p>
+                            <p className="text-gray-900 dark:text-white mt-1">{review.reviewer?.name || 'Unassigned'}</p>
                         </div>
                         <div>
                             <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase">Secondary Reviewer</h3>
@@ -112,11 +112,11 @@ export default function ViewReviewPage({ params }: { params: Promise<{ id: strin
                         </div>
                         <div>
                             <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase">Review Lead</h3>
-                            <p className="text-gray-900 dark:text-white mt-1">{review.project.lead?.name || 'Not assigned'}</p>
+                            <p className="text-gray-900 dark:text-white mt-1">{review.project?.lead?.name || 'Not assigned'}</p>
                         </div>
                         <div>
                             <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase">QA Contact</h3>
-                            <p className="text-gray-900 dark:text-white mt-1">{review.project.contactPerson?.name || 'N/A'}</p>
+                            <p className="text-gray-900 dark:text-white mt-1">{review.project?.contactPerson?.name || 'N/A'}</p>
                         </div>
                         <div>
                             <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase">Submitted Date</h3>

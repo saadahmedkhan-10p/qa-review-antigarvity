@@ -43,9 +43,14 @@ export default function MonthlyReportView({ reviews }: MonthlyReportViewProps) {
     // Filter reviews for the selected month and project type
     const monthReviews = useMemo(() => {
         return reviews.filter(r => {
-            const isMonthMatch = isSameMonth(parseISO(r.createdAt), currentDate);
-            if (activeType !== 'ALL' && (r.project.type || 'MANUAL') !== activeType) return false;
-            return isMonthMatch;
+            if (!r.createdAt) return false;
+            try {
+                const isMonthMatch = isSameMonth(parseISO(r.createdAt), currentDate);
+                const isTypeMatch = activeType === 'ALL' || (r.project?.type || 'MANUAL') === activeType;
+                return isMonthMatch && isTypeMatch;
+            } catch (e) {
+                return false;
+            }
         });
     }, [reviews, currentDate, activeType]);
 
@@ -127,7 +132,7 @@ export default function MonthlyReportView({ reviews }: MonthlyReportViewProps) {
                 {/* Header Section */}
                 <div className="flex flex-col md:flex-row justify-between items-center mb-8 border-b pb-4 dark:border-gray-700">
                     <div>
-                        <div className="flex items-center gap-4 mb-2 print:hidden">
+                        <div className="flex items-center gap-4 print:hidden">
                             <Link href={`/admin/reports?type=${projectType}`} className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
                                 Reports
                             </Link>
@@ -302,7 +307,7 @@ export default function MonthlyReportView({ reviews }: MonthlyReportViewProps) {
                                         <tr key={i} className="border-b dark:border-gray-700">
                                             <td className="px-4 py-2 text-indigo-600 dark:text-indigo-400 font-medium">
                                                 <Link href={`/admin/reviews/${r.id}`} className="hover:underline">
-                                                    {r.project.name}
+                                                    {r.project?.name || 'Unknown Project'}
                                                 </Link>
                                             </td>
                                             <td className="px-4 py-2 text-gray-700 dark:text-gray-300">{r.healthStatus}</td>
@@ -332,7 +337,7 @@ export default function MonthlyReportView({ reviews }: MonthlyReportViewProps) {
                                         <tr key={i} className="border-b dark:border-gray-700">
                                             <td className="px-4 py-2 text-indigo-600 dark:text-indigo-400 font-medium">
                                                 <Link href={`/admin/reviews/${r.id}`} className="hover:underline">
-                                                    {r.project.name}
+                                                    {r.project?.name || 'Unknown Project'}
                                                 </Link>
                                             </td>
                                         </tr>
@@ -363,7 +368,7 @@ export default function MonthlyReportView({ reviews }: MonthlyReportViewProps) {
                                     <tr key={i} className="border-b dark:border-gray-700">
                                         <td className="px-4 py-2 text-indigo-600 dark:text-indigo-400 font-medium">
                                             <Link href={`/admin/reviews/${r.id}`} className="hover:underline">
-                                                {r.project.name}
+                                                {r.project?.name || 'Unknown Project'}
                                             </Link>
                                         </td>
                                         <td className="px-4 py-2 text-gray-600 dark:text-gray-300">{r.deferredReason || '-'}</td>
@@ -393,13 +398,13 @@ export default function MonthlyReportView({ reviews }: MonthlyReportViewProps) {
                             </thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                                 {stats.details.challenged.length === 0 ? (
-                                    <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-500">No details available</td></tr>
+                                    <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">No details available</td></tr>
                                 ) : (
                                     stats.details.challenged.map((r, i) => (
                                         <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                                             <td className="px-4 py-3 text-indigo-600 dark:text-indigo-400 font-medium align-top">
                                                 <Link href={`/admin/reviews/${r.id}`} className="hover:underline">
-                                                    {r.project.name}
+                                                    {r.project?.name || 'Unknown Project'}
                                                 </Link>
                                             </td>
                                             <td className="px-4 py-3 text-gray-700 dark:text-gray-300 align-top">{r.healthStatus}</td>
@@ -407,24 +412,26 @@ export default function MonthlyReportView({ reviews }: MonthlyReportViewProps) {
                                             <td className="px-4 py-3 text-indigo-600 dark:text-indigo-400 align-top whitespace-pre-line font-medium bg-indigo-50/20 dark:bg-indigo-900/10">
                                                 {(() => {
                                                     if (!r.aiAnalysis) return '-';
+                                                    let analysis: any = null;
                                                     try {
-                                                        const analysis = JSON.parse(r.aiAnalysis);
-                                                        if (analysis && typeof analysis === 'object') {
-                                                            return (
-                                                                <div className="flex flex-col gap-1">
-                                                                    <span className="text-[10px] font-black uppercase tracking-tighter opacity-70">
-                                                                        {typeof analysis.riskLevel === 'string' ? analysis.riskLevel : 'ANALYZED'} {analysis.riskScore !== undefined ? `(${analysis.riskScore}/10)` : ''}
-                                                                    </span>
-                                                                    <span className="text-xs line-clamp-3" title={typeof analysis.summary === 'string' ? analysis.summary : ''}>
-                                                                        {typeof analysis.summary === 'string' ? analysis.summary : JSON.stringify(analysis.summary)}
-                                                                    </span>
-                                                                </div>
-                                                            );
-                                                        }
+                                                        analysis = JSON.parse(r.aiAnalysis);
                                                     } catch (e) {
-                                                        // Fallback to plain text
+                                                        return <span className="text-xs line-clamp-3">{r.aiAnalysis}</span>;
                                                     }
-                                                    return r.aiAnalysis;
+
+                                                    if (analysis && typeof analysis === 'object') {
+                                                        return (
+                                                            <div className="flex flex-col gap-1">
+                                                                <span className="text-[10px] font-black uppercase tracking-tighter opacity-70">
+                                                                    {typeof analysis.riskLevel === 'string' ? analysis.riskLevel : 'ANALYZED'} {analysis.riskScore !== undefined ? `(${analysis.riskScore}/10)` : ''}
+                                                                </span>
+                                                                <span className="text-xs line-clamp-3" title={typeof analysis.summary === 'string' ? analysis.summary : ''}>
+                                                                    {typeof analysis.summary === 'string' ? analysis.summary : JSON.stringify(analysis.summary)}
+                                                                </span>
+                                                            </div>
+                                                        );
+                                                    }
+                                                    return <span className="text-xs line-clamp-3">{r.aiAnalysis}</span>;
                                                 })()}
                                             </td>
                                             <td className="px-4 py-3 text-gray-600 dark:text-gray-300 align-top whitespace-pre-line">{r.recommendedActions || '-'}</td>

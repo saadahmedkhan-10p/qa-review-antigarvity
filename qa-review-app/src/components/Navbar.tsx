@@ -166,7 +166,7 @@ export default function Navbar() {
                                 {user.name}
                             </span>
                             <span className="text-[10px] text-gray-500 dark:text-gray-400">
-                                {roles.map((r: Role) => getRoleLabel(r)).join(', ')}
+                                {Array.isArray(roles) ? roles.map((r: Role) => getRoleLabel(r)).join(', ') : getRoleLabel(roles as any)}
                             </span>
                         </div>
                         <button

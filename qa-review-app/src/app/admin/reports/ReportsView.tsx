@@ -80,7 +80,8 @@ export function ReportsView({ reviews, pageTitle, typeFilter, initialMonth, init
     const baseFilteredReviews = useMemo(() => {
         return reviews.filter(review => {
             // Filter by type
-            if (activeType !== 'ALL' && review.project.type !== activeType) return false;
+            const projectType = review.project?.type || 'MANUAL';
+            if (activeType !== 'ALL' && projectType !== activeType) return false;
 
             // Filter by any date available - scheduled, submitted, or created
             const reviewDate = review.scheduledDate || review.submittedDate || review.createdAt;
@@ -431,9 +432,13 @@ export function ReportsView({ reviews, pageTitle, typeFilter, initialMonth, init
                                         .map((review) => (
                                             <tr key={review.id}>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
-                                                    <Link href={`/admin/reports/project/${review.project.id}`}>
-                                                        {review.project.name}
-                                                    </Link>
+                                                    {review.project ? (
+                                                        <Link href={`/admin/reports/project/${review.project.id}`}>
+                                                            {review.project.name}
+                                                        </Link>
+                                                    ) : (
+                                                        <span className="text-gray-400 italic">Project Missing</span>
+                                                    )}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                                     {review.reviewer?.name || 'Unassigned'}
@@ -462,8 +467,9 @@ export function ReportsView({ reviews, pageTitle, typeFilter, initialMonth, init
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                     {(() => {
-                                                        const isDirector = user?.roles?.includes('DIRECTOR');
-                                                        const isAdminOrHead = user?.roles?.some(r => ['ADMIN', 'QA_HEAD', 'QA_MANAGER'].includes(r));
+                                                        const roles = Array.isArray(user?.roles) ? user.roles : [];
+                                                        const isDirector = roles.includes('DIRECTOR');
+                                                        const isAdminOrHead = roles.some(r => ['ADMIN', 'QA_HEAD', 'QA_MANAGER'].includes(r));
                                                         const viewHref = isDirector && !isAdminOrHead 
                                                             ? `/reviews/${review.id}/view` 
                                                             : `/admin/reviews/${review.id}`;

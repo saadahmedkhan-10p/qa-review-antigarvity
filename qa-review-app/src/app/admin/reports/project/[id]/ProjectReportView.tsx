@@ -30,7 +30,7 @@ export default function ProjectReportView({ project }: ProjectReportViewProps) {
     ].filter(d => d.value > 0);
 
     const reviewsByReviewer = project.reviews.reduce((acc: any, review: any) => {
-        const name = review.reviewer.name;
+        const name = review.reviewer?.name || 'Unassigned';
         acc[name] = (acc[name] || 0) + 1;
         return acc;
     }, {});
@@ -55,8 +55,8 @@ export default function ProjectReportView({ project }: ProjectReportViewProps) {
 
         // Reviews Table
         const tableData = project.reviews.map((r: any) => [
-            r.form.title,
-            r.reviewer.name,
+            r.form?.title || 'Unknown Form',
+            r.reviewer?.name || 'Unassigned',
             r.status,
             r.submittedDate ? format(new Date(r.submittedDate), 'MMM d, yyyy') : '-'
         ]);
@@ -87,8 +87,8 @@ export default function ProjectReportView({ project }: ProjectReportViewProps) {
 
         // Reviews Sheet
         const reviewsData = project.reviews.map((r: any) => ({
-            Form: r.form.title,
-            Reviewer: r.reviewer.name,
+            Form: r.form?.title || 'Unknown Form',
+            Reviewer: r.reviewer?.name || 'Unassigned',
             Status: r.status,
             ScheduledDate: r.scheduledDate ? format(new Date(r.scheduledDate), 'MMM d, yyyy') : '-',
             SubmittedDate: r.submittedDate ? format(new Date(r.submittedDate), 'MMM d, yyyy') : '-',
@@ -248,10 +248,10 @@ export default function ProjectReportView({ project }: ProjectReportViewProps) {
                                 {project.reviews.map((review: any) => (
                                     <tr key={review.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                                            {review.form.title}
+                                            {review.form?.title || 'Unknown Form'}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            {review.reviewer.name}
+                                            {review.reviewer?.name || 'Unassigned'}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={`px-2 inline-flex text-[10px] leading-5 font-bold rounded-full uppercase tracking-tight ${review.status === 'NOT_COMPLETED' ? 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400' :
@@ -282,7 +282,7 @@ export default function ProjectReportView({ project }: ProjectReportViewProps) {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             {(() => {
-                                                const roles = (user?.roles || []) as Role[];
+                                                const roles = Array.isArray(user?.roles) ? user.roles : [];
                                                 const isDirector = roles.includes('DIRECTOR');
                                                 const isAdminOrHead = roles.some(r => ['ADMIN', 'QA_HEAD', 'QA_MANAGER'].includes(r));
                                                 const viewHref = isDirector && !isAdminOrHead 
