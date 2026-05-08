@@ -176,8 +176,8 @@ export async function POST(
                     const targetUser = await prisma.user.findFirst({
                         where: {
                             OR: [
-                                { name: { contains: handle, mode: 'insensitive' } },
-                                { email: { startsWith: handle, mode: 'insensitive' } }
+                                { name: { contains: handle } },
+                                { email: { startsWith: handle } }
                             ]
                         }
                     });
