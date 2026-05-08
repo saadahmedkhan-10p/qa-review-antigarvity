@@ -82,7 +82,7 @@ export default function Navbar() {
 
     if (!user || pathname === "/") return null;
 
-    const roles = user.roles as Role[];
+    const roles = Array.isArray(user.roles) ? user.roles as Role[] : [];
 
     // Helper to check if path is active
     const isPathActive = (path: string) => pathname.includes(path);

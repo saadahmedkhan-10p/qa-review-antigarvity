@@ -35,8 +35,9 @@ interface Review {
 
 export function ReviewsTable({ reviews, initialType = 'ALL' }: { reviews: Review[], initialType?: 'ALL' | 'MANUAL' | 'AUTOMATION_WEB' | 'AUTOMATION_MOBILE' | 'API' | 'DESKTOP' }) {
     const { user } = useAuth();
-    const isAdmin = user?.roles?.includes("ADMIN");
-    const isQAHead = user?.roles?.includes("QA_HEAD");
+    const userRoles = Array.isArray(user?.roles) ? user.roles : [];
+    const isAdmin = userRoles.includes("ADMIN");
+    const isQAHead = userRoles.includes("QA_HEAD");
     const canMarkNotCompleted = isAdmin || isQAHead;
 
     const [statusFilter, setStatusFilter] = useState<'ALL' | 'SUBMITTED' | 'PENDING' | 'SCHEDULED' | 'DEFERRED' | 'ON_HOLD' | 'PROJECT_ENDED' | 'NOT_COMPLETED'>('ALL');
