@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { NotificationService } from "@/services/notificationService";
 
@@ -73,6 +74,12 @@ export async function submitReview(
             secondaryReviewer: true,
         }
     }) as any;
+
+    console.log(`[submitReview] Persisted review ${reviewId}:`, {
+        status: status,
+        healthStatus: summary.healthStatus,
+        observations: summary.observations
+    });
 
     // Trigger AI Analysis if project is challenged or critical
     const highRiskStatuses = ["Challenged", "Critical", "Risk", "Behind Schedule"];
@@ -151,6 +158,13 @@ export async function submitReview(
             healthStatus: summary.healthStatus
         }
     });
+
+    revalidatePath("/admin/reviews");
+    revalidatePath("/admin/reports");
+    revalidatePath("/reviewer/dashboard");
+    revalidatePath("/pm/dashboard");
+    revalidatePath("/director/dashboard");
+    revalidatePath(`/reviews/${reviewId}/view`);
 
     return { success: true };
 }

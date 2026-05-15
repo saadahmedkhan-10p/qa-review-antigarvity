@@ -66,14 +66,23 @@ export async function GET() {
         };
 
         // Create project summary
-        const projectSummary = projects.map(project => ({
-            id: project.id,
-            name: project.name,
-            totalReviews: project.reviews.length,
-            completed: project.reviews.filter(r => r.status === 'SUBMITTED').length,
-            pending: project.reviews.filter(r => r.status === 'PENDING').length,
-            scheduled: project.reviews.filter(r => r.status === 'SCHEDULED').length
-        }));
+        const projectSummary = projects.map(project => {
+            const sortedReviews = [...project.reviews].sort((a, b) => 
+                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+            const latestReview = sortedReviews[0];
+
+            return {
+                id: project.id,
+                name: project.name,
+                type: project.type,
+                totalReviews: project.reviews.length,
+                completed: project.reviews.filter(r => r.status === 'SUBMITTED').length,
+                pending: project.reviews.filter(r => r.status === 'PENDING').length,
+                scheduled: project.reviews.filter(r => r.status === 'SCHEDULED').length,
+                healthStatus: latestReview?.healthStatus || 'N/A'
+            };
+        });
 
         return NextResponse.json({
             stats,

@@ -3,15 +3,22 @@ import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { Role } from "@/types/roles";
 
-// C-01: Require JWT_SECRET at startup — no hardcoded fallback
-const rawSecret = process.env.JWT_SECRET;
-if (!rawSecret || rawSecret.length < 32) {
-    throw new Error(
-        "FATAL: JWT_SECRET environment variable is missing or too short (minimum 32 characters). " +
-        "Set it in your .env.local file or deployment environment."
-    );
+// Helper to get the key lazily to avoid build-time crashes when env vars are missing
+function getSecretKey() {
+    const rawSecret = process.env.JWT_SECRET;
+    if (!rawSecret || rawSecret.length < 32) {
+        // If we are in build time, we can return a dummy key to let the build proceed
+        if (process.env.NEXT_PHASE === 'phase-production-build') {
+            return new TextEncoder().encode("dummy-secret-for-build-purposes-only-123456");
+        }
+        
+        throw new Error(
+            "FATAL: JWT_SECRET environment variable is missing or too short (minimum 32 characters). " +
+            "Set it in your .env.local file or deployment environment."
+        );
+    }
+    return new TextEncoder().encode(rawSecret);
 }
-const key = new TextEncoder().encode(rawSecret);
 
 export interface SessionUser {
     id: string;
@@ -47,11 +54,11 @@ export async function encrypt(payload: any) {
         .setProtectedHeader({ alg: "HS256" })
         .setIssuedAt()
         .setExpirationTime("24h") 
-        .sign(key);
+        .sign(getSecretKey());
 }
 
 export async function decrypt(input: string): Promise<any> {
-    const { payload } = await jwtVerify(input, key, {
+    const { payload } = await jwtVerify(input, getSecretKey(), {
         algorithms: ["HS256"],
     });
     return payload;

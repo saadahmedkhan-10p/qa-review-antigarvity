@@ -16,7 +16,11 @@ export function CreateUserForm({ projects }: { projects: Project[] }) {
     async function handleSubmit(formData: FormData) {
         setIsPending(true);
         try {
-            await createUser(formData);
+            const result = await createUser(formData);
+            if (result && result.error) {
+                toast.error(result.error);
+                return;
+            }
             toast.success("User created and email sent successfully");
             formRef.current?.reset();
         } catch (error: any) {
@@ -66,6 +70,7 @@ export function CreateUserForm({ projects }: { projects: Project[] }) {
                     <option value="REVIEW_LEAD">Review Lead</option>
                     <option value="REVIEWER">Reviewer</option>
                     <option value="PM">Project Manager</option>
+                    <option value="DEV_ARCHITECT">Dev Architect</option>
                     <option value="CONTACT_PERSON">Contact Person</option>
                     <option value="DIRECTOR">Director</option>
                     <option value="GUEST">Guest</option>

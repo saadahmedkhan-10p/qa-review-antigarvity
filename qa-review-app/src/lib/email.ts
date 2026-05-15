@@ -254,6 +254,51 @@ export const emailTemplates = {
       </div>
     `,
   }),
+
+  roleChanged: (name: string, oldRoles: string[], newRoles: string[]) => ({
+    subject: '🔔 Your Role Has Been Updated - QA Review System',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1F2937;">
+        <div style="background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); padding: 32px 40px; border-radius: 12px 12px 0 0;">
+          <h2 style="color: #ffffff; margin: 0; font-size: 24px;">Your Role Has Been Updated</h2>
+          <p style="color: #C7D2FE; margin: 8px 0 0;">QA Review System — Account Notice</p>
+        </div>
+        <div style="background-color: #ffffff; padding: 32px 40px; border: 1px solid #E5E7EB; border-top: none; border-radius: 0 0 12px 12px;">
+          <p>Hello <strong>${esc(name)}</strong>,</p>
+          <p>An administrator has updated your role in the <strong>QA Review System</strong>. Here is a summary of the change:</p>
+          
+          <table style="width: 100%; border-collapse: collapse; margin: 24px 0; border-radius: 8px; overflow: hidden;">
+            <tr style="background-color: #F9FAFB;">
+              <th style="padding: 12px 16px; text-align: left; font-size: 13px; color: #6B7280; border-bottom: 1px solid #E5E7EB;">Change</th>
+              <th style="padding: 12px 16px; text-align: left; font-size: 13px; color: #6B7280; border-bottom: 1px solid #E5E7EB;">Roles</th>
+            </tr>
+            <tr>
+              <td style="padding: 14px 16px; border-bottom: 1px solid #E5E7EB;"><span style="background: #FEE2E2; color: #991B1B; padding: 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 600;">Previous</span></td>
+              <td style="padding: 14px 16px; border-bottom: 1px solid #E5E7EB; color: #4B5563;">${oldRoles.length > 0 ? oldRoles.map(r => esc(r.replace(/_/g, ' '))).join(', ') : 'No roles assigned'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 14px 16px;"><span style="background: #D1FAE5; color: #065F46; padding: 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 600;">New</span></td>
+              <td style="padding: 14px 16px; color: #4B5563;">${newRoles.length > 0 ? newRoles.map(r => esc(r.replace(/_/g, ' '))).join(', ') : 'No roles assigned'}</td>
+            </tr>
+          </table>
+
+          <div style="background-color: #FEF3C7; border-left: 4px solid #F59E0B; padding: 16px 20px; border-radius: 6px; margin: 24px 0;">
+            <p style="margin: 0; color: #92400E;"><strong>⚠️ Action Required</strong></p>
+            <p style="margin: 8px 0 0; color: #78350F;">To see your new role and access your updated dashboard, please <strong>log out and log back in</strong>.</p>
+          </div>
+
+          <a href="${APP_URL}/login"
+             style="display: inline-block; background-color: #4F46E5; color: white; padding: 12px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; margin-top: 8px;">
+            Log In Now
+          </a>
+
+          <p style="margin-top: 32px; color: #6B7280; font-size: 13px;">
+            If you believe this change was made in error, please contact your system administrator.
+          </p>
+        </div>
+      </div>
+    `,
+  }),
 };
 
 // Send email function

@@ -261,6 +261,35 @@ export default function DirectorDashboard() {
                     </div>
                 </div>
 
+                {/* High Risk Focus */}
+                {projectSummary.some(p => p.healthStatus === 'Critical' || p.healthStatus === 'Extremely Challenged' || p.healthStatus === 'Slightly Challenged') && (
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl mb-8 border-l-4 border-rose-500 transition-colors duration-200">
+                        <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+                            <span className="p-1 bg-rose-100 dark:bg-rose-900 rounded text-rose-600">⚠️</span>
+                            High Risk Focus
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {projectSummary
+                                .filter(p => p.healthStatus === 'Critical' || p.healthStatus === 'Extremely Challenged' || p.healthStatus === 'Slightly Challenged')
+                                .slice(0, 6)
+                                .map(p => (
+                                    <Link key={p.id} href={`/admin/reports/project/${p.id}`} className="p-4 bg-rose-50 dark:bg-rose-900/10 rounded-xl border border-rose-100 dark:border-rose-900/30 hover:border-rose-300 transition-all group">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <span className="font-bold text-gray-900 dark:text-white group-hover:text-rose-600 transition-colors">{p.name}</span>
+                                            <span className={`px-2 py-0.5 text-[10px] font-black rounded uppercase ${
+                                                p.healthStatus === 'Critical' ? 'bg-rose-600 text-white' : 'bg-orange-500 text-white'
+                                            }`}>
+                                                {p.healthStatus}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">Last Review Health: {p.healthStatus}</p>
+                                    </Link>
+                                ))
+                            }
+                        </div>
+                    </div>
+                )}
+
                 {/* Quick Actions */}
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-8 transition-colors duration-200">
                     <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Quick Access</h2>
@@ -320,6 +349,9 @@ export default function DirectorDashboard() {
                                                 Pending
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                                Project Health
+                                            </th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                                 Status
                                             </th>
                                         </tr>
@@ -340,6 +372,17 @@ export default function DirectorDashboard() {
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
                                                         <div className="text-sm text-yellow-600 dark:text-yellow-400 font-medium">{project.pending}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <span className={`px-2 inline-flex text-xs leading-5 font-bold rounded-full uppercase tracking-tight ${
+                                                            project.healthStatus === 'On Track' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
+                                                            project.healthStatus === 'Slightly Challenged' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                                                            project.healthStatus === 'Extremely Challenged' || project.healthStatus === 'Critical' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
+                                                            project.healthStatus === 'Deferred' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400' :
+                                                            'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                                                        }`}>
+                                                            {project.healthStatus || 'N/A'}
+                                                        </span>
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
                                                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${project.completed === project.totalReviews

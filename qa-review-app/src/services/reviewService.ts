@@ -212,17 +212,34 @@ export class ReviewService {
      * Update an existing review (Admin/Lead mode)
      */
     static async adminUpdate(id: string, data: Partial<ReviewInput>, currentUser: SessionUser) {
+        console.log(`[ReviewService.adminUpdate] START - Updating review ${id}`, {
+            incomingDataKeys: Object.keys(data),
+            incomingStatus: data.status,
+            incomingHealth: data.healthStatus
+        });
+
         // Validation (partial)
         const validatedData = reviewSchema.partial().parse(data);
 
+        const updatePayload: any = {
+            ...validatedData,
+            answers: validatedData.answers ? JSON.stringify(validatedData.answers) : undefined,
+        };
+
+        // Explicitly ensure status and healthStatus are handled if present in the input
+        if (data.status !== undefined) updatePayload.status = data.status;
+        if (data.healthStatus !== undefined) updatePayload.healthStatus = data.healthStatus;
+
+        console.log(`[ReviewService.adminUpdate] FINAL PAYLOAD for review ${id}:`, {
+            status: updatePayload.status,
+            healthStatus: updatePayload.healthStatus,
+            hasAnswers: !!updatePayload.answers,
+            observations: !!updatePayload.observations
+        });
+
         const review = await prisma.review.update({
             where: { id },
-            data: {
-                ...validatedData,
-                status: validatedData.status as string | undefined,
-                healthStatus: validatedData.healthStatus as string | undefined,
-                answers: validatedData.answers ? JSON.stringify(validatedData.answers) : undefined,
-            },
+            data: updatePayload,
             include: { project: true }
         });
 

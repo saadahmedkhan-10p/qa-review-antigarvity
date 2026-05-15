@@ -67,7 +67,7 @@ const MONTHS = [
 ];
 
 export function ReportsView({ reviews, pageTitle, typeFilter, initialMonth, initialYear }: ReportsViewProps) {
-    const { user } = useAuth();
+    const { user, isManagement } = useAuth();
     const now = new Date();
     const [selectedMonth, setSelectedMonth] = useState(initialMonth ?? now.getMonth());
     const [selectedYear, setSelectedYear] = useState(initialYear ?? now.getFullYear());
@@ -108,6 +108,10 @@ export function ReportsView({ reviews, pageTitle, typeFilter, initialMonth, init
             deferredReviews: baseFilteredReviews.filter(r => r.status === "DEFERRED").length,
             onHoldReviews: baseFilteredReviews.filter(r => r.status === "ON_HOLD").length,
             endedReviews: baseFilteredReviews.filter(r => r.status === "PROJECT_ENDED").length,
+            // Project Health Stats
+            onTrack: baseFilteredReviews.filter(r => r.healthStatus === "On Track").length,
+            challenged: baseFilteredReviews.filter(r => r.healthStatus === "Slightly Challenged" || r.healthStatus === "Extremely Challenged").length,
+            critical: baseFilteredReviews.filter(r => r.healthStatus === "Critical").length,
         };
     }, [baseFilteredReviews]);
 
@@ -119,6 +123,14 @@ export function ReportsView({ reviews, pageTitle, typeFilter, initialMonth, init
             { name: 'Deferred', value: stats.deferredReviews, color: COLORS.DEFERRED },
             { name: 'On Hold', value: stats.onHoldReviews, color: COLORS.ON_HOLD },
             { name: 'Ended', value: stats.endedReviews, color: COLORS.PROJECT_ENDED },
+        ].filter(item => item.value > 0);
+    }, [stats]);
+
+    const healthChartData = useMemo(() => {
+        return [
+            { name: 'On Track', value: stats.onTrack, color: '#059669' },
+            { name: 'Challenged', value: stats.challenged, color: '#D97706' },
+            { name: 'Critical', value: stats.critical, color: '#DC2626' },
         ].filter(item => item.value > 0);
     }, [stats]);
 
@@ -264,34 +276,34 @@ export function ReportsView({ reviews, pageTitle, typeFilter, initialMonth, init
                         <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.totalReviews}</p>
                     </div>
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700 transition-all duration-200 hover:shadow-md">
-                        <h3 className="text-green-600 dark:text-green-500 text-xs font-semibold uppercase tracking-wider mb-2">Submitted</h3>
-                        <p className="text-3xl font-bold text-green-800 dark:text-green-400">{stats.submittedReviews}</p>
+                        <h3 className="text-green-600 dark:text-green-500 text-xs font-semibold uppercase tracking-wider mb-2">On Track</h3>
+                        <p className="text-3xl font-bold text-green-800 dark:text-green-400">{stats.onTrack}</p>
                     </div>
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700 transition-all duration-200 hover:shadow-md">
-                        <h3 className="text-indigo-600 dark:text-indigo-500 text-xs font-semibold uppercase tracking-wider mb-2">Scheduled</h3>
-                        <p className="text-3xl font-bold text-indigo-700 dark:text-indigo-400">{stats.scheduledReviews}</p>
+                        <h3 className="text-orange-600 dark:text-orange-500 text-xs font-semibold uppercase tracking-wider mb-2">Challenged</h3>
+                        <p className="text-3xl font-bold text-orange-700 dark:text-orange-400">{stats.challenged}</p>
+                    </div>
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700 transition-all duration-200 hover:shadow-md">
+                        <h3 className="text-red-600 dark:text-red-500 text-xs font-semibold uppercase tracking-wider mb-2">Critical</h3>
+                        <p className="text-3xl font-bold text-red-800 dark:text-red-400">{stats.critical}</p>
                     </div>
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700 transition-all duration-200 hover:shadow-md">
                         <h3 className="text-yellow-600 dark:text-yellow-500 text-xs font-semibold uppercase tracking-wider mb-2">Pending</h3>
                         <p className="text-3xl font-bold text-yellow-800 dark:text-yellow-400">{stats.pendingReviews}</p>
                     </div>
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700 transition-all duration-200 hover:shadow-md">
-                        <h3 className="text-red-600 dark:text-red-500 text-xs font-semibold uppercase tracking-wider mb-2">Deferred</h3>
-                        <p className="text-3xl font-bold text-red-700 dark:text-red-400">{stats.deferredReviews}</p>
-                    </div>
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700 transition-all duration-200 hover:shadow-md">
-                        <h3 className="text-gray-500 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">Project Ended</h3>
-                        <p className="text-3xl font-bold text-gray-700 dark:text-gray-300">{stats.endedReviews}</p>
+                        <h3 className="text-indigo-600 dark:text-indigo-500 text-xs font-semibold uppercase tracking-wider mb-2">Scheduled</h3>
+                        <p className="text-3xl font-bold text-indigo-800 dark:text-indigo-400">{stats.scheduledReviews}</p>
                     </div>
                 </div>
 
-                {/* Chart Section */}
-                {/*} {chartData.length > 0 && (
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 mb-8 overflow-hidden relative">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full -mr-16 -mt-16 blur-2xl" />
+                {/* Charts Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    {/* Review Status Distribution */}
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden relative">
                         <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-2">
                             <span className="w-2 h-6 bg-indigo-500 rounded-full" />
-                            Review Status Distribution
+                            Review Status
                         </h3>
                         <div className="h-[300px] w-full">
                             <ResponsiveContainer width="100%" height="100%">
@@ -324,7 +336,45 @@ export function ReportsView({ reviews, pageTitle, typeFilter, initialMonth, init
                             </ResponsiveContainer>
                         </div>
                     </div>
-                )} */}
+
+                    {/* Project Health Distribution */}
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden relative">
+                        <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-2">
+                            <span className="w-2 h-6 bg-green-500 rounded-full" />
+                            Project Health
+                        </h3>
+                        <div className="h-[300px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={healthChartData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={80}
+                                        outerRadius={100}
+                                        paddingAngle={5}
+                                        dataKey="value"
+                                    >
+                                        {healthChartData.map((entry, index) => (
+                                            <Cell key={`cell-h-${index}`} fill={entry.color} stroke="none" />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px', color: '#FFF' }}
+                                        itemStyle={{ color: '#E5E7EB' }}
+                                    />
+                                    <Legend
+                                        verticalAlign="middle"
+                                        align="right"
+                                        layout="vertical"
+                                        iconType="circle"
+                                        formatter={(value) => <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{value}</span>}
+                                    />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+                </div>
 
                 {/* Detailed Table */}
                 <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden transition-colors duration-200">
@@ -465,14 +515,11 @@ export function ReportsView({ reviews, pageTitle, typeFilter, initialMonth, init
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                                     {review.submittedDate ? format(new Date(review.submittedDate), 'MMM d, yyyy') : '-'}
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                     {(() => {
-                                                        const roles = Array.isArray(user?.roles) ? user.roles : [];
-                                                        const isDirector = roles.includes('DIRECTOR');
-                                                        const isAdminOrHead = roles.some(r => ['ADMIN', 'QA_HEAD', 'QA_MANAGER'].includes(r));
-                                                        const viewHref = isDirector && !isAdminOrHead 
-                                                            ? `/reviews/${review.id}/view` 
-                                                            : `/admin/reviews/${review.id}`;
+                                                        const viewHref = isManagement 
+                                                            ? `/admin/reviews/${review.id}`
+                                                            : `/reviews/${review.id}/view`;
                                                         
                                                         return (
                                                             <Link

@@ -1,7 +1,7 @@
 "use server";
 
 import * as bcrypt from "bcryptjs";
-import { login, getSession } from "@/lib/auth";
+import { login, getSession, parseRoles } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { logActivity } from "@/lib/activityLogger";
@@ -44,8 +44,7 @@ export async function loginAction(prevState: any, formData: FormData) {
     });
 
     // Return success and roles for client-side handling
-    const rolesRaw = user.roles;
-    const roles = typeof rolesRaw === 'string' ? JSON.parse(rolesRaw) : rolesRaw;
+    const roles = parseRoles(user.roles);
     return { success: true, roles };
 }
 

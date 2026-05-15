@@ -19,7 +19,7 @@ interface ProjectReportViewProps {
 }
 
 export default function ProjectReportView({ project }: ProjectReportViewProps) {
-    const { user } = useAuth();
+    const { user, isManagement } = useAuth();
     const [activeTab, setActiveTab] = useState<'overview' | 'reviews'>('overview');
 
     // Data processing for charts
@@ -50,7 +50,7 @@ export default function ProjectReportView({ project }: ProjectReportViewProps) {
         // Project Info
         doc.setFontSize(12);
         doc.text(`Lead: ${project.lead?.name || 'N/A'}`, 14, 32);
-        doc.text(`QA Contact: ${project.contact?.name || 'N/A'}`, 14, 38);
+        doc.text(`QA Contact: ${project.contactPerson?.name || 'N/A'}`, 14, 38);
         doc.text(`Total Reviews: ${project.reviews.length}`, 14, 44);
 
         // Reviews Table
@@ -78,7 +78,7 @@ export default function ProjectReportView({ project }: ProjectReportViewProps) {
             ['Project Name', project.name],
             ['Description', project.description],
             ['Lead', project.lead?.name],
-            ['QA Contact', project.contact?.name],
+            ['QA Contact', project.contactPerson?.name],
             ['Total Reviews', project.reviews.length],
             ['Created At', format(new Date(project.createdAt), 'MMM d, yyyy')]
         ];
@@ -280,14 +280,11 @@ export default function ProjectReportView({ project }: ProjectReportViewProps) {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                             {review.submittedDate ? format(new Date(review.submittedDate), 'MMM d, yyyy') : '-'}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             {(() => {
-                                                const roles = Array.isArray(user?.roles) ? user.roles : [];
-                                                const isDirector = roles.includes('DIRECTOR');
-                                                const isAdminOrHead = roles.some(r => ['ADMIN', 'QA_HEAD', 'QA_MANAGER'].includes(r));
-                                                const viewHref = isDirector && !isAdminOrHead 
-                                                    ? `/reviews/${review.id}/view` 
-                                                    : `/admin/reviews/${review.id}`;
+                                                const viewHref = isManagement 
+                                                    ? `/admin/reviews/${review.id}`
+                                                    : `/reviews/${review.id}/view`;
 
                                                 return (
                                                     <Link

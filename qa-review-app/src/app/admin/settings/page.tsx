@@ -89,7 +89,7 @@ export default function AdminSettingsPage() {
                                 onChange={(e) => setProvider(e.target.value)}
                             >
                                 <option value="openai">OpenAI (ChatGPT)</option>
-                                <option value="grok">xAI (Grok)</option>
+                                <option value="grok">Groq</option>
                             </select>
                         </div>
 
@@ -114,7 +114,7 @@ export default function AdminSettingsPage() {
                         ) : (
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">
-                                    Grok API Key
+                                    Groq API Key
                                 </label>
                                 <div className="relative group">
                                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-indigo-500 transition-colors">
@@ -137,13 +137,13 @@ export default function AdminSettingsPage() {
                             </label>
                             <input
                                 type="text"
-                                placeholder={provider === "openai" ? "gpt-4o" : "grok-beta"}
+                                placeholder={provider === "openai" ? "gpt-4o" : "llama-3.3-70b-versatile"}
                                 className="block w-full px-4 py-4 bg-gray-50 dark:bg-gray-900 border-2 border-gray-100 dark:border-gray-700 rounded-2xl text-gray-900 dark:text-white font-mono focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:focus:border-indigo-600 transition-all outline-none"
                                 value={aiModel}
                                 onChange={(e) => setAiModel(e.target.value)}
                             />
                             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                                Leave blank to use default model ({provider === "openai" ? "gpt-4o" : "grok-beta"}).
+                                Leave blank to use default model ({provider === "openai" ? "gpt-4o" : "llama-3.3-70b-versatile"}).
                             </p>
                         </div>
                             <p className="mt-3 text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5">

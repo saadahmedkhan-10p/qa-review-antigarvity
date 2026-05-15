@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationBell } from "@/components/NotificationBell";
-import { Role, getRoleLabel, canViewReports, getDashboardPath } from "@/types/roles";
+import { Role, getRoleLabel, canViewReports, getDashboardPath, ROLE_CONFIG } from "@/types/roles";
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 
@@ -77,12 +77,12 @@ function NavDropdownItem({ href, isActive, children }: NavDropdownItemProps) {
 }
 
 export default function Navbar() {
-    const { user, logout } = useAuth();
+    const { user, logout, isAdmin, isManagement, isExecutive, isReviewStaff } = useAuth();
     const pathname = usePathname();
 
     if (!user || pathname === "/") return null;
 
-    const roles = Array.isArray(user.roles) ? user.roles as Role[] : [];
+    const roles = Array.isArray(user.roles) ? user.roles : [];
 
     // Helper to check if path is active
     const isPathActive = (path: string) => pathname.includes(path);
@@ -110,8 +110,8 @@ export default function Navbar() {
                             <span className="text-xl font-bold text-indigo-600 dark:text-indigo-400 hidden md:block">QA Review</span>
                         </Link>
                         <div className="hidden sm:ml-6 sm:flex sm:items-center sm:space-x-4 overflow-hidden">
-                            {/* Admin Navigation */}
-                            {(roles.includes("ADMIN") || roles.includes("QA_HEAD")) && (
+                            {/* Management Navigation */}
+                            {isManagement && (
                                 <>
                                     <Link href="/admin/projects" className={`px-3 py-2 text-sm font-medium rounded-md transition-colors flex-shrink-0 ${isPathActive('/admin/projects') ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
                                         Projects
@@ -122,13 +122,15 @@ export default function Navbar() {
                                     <Link href="/admin/forms" className={`px-3 py-2 text-sm font-medium rounded-md transition-colors flex-shrink-0 ${isPathActive('/admin/forms') ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
                                         Forms
                                     </Link>
-                                    <Link href="/admin/users" className={`px-3 py-2 text-sm font-medium rounded-md transition-colors flex-shrink-0 ${isPathActive('/admin/users') ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
-                                        Users
-                                    </Link>
+                                    {(isAdmin || roles.includes("QA_HEAD")) && (
+                                        <Link href="/admin/users" className={`px-3 py-2 text-sm font-medium rounded-md transition-colors flex-shrink-0 ${isPathActive('/admin/users') ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
+                                            Users
+                                        </Link>
+                                    )}
                                     <Link href="/admin/reports" className={`px-3 py-2 text-sm font-medium rounded-md transition-colors flex-shrink-0 ${isPathActive('/admin/reports') ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
                                         Reports
                                     </Link>
-                                    {roles.includes("ADMIN") && (
+                                    {isAdmin && (
                                         <>
                                             <Link href="/admin/activity-logs" className={`px-3 py-2 text-sm font-medium rounded-md transition-colors flex-shrink-0 ${isPathActive('/admin/activity-logs') ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
                                                 Activity Logs
@@ -141,17 +143,26 @@ export default function Navbar() {
                                 </>
                             )}
 
-                            {/* Role Dashboards - Non-Admin */}
-                            {!roles.includes("ADMIN") && !roles.includes("QA_HEAD") && (
-                                <Link
-                                    href={getDashboardPath(roles)}
-                                    className={`px-3 py-2 text-sm font-medium rounded-md transition-colors flex-shrink-0 ${pathname.includes('dashboard') ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
-                                >
-                                    Dashboard
-                                </Link>
-                            )}
+                            {/* Role Dashboards - Non-Management */}
+                            {!isManagement && roles.map((role: Role) => {
+                                const roleConfig = ROLE_CONFIG[role];
+                                if (!roleConfig || role === 'GUEST' || !roleConfig.dashboardPath || roleConfig.dashboardPath === '/') return null;
+                                
+                                // Skip roles that are part of management as they are handled above
+                                if (["ADMIN", "QA_HEAD", "QA_MANAGER", "QA_ARCHITECT"].includes(role)) return null;
 
-                            {!roles.includes("ADMIN") && !roles.includes("QA_HEAD") && canViewReports(roles) && (
+                                return (
+                                    <Link
+                                        key={role}
+                                        href={roleConfig.dashboardPath}
+                                        className={`px-3 py-2 text-sm font-medium rounded-md transition-colors flex-shrink-0 ${pathname.startsWith(roleConfig.dashboardPath) ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                                    >
+                                        {roleConfig.label} Dashboard
+                                    </Link>
+                                );
+                            })}
+
+                            {!isManagement && canViewReports(roles) && (
                                 <Link href="/admin/reports" className={`px-3 py-2 text-sm font-medium rounded-md transition-colors flex-shrink-0 ${isPathActive('/admin/reports') ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
                                     Reports
                                 </Link>

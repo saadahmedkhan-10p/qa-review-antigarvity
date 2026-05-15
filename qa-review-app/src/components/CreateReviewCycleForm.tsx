@@ -20,7 +20,11 @@ export function CreateReviewCycleForm({ forms }: CreateReviewCycleFormProps) {
 
         setIsPending(true);
         try {
-            await createReviewCycle(formId, false);
+            const result = await createReviewCycle(formId, false);
+            if (result && result.error) {
+                toast.error(result.error);
+                return;
+            }
             toast.success("Review cycle initiated and invites sent successfully");
         } catch (error) {
             console.error(error);

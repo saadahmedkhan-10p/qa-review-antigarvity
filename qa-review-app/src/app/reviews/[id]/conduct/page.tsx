@@ -112,11 +112,8 @@ export default function ConductReviewPage({ params }: { params: Promise<{ id: st
         e.preventDefault();
 
         try {
-            // Extract health data from dynamic form answers
             const finalSummary = {
                 ...summary,
-                healthStatus: answers['health-status'] || summary.healthStatus,
-                observations: answers['health-observations'] || summary.observations,
                 status: "SUBMITTED"
             };
 
@@ -133,6 +130,13 @@ export default function ConductReviewPage({ params }: { params: Promise<{ id: st
     const handleAnswerChange = (qId: string, value: any) => {
         if (isLocked) return;
         setAnswers(prev => ({ ...prev, [qId]: value }));
+
+        // Sync with summary fields if these are the magic health questions
+        if (qId === 'health-status') {
+            setSummary(prev => ({ ...prev, healthStatus: value }));
+        } else if (qId === 'health-observations') {
+            setSummary(prev => ({ ...prev, observations: value }));
+        }
     };
 
     const handleCheckboxChange = (qId: string, option: string, checked: boolean) => {
@@ -284,6 +288,19 @@ export default function ConductReviewPage({ params }: { params: Promise<{ id: st
                                 </span>
                             )}
                         </div>
+                            <div className="grid grid-cols-1 gap-8">
+                                <div>
+                                    <label className="block text-sm font-bold uppercase tracking-wider !text-gray-900 dark:!text-white mb-2">Observations</label>
+                                    <textarea
+                                        disabled={isLocked}
+                                        rows={4}
+                                        className="w-full p-4 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 rounded-xl text-gray-900 dark:text-white font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none placeholder-gray-400 dark:placeholder-gray-500 resize-none disabled:opacity-60"
+                                        placeholder="Key findings from this review..."
+                                        value={summary.observations}
+                                        onChange={(e) => setSummary(prev => ({ ...prev, observations: e.target.value }))}
+                                    />
+                                </div>
+                            </div>
 
                         <div className="grid grid-cols-1 gap-8">
                             <div>

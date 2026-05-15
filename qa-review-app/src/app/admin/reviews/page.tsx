@@ -1,8 +1,6 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { ReviewsTable } from "@/components/ReviewsTable";
 import { Metadata } from "next";
-
-const prisma = new PrismaClient();
 
 export const metadata: Metadata = {
     title: "Reviews Management | QA Review App",

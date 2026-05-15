@@ -293,7 +293,23 @@ export function canExportReports(roles: Role[]): boolean {
     return hasPermission(roles, "exportReports");
 }
 
+export function isManagement(roles: Role[]): boolean {
+    return hasAnyRole(roles, ["ADMIN", "QA_HEAD", "QA_MANAGER", "QA_ARCHITECT"]);
+}
+
+export function isExecutive(roles: Role[]): boolean {
+    return hasAnyRole(roles, ["ADMIN", "QA_HEAD", "DIRECTOR"]);
+}
+
+export function isReviewStaff(roles: Role[]): boolean {
+    return hasAnyRole(roles, ["REVIEW_LEAD", "REVIEWER"]);
+}
+
 export function getPrimaryRole(roles: Role[]): Role {
+    if (!Array.isArray(roles)) {
+        console.warn("getPrimaryRole called with non-array roles:", roles);
+        return (roles as any) || "GUEST";
+    }
     // Priority order for determining primary role
     const priority: Role[] = [
         "ADMIN",
@@ -320,7 +336,7 @@ export function getPrimaryRole(roles: Role[]): Role {
 
 export function getDashboardPath(roles: Role[]): string {
     const primaryRole = getPrimaryRole(roles);
-    return ROLE_CONFIG[primaryRole].dashboardPath;
+    return ROLE_CONFIG[primaryRole]?.dashboardPath || "/dashboard";
 }
 
 export function getRoleBadgeColor(role: Role): string {

@@ -13,9 +13,13 @@ interface User {
 
 interface AuthContextType {
     user: User | null;
-    login: (email: string) => Promise<void>; // Kept for compatibility but not used
+    login: (email: string) => Promise<void>; 
     logout: () => Promise<void>;
     loading: boolean;
+    isAdmin: boolean;
+    isManagement: boolean;
+    isExecutive: boolean;
+    isReviewStaff: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -49,8 +53,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await logoutAction();
     }, []);
 
+    const roles = Array.isArray(user?.roles) ? user.roles : [];
+    const isAdmin = roles.includes('ADMIN');
+    const isManagement = roles.some(r => ['ADMIN', 'QA_HEAD', 'QA_MANAGER', 'QA_ARCHITECT'].includes(r));
+    const isExecutive = roles.some(r => ['ADMIN', 'QA_HEAD', 'DIRECTOR'].includes(r));
+    const isReviewStaff = roles.some(r => ['REVIEW_LEAD', 'REVIEWER'].includes(r));
+
     return (
-        <AuthContext.Provider value={{ user, login, logout, loading }}>
+        <AuthContext.Provider value={{ 
+            user, 
+            login, 
+            logout, 
+            loading,
+            isAdmin,
+            isManagement,
+            isExecutive,
+            isReviewStaff
+        }}>
             {children}
         </AuthContext.Provider>
     );

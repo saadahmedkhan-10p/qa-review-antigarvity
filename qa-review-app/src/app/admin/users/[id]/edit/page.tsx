@@ -70,6 +70,7 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
                                 <option value="DEV_ARCHITECT">Dev Architect</option>
                                 <option value="DIRECTOR">Director</option>
                                 <option value="CONTACT_PERSON">Contact Person</option>
+                                <option value="GUEST">Guest</option>
                             </select>
                             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                 Select one or more roles. Users can have multiple roles.

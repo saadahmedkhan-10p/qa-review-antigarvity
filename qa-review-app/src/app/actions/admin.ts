@@ -58,7 +58,7 @@ export async function createProject(formData: FormData) {
 }
 
 export async function updateProject(projectId: string, data: any) {
-    const user = await requireRole("ADMIN", "QA_HEAD");
+    const user = await requireRole("ADMIN", "QA_HEAD", "QA_MANAGER", "QA_ARCHITECT");
 
     // M-06: Validate with Zod before processing
     const parsed = projectSchema.omit({ id: true }).safeParse({
@@ -125,8 +125,14 @@ export async function createUser(formData: FormData) {
     const parsed = userSchema.pick({ name: true, email: true, roles: true }).safeParse(raw);
     if (!parsed.success) throw new Error("Invalid input: " + JSON.stringify(parsed.error.flatten()));
 
-    await UserService.create(parsed.data as any, user);
-    revalidatePath("/admin/users");
+    try {
+        await UserService.create(parsed.data as any, user);
+        revalidatePath("/admin/users");
+        return { success: true };
+    } catch (e: any) {
+        console.error("Create user failed:", e);
+        return { error: e.message || "Failed to create user" };
+    }
 }
 
 export async function updateUser(userId: string, formData: FormData) {
@@ -162,32 +168,45 @@ export async function deleteUser(userId: string) {
  */
 
 export async function createReviewCycle(formId: string, targetNewOnly: boolean = false) {
-    const user = await requireRole("ADMIN", "QA_HEAD");
+    const user = await requireRole("ADMIN", "QA_HEAD", "QA_MANAGER", "QA_ARCHITECT");
 
-    await ReviewService.initiateCycle(formId, targetNewOnly, user);
-    revalidatePath("/admin/projects");
-    revalidatePath("/admin/reports");
+    try {
+        await ReviewService.initiateCycle(formId, targetNewOnly, user);
+        revalidatePath("/admin/projects");
+        revalidatePath("/admin/reports");
+        return { success: true };
+    } catch (e: any) {
+        console.error("Create review cycle failed:", e);
+        return { error: e.message || "Failed to initiate review cycle" };
+    }
 }
 
 export async function updateReview(reviewId: string, answers: any, summary: any) {
-    const user = await requireRole("ADMIN", "QA_HEAD");
+    const user = await requireRole("ADMIN", "QA_HEAD", "QA_MANAGER", "QA_ARCHITECT", "DIRECTOR");
 
     await ReviewService.adminUpdate(reviewId, { ...summary, answers }, user);
     
+    // Comprehensive Cache Invalidation
     revalidatePath("/admin/reviews");
-    revalidatePath(`/admin/reviews/${reviewId}`);
     revalidatePath("/admin/reports");
+    revalidatePath("/reviewer/dashboard");
+    revalidatePath("/pm/dashboard");
+    revalidatePath("/director/dashboard");
+    revalidatePath(`/reviews/${reviewId}/view`);
+    revalidatePath(`/admin/reviews/${reviewId}`);
+    
+    return { success: true };
 }
 
 export async function markReviewAsNotCompleted(reviewId: string, reason: string) {
-    const user = await requireRole("ADMIN", "QA_HEAD");
+    const user = await requireRole("ADMIN", "QA_HEAD", "QA_MANAGER", "QA_ARCHITECT", "DIRECTOR");
 
     await ReviewService.adminUpdate(reviewId, { status: "NOT_COMPLETED", notCompletedReason: reason }, user);
     revalidatePath("/admin/reviews");
 }
 
 export async function createForm(title: string, questions: any, projectType: string | null) {
-    const user = await requireRole("ADMIN", "QA_HEAD");
+    const user = await requireRole("ADMIN", "QA_HEAD", "QA_MANAGER", "QA_ARCHITECT");
 
     // M-06: Validate with Zod before processing
     const parsed = formSchema.pick({ title: true, questions: true, projectType: true }).safeParse({
@@ -202,7 +221,7 @@ export async function createForm(title: string, questions: any, projectType: str
 }
 
 export async function updateForm(id: string, title: string, questions: any, projectType: string | null) {
-    const user = await requireRole("ADMIN", "QA_HEAD");
+    const user = await requireRole("ADMIN", "QA_HEAD", "QA_MANAGER", "QA_ARCHITECT");
 
     // M-06: Validate with Zod before processing
     const parsed = formSchema.pick({ title: true, questions: true, projectType: true }).safeParse({

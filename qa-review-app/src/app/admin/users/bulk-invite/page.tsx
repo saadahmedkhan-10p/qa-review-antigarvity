@@ -120,8 +120,14 @@ export default function BulkInvitePage() {
             const data = await response.json();
 
             if (response.ok) {
-                toast.success(`Successfully invited ${data.invitedCount} users`);
-                router.push('/admin/users');
+                if (data.invitedCount > 0) {
+                    toast.success(`Successfully invited ${data.invitedCount} users. ${data.skippedCount > 0 ? `${data.skippedCount} users skipped (already exist).` : ''}`);
+                    router.push('/admin/users');
+                } else if (data.skippedCount > 0) {
+                    toast.error(`0 users invited. ${data.skippedCount} users were skipped (already exist).`);
+                } else {
+                    toast.error("No users were processed.");
+                }
             } else {
                 toast.error(data.error || "Failed to send invites");
             }

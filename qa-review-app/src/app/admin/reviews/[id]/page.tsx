@@ -24,7 +24,8 @@ export default function AdminReviewPage({ params }: { params: Promise<{ id: stri
         deferredReason: "",
         endedReason: "",
         onHoldReason: "",
-        aiAnalysis: ""
+        aiAnalysis: "",
+        status: "PENDING"
     });
 
     const [loading, setLoading] = useState(true);
@@ -53,7 +54,8 @@ export default function AdminReviewPage({ params }: { params: Promise<{ id: stri
                         deferredReason: reviewData.deferredReason || "",
                         endedReason: reviewData.endedReason || "",
                         onHoldReason: reviewData.onHoldReason || "",
-                        aiAnalysis: reviewData.aiAnalysis || ""
+                        aiAnalysis: reviewData.aiAnalysis || "",
+                        status: reviewData.status || "PENDING"
                     });
 
                     if (reviewData.answers) {
@@ -124,6 +126,13 @@ export default function AdminReviewPage({ params }: { params: Promise<{ id: stri
 
     const handleAnswerChange = (qId: string, value: any) => {
         setAnswers(prev => ({ ...prev, [qId]: value }));
+        
+        // Sync with summary fields if these are the magic health questions
+        if (qId === 'health-status') {
+            setSummary(prev => ({ ...prev, healthStatus: value }));
+        } else if (qId === 'health-observations') {
+            setSummary(prev => ({ ...prev, observations: value }));
+        }
     };
 
     const handleCheckboxChange = (qId: string, option: string, checked: boolean) => {
@@ -248,22 +257,25 @@ export default function AdminReviewPage({ params }: { params: Promise<{ id: stri
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div>
-                                <label className="block text-sm font-black uppercase tracking-widest text-black dark:text-white mb-3">Health Status</label>
+                                <label className="block text-sm font-black uppercase tracking-widest text-black dark:text-white mb-3">Review Status</label>
                                 <select
                                     required
-                                    className="w-full p-4 border-2 border-indigo-200 dark:border-gray-600 bg-white dark:bg-gray-900 rounded-xl text-gray-900 dark:text-white font-bold text-lg focus:ring-4 focus:ring-indigo-500/50 transition-all outline-none"
-                                    value={summary.healthStatus}
-                                    onChange={(e) => setSummary(prev => ({ ...prev, healthStatus: e.target.value }))}
+                                    className="w-full p-4 border-2 border-blue-200 dark:border-blue-900 bg-white dark:bg-gray-900 rounded-xl text-gray-900 dark:text-white font-bold text-lg focus:ring-4 focus:ring-blue-500/50 transition-all outline-none"
+                                    value={summary.status}
+                                    onChange={(e) => setSummary(prev => ({ ...prev, status: e.target.value }))}
                                 >
-                                    <option value="On Track">On Track</option>
-                                    <option value="Slightly Challenged">Slightly Challenged</option>
-                                    <option value="Extremely Challenged">Extremely Challenged</option>
-                                    <option value="Critical">Critical</option>
+                                    <option value="PENDING">PENDING</option>
+                                    <option value="SCHEDULED">SCHEDULED</option>
+                                    <option value="SUBMITTED">SUBMITTED</option>
+                                    <option value="DEFERRED">DEFERRED</option>
+                                    <option value="ON_HOLD">ON HOLD</option>
+                                    <option value="PROJECT_ENDED">PROJECT ENDED</option>
+                                    <option value="NOT_COMPLETED">NOT COMPLETED</option>
                                 </select>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-black uppercase tracking-widest text-black dark:text-white mb-3">Observations</label>
+                                <label className="block text-sm font-black uppercase tracking-widest text-black dark:text-white mb-3">Observations (Summary)</label>
                                 <textarea
                                     rows={4}
                                     className="w-full p-4 border-2 border-indigo-200 dark:border-gray-600 bg-white dark:bg-gray-900 rounded-xl text-gray-900 dark:text-white font-medium focus:ring-4 focus:ring-indigo-500/50 transition-all outline-none placeholder-gray-400 dark:placeholder-gray-500"

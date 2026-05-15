@@ -34,11 +34,8 @@ interface Review {
 }
 
 export function ReviewsTable({ reviews, initialType = 'ALL' }: { reviews: Review[], initialType?: 'ALL' | 'MANUAL' | 'AUTOMATION_WEB' | 'AUTOMATION_MOBILE' | 'API' | 'DESKTOP' }) {
-    const { user } = useAuth();
-    const userRoles = Array.isArray(user?.roles) ? user.roles : [];
-    const isAdmin = userRoles.includes("ADMIN");
-    const isQAHead = userRoles.includes("QA_HEAD");
-    const canMarkNotCompleted = isAdmin || isQAHead;
+    const { user, isManagement, isAdmin } = useAuth();
+    const canMarkNotCompleted = isManagement;
 
     const [statusFilter, setStatusFilter] = useState<'ALL' | 'SUBMITTED' | 'PENDING' | 'SCHEDULED' | 'DEFERRED' | 'ON_HOLD' | 'PROJECT_ENDED' | 'NOT_COMPLETED'>('ALL');
     const [activeType, setActiveType] = useState<'ALL' | 'MANUAL' | 'AUTOMATION_WEB' | 'AUTOMATION_MOBILE' | 'API' | 'DESKTOP'>(initialType as any);
@@ -264,13 +261,14 @@ export function ReviewsTable({ reviews, initialType = 'ALL' }: { reviews: Review
                                             {review.reviewer.name}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                            <span className={`px-2 inline-flex text-xs leading-5 font-bold rounded-full uppercase tracking-tight ${review.status === 'NOT_COMPLETED' ? 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400' :
+                                            <span className={`px-2 inline-flex text-xs leading-5 font-bold rounded-full uppercase tracking-tight ${['NOT_COMPLETED', 'PENDING', 'SCHEDULED'].includes(review.status) ? 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400' :
                                                 review.healthStatus === 'On Track' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
                                                     review.healthStatus === 'Slightly Challenged' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' :
                                                         review.healthStatus === 'Extremely Challenged' || review.healthStatus === 'Critical' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
-                                                            'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                                                            review.healthStatus === 'Deferred' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400' :
+                                                                'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                                                 }`}>
-                                                {review.status === 'NOT_COMPLETED' ? '-' : (review.healthStatus || 'N/A')}
+                                                {['NOT_COMPLETED', 'PENDING', 'SCHEDULED'].includes(review.status) ? '-' : (review.healthStatus || 'N/A')}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -311,13 +309,15 @@ export function ReviewsTable({ reviews, initialType = 'ALL' }: { reviews: Review
                                         </td>
                                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             <div className="flex items-center gap-4">
-                                                <Link
-                                                    href={`/admin/reviews/${review.id}`}
-                                                    className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 inline-flex items-center gap-1"
-                                                >
-                                                    <Pencil className="h-4 w-4" />
-                                                    Manage
-                                                </Link>
+                                                {isManagement && (
+                                                    <Link
+                                                        href={`/admin/reviews/${review.id}`}
+                                                        className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 inline-flex items-center gap-1"
+                                                    >
+                                                        <Pencil className="h-4 w-4" />
+                                                        Manage
+                                                    </Link>
+                                                )}
                                                 {canMarkNotCompleted && review.status !== 'SUBMITTED' && review.status !== 'NOT_COMPLETED' && review.status !== 'PROJECT_ENDED' && (
                                                     <button
                                                         onClick={() => setNotCompletedModal({ isOpen: true, reviewId: review.id, projectName: review.project.name, reason: "" })}

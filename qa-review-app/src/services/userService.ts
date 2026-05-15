@@ -54,6 +54,12 @@ export class UserService {
         // Validation
         const validatedData = userSchema.parse(data);
 
+        // Check for existing email
+        const existing = await prisma.user.findUnique({ where: { email: validatedData.email } });
+        if (existing) {
+            throw new Error(`User with email ${validatedData.email} already exists.`);
+        }
+
         const resetToken = crypto.randomBytes(32).toString('hex');
         const resetExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
@@ -97,6 +103,14 @@ export class UserService {
         // Partial validation (only validate what's provided)
         const validatedData = userSchema.partial().parse(data);
 
+        // Fetch existing user so we can detect role changes
+        const existingUser = await prisma.user.findUnique({ where: { id } });
+        const oldRoles: string[] = existingUser
+            ? (typeof existingUser.roles === 'string'
+                ? JSON.parse(existingUser.roles || '[]')
+                : (existingUser.roles as string[]) || [])
+            : [];
+
         const user = await prisma.user.update({
             where: { id },
             data: {
@@ -113,6 +127,21 @@ export class UserService {
             entityId: id,
             details: { updatedFields: Object.keys(validatedData) }
         });
+
+        // Send role-change notification email if roles were actually changed
+        if (validatedData.roles) {
+            const newRoles = validatedData.roles as string[];
+            const rolesChanged =
+                oldRoles.length !== newRoles.length ||
+                !oldRoles.every((r) => newRoles.includes(r));
+
+            if (rolesChanged) {
+                await sendEmail(
+                    user.email,
+                    emailTemplates.roleChanged(user.name, oldRoles, newRoles)
+                );
+            }
+        }
 
         return user;
     }
@@ -158,7 +187,13 @@ export class UserService {
     static async bulkUpdateRoles(userIds: string[], roles: string[], currentUser: SessionUser) {
         // Validate roles
         const validatedRoles = z.array(z.string()).parse(roles);
-        
+
+        // Fetch existing users before update so we can detect role changes per user
+        const existingUsers = await prisma.user.findMany({
+            where: { id: { in: userIds } },
+            select: { id: true, name: true, email: true, roles: true }
+        });
+
         await prisma.user.updateMany({
             where: { id: { in: userIds } },
             data: { roles: JSON.stringify(validatedRoles) }
@@ -171,6 +206,26 @@ export class UserService {
             entity: 'User',
             details: { userCount: userIds.length, newRoles: validatedRoles }
         });
+
+        // Send role-change notification email to each affected user
+        await Promise.all(
+            existingUsers.map(async (u) => {
+                const oldRoles: string[] = typeof u.roles === 'string'
+                    ? JSON.parse(u.roles || '[]')
+                    : (u.roles as string[]) || [];
+
+                const rolesChanged =
+                    oldRoles.length !== validatedRoles.length ||
+                    !oldRoles.every((r) => validatedRoles.includes(r));
+
+                if (rolesChanged) {
+                    await sendEmail(
+                        u.email,
+                        emailTemplates.roleChanged(u.name, oldRoles, validatedRoles)
+                    );
+                }
+            })
+        );
 
         return { count: userIds.length };
     }
