@@ -56,17 +56,29 @@ export const projectSchema = z.object({
 // --- Form Schemas ---
 export const formQuestionSchema = z.object({
     id: z.string(),
-    type: z.enum(["TEXT", "TEXTAREA", "SELECT", "RADIO", "CHECKBOX", "NUMBER"]),
+    type: z.enum([
+        "TEXT", "TEXTAREA", "SELECT", "RADIO", "CHECKBOX", "NUMBER",
+        "text", "textarea", "select", "radio", "checkbox", "number"
+    ]),
     // L-02: Cap label and options to prevent DB bloat / stored-XSS amplification
     label: z.string().min(1).max(500),
     options: z.array(z.string().max(200)).max(20).optional(),
     required: z.boolean().default(true),
 });
 
+export const sectionSchema = z.object({
+    id: z.string(),
+    title: z.string().min(1).max(200),
+    questions: z.array(formQuestionSchema)
+});
+
 export const formSchema = z.object({
     id: z.string().cuid().optional(),
     title: z.string().min(2, "Form title must be at least 2 characters"),
-    questions: z.array(formQuestionSchema),
+    questions: z.union([
+        z.array(formQuestionSchema),
+        z.array(sectionSchema)
+    ]),
     projectType: projectTypeSchema.optional().nullable(),
     isActive: z.boolean().default(true),
 });
