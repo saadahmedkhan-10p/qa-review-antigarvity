@@ -167,7 +167,7 @@ export default function MonthlyReportView({ reviews }: MonthlyReportViewProps) {
                         </h1>
                     </div>
 
-                    <div className="flex items-center gap-4 print:hidden">
+                    <div className="flex items-center gap-4 flex-wrap print:hidden">
                         {/* Type Filter Toggle */}
                         <div className="flex bg-gray-200 dark:bg-gray-800 p-1 rounded-xl shadow-inner transition-colors">
                             <button

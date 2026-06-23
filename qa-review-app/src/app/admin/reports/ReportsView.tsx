@@ -205,8 +205,8 @@ export function ReportsView({ reviews, pageTitle, typeFilter, initialMonth, init
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8 transition-colors duration-200">
             <div className="max-w-7xl mx-auto">
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
-                    <div className="flex items-center gap-4 flex-wrap lg:flex-nowrap">
+                <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-8">
+                    <div className="flex items-center gap-4 flex-wrap">
                         <h1 className="text-3xl font-bold text-gray-800 dark:text-white shrink-0 mr-2">{pageTitle}</h1>
 
                         {/* Filter Type Group */}
