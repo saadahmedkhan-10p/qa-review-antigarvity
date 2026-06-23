@@ -144,3 +144,184 @@ body {
   color: #f3f4f6;
   /* gray-100 */
 }
+
+/* ─── Print / PDF export styles ──────────────────────────────────────────── */
+@media print {
+  /*
+   * CRITICAL: Force browser to print background colors on styled elements.
+   * Without this, Chrome/Edge strip all background-color values in print.
+   */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* ── Override dark mode: force all page backgrounds to white ────────── */
+  html, body {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #111827 !important;
+  }
+
+  /* Force all generic containers / wrappers to white */
+  div, main, section, article, aside, nav, header, footer {
+    background-color: transparent !important;
+    background: transparent !important;
+    color: #111827 !important;
+  }
+
+  /* Reset dark mode specific classes to white */
+  .dark body,
+  .dark,
+  [class*="bg-gray-900"],
+  [class*="bg-gray-800"],
+  [class*="bg-gray-700"],
+  [class*="bg-gray-50"],
+  [class*="bg-gray-100"],
+  [class*="bg-white"],
+  [class*="min-h-screen"] {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+  }
+
+  /* Prevent table rows from being split across pages */
+  tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Prevent page breaks inside grid cards/columns and small table containers */
+  .grid > div,
+  .print-table-container:not(.print-detailed-table-container) {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Keep table headers repeating on each new page and prevent breaks right after header */
+  thead {
+    display: table-header-group;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  /* Keep section headings with their tables */
+  h2, h3, .section-heading, .print-section-header {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  .print-section-header + table,
+  .print-section-header + div {
+    break-before: avoid !important;
+    page-break-before: avoid !important;
+  }
+
+  tbody tr:first-child {
+    break-before: avoid !important;
+    page-break-before: avoid !important;
+  }
+
+  /* Word-break: force long names/URLs to wrap within cells */
+  td, th {
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  /* Remove shadow and border-radius */
+  .rounded-lg, .rounded-xl, .shadow, .shadow-lg {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* Ensure overflow is never clipped when printing */
+  * {
+    overflow: visible !important;
+  }
+
+  /*
+   * ── Table styling ─────────────────────────────────────────────────────────
+   * Use border-collapse + per-cell borders so the grid persists across page
+   * breaks. Apply a professional color scheme.
+   */
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+    border: 1.5px solid #4338ca !important;   /* indigo-700 */
+    background-color: #ffffff !important;
+  }
+
+  /* Column header row — indigo background */
+  th {
+    border: 1px solid #4f46e5 !important;     /* indigo-600 */
+    background-color: #4f46e5 !important;     /* indigo-600 */
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    padding: 7px 10px !important;
+    font-size: 11px !important;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* Data cells */
+  td {
+    border: 1px solid #c7d2fe !important;     /* indigo-200 */
+    padding: 6px 10px !important;
+    color: #1e1b4b !important;                /* indigo-950 */
+    font-size: 11px !important;
+    background-color: #ffffff !important;
+  }
+
+  /* Even rows — very light indigo tint */
+  tbody tr:nth-child(even) td {
+    background-color: #eef2ff !important;     /* indigo-50 */
+  }
+
+  /* Odd rows — white */
+  tbody tr:nth-child(odd) td {
+    background-color: #ffffff !important;
+  }
+
+  /* Project name links */
+  td a {
+    color: #4338ca !important;
+    text-decoration: none !important;
+  }
+
+  /*
+   * ── Section title bars ────────────────────────────────────────────────────
+   * e.g. "Challenged Projects", "Ended Projects", "Deferred Projects"
+   * Deep indigo background with white bold text.
+   */
+  .print-section-header {
+    background-color: #312e81 !important;     /* indigo-900 */
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    font-size: 12px !important;
+    padding: 8px 12px !important;
+    border: 1.5px solid #4338ca !important;
+    border-bottom: 1px solid #4f46e5 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Remove the outer div border since table now has its own */
+  .print-table-container {
+    border: none !important;
+    margin-bottom: 12px !important;
+    background-color: transparent !important;
+  }
+
+  /* Dark text overrides for readability */
+  [class*="text-gray-"],
+  [class*="text-indigo-"],
+  [class*="dark:text-"] {
+    color: #111827 !important;
+  }
+
+  /* Keep link colors */
+  a[class*="text-indigo-"] {
+    color: #4338ca !important;
+  }
+}

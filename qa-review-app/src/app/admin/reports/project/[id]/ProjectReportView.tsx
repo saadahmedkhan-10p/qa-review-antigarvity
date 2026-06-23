@@ -184,23 +184,39 @@ export default function ProjectReportView({ project }: ProjectReportViewProps) {
                                 <PieChart>
                                     <Pie
                                         data={statusData}
-                                        cx="50%"
+                                        cx="40%"
                                         cy="50%"
                                         innerRadius={60}
-                                        outerRadius={100}
+                                        outerRadius={80}
                                         fill="#8884d8"
                                         paddingAngle={5}
                                         dataKey="value"
-                                        label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
                                     >
-                                        {statusData.map((entry, index) => (
+                                        {statusData.map((entry: any, index: number) => (
                                             <Cell key={`cell-${index}`} fill={entry.color} />
                                         ))}
                                     </Pie>
                                     <Tooltip
                                         contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '0.5rem', color: '#F3F4F6' }}
+                                        formatter={(value: number, name: string) => {
+                                            const total = statusData.reduce((s: number, d: any) => s + d.value, 0);
+                                            const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
+                                            return [`${value} (${pct}%)`, name];
+                                        }}
                                     />
-                                    <Legend />
+                                    <Legend
+                                        verticalAlign="middle"
+                                        align="right"
+                                        layout="vertical"
+                                        iconType="circle"
+                                        formatter={(value) => {
+                                            const item = statusData.find((d: any) => d.name === value);
+                                            const count = item ? item.value : 0;
+                                            const total = statusData.reduce((s: number, d: any) => s + d.value, 0);
+                                            const pct = total > 0 ? ((count / total) * 100).toFixed(0) : '0';
+                                            return <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">{value} ({count} · {pct}%)</span>;
+                                        }}
+                                    />
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>
@@ -227,11 +243,11 @@ export default function ProjectReportView({ project }: ProjectReportViewProps) {
                 </div>
 
                 {/* Detailed Reviews List */}
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden transition-colors">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden print:overflow-visible transition-colors">
                     <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Review History</h3>
                     </div>
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto print:overflow-visible">
                         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead className="bg-gray-50 dark:bg-gray-700">
                                 <tr>

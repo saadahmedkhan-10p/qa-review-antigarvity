@@ -225,11 +225,13 @@ export function ProjectsTable({ projects, onInvite, onClose, onReopen, initialTy
                                                     onClose={onClose}
                                                     onReopen={onReopen}
                                                 />
-                                                <SendInviteButton
-                                                    projectId={project.id}
-                                                    projectName={project.name}
-                                                    onInvite={onInvite}
-                                                />
+                                                {project.status !== 'CLOSED' && (
+                                                    <SendInviteButton
+                                                        projectId={project.id}
+                                                        projectName={project.name}
+                                                        onInvite={onInvite}
+                                                    />
+                                                )}
                                                 <DeleteProjectButton
                                                     projectId={project.id}
                                                     projectName={project.name}

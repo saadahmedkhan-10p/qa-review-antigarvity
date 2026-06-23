@@ -15,6 +15,7 @@ import { useTableSort } from "@/hooks/useTableSort";
 import { useTableSearch } from "@/hooks/useTableSearch";
 import { SortIcon } from "@/components/table/SortIcon";
 import { ColumnFilter } from "@/components/table/ColumnFilter";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 
 interface Review {
     id: string;
@@ -67,11 +68,25 @@ const MONTHS = [
 ];
 
 export function ReportsView({ reviews, pageTitle, typeFilter, initialMonth, initialYear }: ReportsViewProps) {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const pathname = usePathname();
+
     const { user, isManagement } = useAuth();
     const now = new Date();
     const [selectedMonth, setSelectedMonth] = useState(initialMonth ?? now.getMonth());
     const [selectedYear, setSelectedYear] = useState(initialYear ?? now.getFullYear());
-    const [activeType, setActiveType] = useState<'ALL' | 'MANUAL' | 'AUTOMATION_WEB' | 'AUTOMATION_MOBILE' | 'API' | 'DESKTOP'>((typeFilter as any) || 'ALL');
+    const activeType = ((searchParams.get("type") as any) || 'ALL') as 'ALL' | 'MANUAL' | 'AUTOMATION_WEB' | 'AUTOMATION_MOBILE' | 'API' | 'DESKTOP';
+
+    const handleTypeChange = (type: string) => {
+        const params = new URLSearchParams(searchParams.toString());
+        if (type === 'ALL') {
+            params.delete('type');
+        } else {
+            params.set('type', type);
+        }
+        router.push(`${pathname}?${params.toString()}`);
+    };
     const [searchQuery, setSearchQuery] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
@@ -197,7 +212,7 @@ export function ReportsView({ reviews, pageTitle, typeFilter, initialMonth, init
                         {/* Filter Type Group */}
                         <div className="flex bg-gray-200 dark:bg-gray-800 p-1 rounded-xl shadow-inner transition-colors shrink-0">
                             <button
-                                onClick={() => setActiveType('ALL')}
+                                onClick={() => handleTypeChange('ALL')}
                                 className={`px-4 py-1.5 text-xs font-black rounded-lg transition-all ${activeType === 'ALL'
                                     ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
                                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
@@ -205,7 +220,7 @@ export function ReportsView({ reviews, pageTitle, typeFilter, initialMonth, init
                                 ALL
                             </button>
                             <button
-                                onClick={() => setActiveType('MANUAL')}
+                                onClick={() => handleTypeChange('MANUAL')}
                                 className={`px-4 py-1.5 text-xs font-black rounded-lg transition-all ${activeType === 'MANUAL'
                                     ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
                                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
@@ -213,7 +228,7 @@ export function ReportsView({ reviews, pageTitle, typeFilter, initialMonth, init
                                 MANUAL
                             </button>
                             <button
-                                onClick={() => setActiveType('AUTOMATION_WEB')}
+                                onClick={() => handleTypeChange('AUTOMATION_WEB')}
                                 className={`px-4 py-1.5 text-xs font-black rounded-lg transition-all ${activeType === 'AUTOMATION_WEB'
                                     ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
                                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
@@ -221,7 +236,7 @@ export function ReportsView({ reviews, pageTitle, typeFilter, initialMonth, init
                                 WEB AUTO
                             </button>
                             <button
-                                onClick={() => setActiveType('AUTOMATION_MOBILE')}
+                                onClick={() => handleTypeChange('AUTOMATION_MOBILE')}
                                 className={`px-4 py-1.5 text-xs font-black rounded-lg transition-all ${activeType === 'AUTOMATION_MOBILE'
                                     ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
                                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
@@ -229,7 +244,7 @@ export function ReportsView({ reviews, pageTitle, typeFilter, initialMonth, init
                                 MOB AUTO
                             </button>
                             <button
-                                onClick={() => setActiveType('API')}
+                                onClick={() => handleTypeChange('API')}
                                 className={`px-4 py-1.5 text-xs font-black rounded-lg transition-all ${activeType === 'API'
                                     ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
                                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
@@ -237,7 +252,7 @@ export function ReportsView({ reviews, pageTitle, typeFilter, initialMonth, init
                                 API AUTO
                             </button>
                             <button
-                                onClick={() => setActiveType('DESKTOP')}
+                                onClick={() => handleTypeChange('DESKTOP')}
                                 className={`px-4 py-1.5 text-xs font-black rounded-lg transition-all ${activeType === 'DESKTOP'
                                     ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
                                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
@@ -310,10 +325,10 @@ export function ReportsView({ reviews, pageTitle, typeFilter, initialMonth, init
                                 <PieChart>
                                     <Pie
                                         data={chartData}
-                                        cx="50%"
+                                        cx="40%"
                                         cy="50%"
-                                        innerRadius={80}
-                                        outerRadius={100}
+                                        innerRadius={60}
+                                        outerRadius={80}
                                         paddingAngle={5}
                                         dataKey="value"
                                     >
@@ -324,13 +339,24 @@ export function ReportsView({ reviews, pageTitle, typeFilter, initialMonth, init
                                     <Tooltip
                                         contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px', color: '#FFF' }}
                                         itemStyle={{ color: '#E5E7EB' }}
+                                        formatter={(value: number, name: string) => {
+                                            const total = chartData.reduce((s, d) => s + d.value, 0);
+                                            const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
+                                            return [`${value} (${pct}%)`, name];
+                                        }}
                                     />
                                     <Legend
                                         verticalAlign="middle"
                                         align="right"
                                         layout="vertical"
                                         iconType="circle"
-                                        formatter={(value) => <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{value}</span>}
+                                        formatter={(value) => {
+                                            const item = chartData.find(d => d.name === value);
+                                            const count = item ? item.value : 0;
+                                            const total = chartData.reduce((s, d) => s + d.value, 0);
+                                            const pct = total > 0 ? ((count / total) * 100).toFixed(0) : '0';
+                                            return <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">{value} ({count} · {pct}%)</span>;
+                                        }}
                                     />
                                 </PieChart>
                             </ResponsiveContainer>
@@ -348,10 +374,10 @@ export function ReportsView({ reviews, pageTitle, typeFilter, initialMonth, init
                                 <PieChart>
                                     <Pie
                                         data={healthChartData}
-                                        cx="50%"
+                                        cx="40%"
                                         cy="50%"
-                                        innerRadius={80}
-                                        outerRadius={100}
+                                        innerRadius={60}
+                                        outerRadius={80}
                                         paddingAngle={5}
                                         dataKey="value"
                                     >
@@ -362,13 +388,24 @@ export function ReportsView({ reviews, pageTitle, typeFilter, initialMonth, init
                                     <Tooltip
                                         contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px', color: '#FFF' }}
                                         itemStyle={{ color: '#E5E7EB' }}
+                                        formatter={(value: number, name: string) => {
+                                            const total = healthChartData.reduce((s, d) => s + d.value, 0);
+                                            const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
+                                            return [`${value} (${pct}%)`, name];
+                                        }}
                                     />
                                     <Legend
                                         verticalAlign="middle"
                                         align="right"
                                         layout="vertical"
                                         iconType="circle"
-                                        formatter={(value) => <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{value}</span>}
+                                        formatter={(value) => {
+                                            const item = healthChartData.find(d => d.name === value);
+                                            const count = item ? item.value : 0;
+                                            const total = healthChartData.reduce((s, d) => s + d.value, 0);
+                                            const pct = total > 0 ? ((count / total) * 100).toFixed(0) : '0';
+                                            return <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">{value} ({count} · {pct}%)</span>;
+                                        }}
                                     />
                                 </PieChart>
                             </ResponsiveContainer>

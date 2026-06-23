@@ -266,11 +266,12 @@ export class ProjectService {
             await sendEmail(
                 project.reviewer.email,
                 emailTemplates.projectAssigned(
-                    project.reviewer.name,
+                    project.reviewer.name, // recipientName
                     project.name,
                     project.lead?.name || 'Not Assigned',
                     project.contactPerson?.name || 'Not Assigned',
-                    project.secondaryReviewer?.name
+                    project.reviewer.name, // primaryReviewerName
+                    project.secondaryReviewer?.name // secondaryReviewerName
                 )
             );
         }
@@ -280,11 +281,12 @@ export class ProjectService {
             await sendEmail(
                 project.secondaryReviewer.email,
                 emailTemplates.projectAssigned(
-                    project.secondaryReviewer.name,
+                    project.secondaryReviewer.name, // recipientName
                     project.name,
                     project.lead?.name || 'Not Assigned',
                     project.contactPerson?.name || 'Not Assigned',
-                    project.reviewer?.name
+                    project.reviewer?.name || 'Not Assigned', // primaryReviewerName
+                    project.secondaryReviewer.name // secondaryReviewerName
                 )
             );
         }

@@ -28,6 +28,10 @@ export async function sendProjectInvites(projectId: string) {
         return { error: "Project not found" };
     }
 
+    if (project.status === "CLOSED") {
+        return { error: "Cannot send invitations for a closed project" };
+    }
+
     if (!project.reviewer) {
         return { error: "Project has no reviewer assigned" };
     }

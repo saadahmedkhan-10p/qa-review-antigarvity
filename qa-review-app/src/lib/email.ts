@@ -60,16 +60,16 @@ export const emailTemplates = {
     `,
   }),
 
-  projectAssigned: (reviewerName: string, projectName: string, leadName: string, contactName: string, secondaryReviewerName?: string) => ({
+  projectAssigned: (recipientName: string, projectName: string, leadName: string, contactName: string, primaryReviewerName: string, secondaryReviewerName?: string) => ({
     subject: `New Project Assignment: ${esc(projectName)}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #4F46E5;">New Project Assignment</h2>
-        <p>Hello <strong>${esc(reviewerName)}</strong>,</p>
+        <p>Hello <strong>${esc(recipientName)}</strong>,</p>
         <p>You have been assigned as a reviewer for a new project.</p>
         <div style="background-color: #F3F4F6; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="margin-top: 0;">${esc(projectName)}</h3>
-          <p><strong>Primary Reviewer:</strong> ${esc(reviewerName)}</p>
+          <p><strong>Primary Reviewer:</strong> ${esc(primaryReviewerName)}</p>
           ${secondaryReviewerName ? `<p><strong>Secondary Reviewer:</strong> ${esc(secondaryReviewerName)}</p>` : ''}
           <p><strong>Review Lead:</strong> ${esc(leadName)}</p>
           <p><strong>Contact Person:</strong> ${esc(contactName)}</p>
