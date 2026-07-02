@@ -67,10 +67,12 @@ export async function GET() {
 
         // Create project summary
         const projectSummary = projects.map(project => {
-            const sortedReviews = [...project.reviews].sort((a, b) => 
-                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-            );
-            const latestReview = sortedReviews[0];
+            const submittedReviews = [...project.reviews]
+                .filter(r => r.status === 'SUBMITTED')
+                .sort((a, b) => 
+                    new Date(b.submittedDate || b.createdAt).getTime() - new Date(a.submittedDate || a.createdAt).getTime()
+                );
+            const latestSubmittedReview = submittedReviews[0];
 
             return {
                 id: project.id,
@@ -80,7 +82,7 @@ export async function GET() {
                 completed: project.reviews.filter(r => r.status === 'SUBMITTED').length,
                 pending: project.reviews.filter(r => r.status === 'PENDING').length,
                 scheduled: project.reviews.filter(r => r.status === 'SCHEDULED').length,
-                healthStatus: latestReview?.healthStatus || 'N/A'
+                healthStatus: latestSubmittedReview?.healthStatus || 'N/A'
             };
         });
 

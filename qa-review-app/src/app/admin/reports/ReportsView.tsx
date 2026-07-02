@@ -534,8 +534,8 @@ export function ReportsView({ reviews, pageTitle, typeFilter, initialMonth, init
                                                     {review.form.title}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                    <span className={`px-2 inline-flex text-[10px] leading-5 font-bold rounded-full uppercase tracking-tight ${review.status === 'NOT_COMPLETED' ? 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400' : getHealthBadgeClass(review.healthStatus)}`}>
-                                                        {review.status === 'NOT_COMPLETED' ? '-' : (review.healthStatus || 'N/A')}
+                                                    <span className={`px-2 inline-flex text-[10px] leading-5 font-bold rounded-full uppercase tracking-tight ${review.status !== 'SUBMITTED' ? 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400' : getHealthBadgeClass(review.healthStatus)}`}>
+                                                        {review.status !== 'SUBMITTED' ? '-' : (review.healthStatus || 'N/A')}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">

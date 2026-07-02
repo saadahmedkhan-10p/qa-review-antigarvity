@@ -417,13 +417,15 @@ export default function ReviewerDashboard() {
                                                             }`}>
                                                             {review.status?.replace('_', ' ')}
                                                         </span>
-                                                        <span className={`px-2 py-0.5 text-[9px] font-black uppercase rounded border ${review.healthStatus === 'On Track' ? 'bg-green-100 text-green-900 border-green-300 dark:bg-green-900/20 dark:text-green-400' :
-                                                            review.healthStatus === 'Slightly Challenged' ? 'bg-yellow-100 text-yellow-900 border-yellow-300 dark:bg-yellow-900/20 dark:text-yellow-400' :
-                                                                review.healthStatus === 'Critical' ? 'bg-red-100 text-red-900 border-red-300 dark:bg-red-900/20 dark:text-red-400' :
-                                                                    'bg-red-200 text-red-950 border-red-400 dark:bg-red-900/40 dark:text-red-300'
-                                                            }`}>
-                                                            {review.healthStatus}
-                                                        </span>
+                                                        {review.status === 'SUBMITTED' && (
+                                                            <span className={`px-2 py-0.5 text-[9px] font-black uppercase rounded border ${review.healthStatus === 'On Track' ? 'bg-green-100 text-green-900 border-green-300 dark:bg-green-900/20 dark:text-green-400' :
+                                                                review.healthStatus === 'Slightly Challenged' ? 'bg-yellow-100 text-yellow-900 border-yellow-300 dark:bg-yellow-900/20 dark:text-yellow-400' :
+                                                                    review.healthStatus === 'Critical' ? 'bg-red-100 text-red-900 border-red-300 dark:bg-red-900/20 dark:text-red-400' :
+                                                                        'bg-red-200 text-red-950 border-red-400 dark:bg-red-900/40 dark:text-red-300'
+                                                                }`}>
+                                                                {review.healthStatus}
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </td>
                                                 <td className="px-8 py-6">

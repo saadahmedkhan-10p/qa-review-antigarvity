@@ -74,12 +74,18 @@ export default async function ContactPersonDashboard() {
                                                         </div>
                                                     </div>
                                                     <div className="flex items-center gap-4">
-                                                        <span className={`px-2 py-1 text-xs rounded-full ${review.healthStatus === 'On Track' ? 'bg-green-100 text-green-800' :
-                                                            review.healthStatus === 'Slightly Challenged' ? 'bg-yellow-100 text-yellow-800' :
-                                                                'bg-red-100 text-red-800'
-                                                            }`}>
-                                                            {review.healthStatus}
-                                                        </span>
+                                                        {review.status === 'SUBMITTED' ? (
+                                                            <span className={`px-2 py-1 text-xs rounded-full ${review.healthStatus === 'On Track' ? 'bg-green-100 text-green-800' :
+                                                                review.healthStatus === 'Slightly Challenged' ? 'bg-yellow-100 text-yellow-800' :
+                                                                    'bg-red-100 text-red-800'
+                                                                }`}>
+                                                                {review.healthStatus}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+                                                                -
+                                                            </span>
+                                                        )}
                                                         {review.status === 'SUBMITTED' && (
                                                             <Link
                                                                 href={`/reviews/${review.id}/view`}
