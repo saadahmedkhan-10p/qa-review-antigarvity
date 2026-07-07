@@ -296,7 +296,7 @@ export function ReportsView({ reviews, pageTitle, typeFilter, initialMonth, init
                     </div>
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700 transition-all duration-200 hover:shadow-md">
                         <h3 className="text-orange-600 dark:text-orange-500 text-xs font-semibold uppercase tracking-wider mb-2">Challenged</h3>
-                        <p className="text-3xl font-bold text-orange-700 dark:text-orange-400">{stats.challenged}</p>
+                        <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">{stats.challenged}</p>
                     </div>
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700 transition-all duration-200 hover:shadow-md">
                         <h3 className="text-red-600 dark:text-red-500 text-xs font-semibold uppercase tracking-wider mb-2">Critical</h3>
