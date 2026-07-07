@@ -153,7 +153,7 @@ export default function MonthlyReportView({ reviews }: MonthlyReportViewProps) {
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8 transition-colors duration-200">
             <div ref={reportRef} className="max-w-7xl mx-auto">
                 {/* Header Section */}
-                <div className="flex flex-col md:flex-row justify-between items-center mb-8 border-b pb-4 dark:border-gray-700">
+                <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-8 border-b pb-4 dark:border-gray-700 gap-4">
                     <div>
                         <div className="flex items-center gap-4 print:hidden">
                             <Link href={`/admin/reports${activeType !== 'ALL' ? `?type=${activeType}` : ''}`} className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
@@ -167,7 +167,7 @@ export default function MonthlyReportView({ reviews }: MonthlyReportViewProps) {
                         </h1>
                     </div>
 
-                    <div className="flex items-center gap-4 flex-wrap print:hidden">
+                    <div className="flex items-center gap-3 flex-wrap print:hidden ml-auto">
                         {/* Type Filter Toggle */}
                         <div className="flex bg-gray-200 dark:bg-gray-800 p-1 rounded-xl shadow-inner transition-colors">
                             <button
@@ -232,12 +232,10 @@ export default function MonthlyReportView({ reviews }: MonthlyReportViewProps) {
                             }}
                         />
 
-                        <div className="flex gap-2">
-                            <button onClick={exportPDF} className="px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center gap-1.5 transition-colors shadow-sm text-xs" title="Print / Save as PDF">
-                                <FileText className="h-4 w-4" />
-                                <span className="font-bold">Print / Save PDF</span>
-                            </button>
-                        </div>
+                        <button onClick={exportPDF} className="px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center gap-1.5 transition-colors shadow-sm text-xs flex-shrink-0" title="Print / Save as PDF">
+                            <FileText className="h-4 w-4" />
+                            <span className="font-bold">Print / Save PDF</span>
+                        </button>
                     </div>
                 </div>
 
