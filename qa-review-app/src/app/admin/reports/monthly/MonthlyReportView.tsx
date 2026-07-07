@@ -153,7 +153,7 @@ export default function MonthlyReportView({ reviews }: MonthlyReportViewProps) {
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8 transition-colors duration-200">
             <div ref={reportRef} className="max-w-7xl mx-auto">
                 {/* Header Section */}
-                <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-8 border-b pb-4 dark:border-gray-700 gap-4">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b pb-4 dark:border-gray-700 gap-3">
                     <div>
                         <div className="flex items-center gap-4 print:hidden">
                             <Link href={`/admin/reports${activeType !== 'ALL' ? `?type=${activeType}` : ''}`} className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
@@ -162,8 +162,8 @@ export default function MonthlyReportView({ reviews }: MonthlyReportViewProps) {
                             <span className="text-gray-400">/</span>
                             <span className="font-bold text-gray-800 dark:text-white">Monthly Report</span>
                         </div>
-                        <h1 className="text-2xl font-bold uppercase text-gray-800 dark:text-white">
-                            {TYPE_LABELS[activeType]} PROJECT QA REVIEW REPORT | <span className="text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600">{format(currentDate, 'MMMM yyyy')}</span>
+                        <h1 className="text-lg font-bold uppercase text-gray-800 dark:text-white leading-tight">
+                            {TYPE_LABELS[activeType]} QA REVIEW REPORT | <span className="text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600">{format(currentDate, 'MMMM yyyy')}</span>
                         </h1>
                     </div>
 
