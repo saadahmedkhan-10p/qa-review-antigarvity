@@ -232,9 +232,14 @@ export default function MonthlyReportView({ reviews }: MonthlyReportViewProps) {
                             }}
                         />
 
-                        <button onClick={exportPDF} className="px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center gap-1.5 transition-colors shadow-sm text-xs flex-shrink-0" title="Print / Save as PDF">
-                            <FileText className="h-4 w-4" />
-                            <span className="font-bold">Print / Save PDF</span>
+                        <button
+                            onClick={exportPDF}
+                            title="Download PDF"
+                            className="flex items-center justify-center w-9 h-9 rounded-lg bg-gray-200 dark:bg-gray-800 hover:bg-indigo-600 dark:hover:bg-indigo-600 text-gray-600 dark:text-gray-300 hover:text-white transition-all shadow-inner flex-shrink-0"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
+                            </svg>
                         </button>
                     </div>
                 </div>
