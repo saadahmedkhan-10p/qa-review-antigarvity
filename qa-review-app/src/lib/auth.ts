@@ -79,8 +79,8 @@ export async function login(userData: Omit<SessionUser, 'roles'> & { roles: stri
     (await cookies()).set("session", session, { 
         expires, 
         httpOnly: true,
-        // M-04: Secure on all non-localhost environments
-        secure: process.env.NODE_ENV !== "development",
+        // M-04: Secure on all non-localhost environments, unless explicitly disabled for internal HTTP servers
+        secure: process.env.NODE_ENV !== "development" && process.env.REQUIRE_SECURE_COOKIES !== "false",
         sameSite: "lax",
         path: "/"
     });
