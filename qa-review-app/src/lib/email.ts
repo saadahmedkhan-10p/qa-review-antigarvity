@@ -25,279 +25,303 @@ const transporter = nodemailer.createTransport({
 
 const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://qa-review-app.vercel.app').replace(/\/$/, '');
 
+// Global wrapper for all emails
+function emailWrapper(title: string, innerHtml: string): string {
+    return `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${esc(title)}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f5f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f5f7; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); border: 1px solid #e5e7eb;">
+                    <!-- Header -->
+                    <tr>
+                        <td align="center" style="padding: 32px 40px; background-color: #ffffff; border-bottom: 1px solid #f3f4f6;">
+                            <img src="${APP_URL}/app-logo.png" alt="10Pearls" width="140" style="display: block; width: 140px; max-width: 100%; height: auto;">
+                        </td>
+                    </tr>
+                    <!-- Body Content -->
+                    <tr>
+                        <td style="padding: 40px; color: #374151; font-size: 16px; line-height: 24px;">
+                            ${innerHtml}
+                        </td>
+                    </tr>
+                    <!-- Footer -->
+                    <tr>
+                        <td align="center" style="padding: 32px 40px; background-color: #f9fafb; border-top: 1px solid #f3f4f6;">
+                            <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 13px;">This is an automated message from the QA Review System.</p>
+                            <p style="margin: 0; color: #9ca3af; font-size: 12px;">&copy; ${new Date().getFullYear()} 10Pearls. All rights reserved.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`;
+}
+
+// Reusable UI components for emails
+const UI = {
+    h2: (text: string) => `<h2 style="margin-top: 0; margin-bottom: 24px; color: #111827; font-size: 24px; font-weight: 600;">${text}</h2>`,
+    p: (text: string) => `<p style="margin-top: 0; margin-bottom: 16px;">${text}</p>`,
+    strong: (text: string) => `<strong>${text}</strong>`,
+    button: (href: string, text: string) => `
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 32px; margin-bottom: 16px;">
+            <tr>
+                <td align="center">
+                    <a href="${href}" style="display: inline-block; background-color: #2563eb; color: #ffffff; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-size: 16px; transition: background-color 0.2s;">
+                        ${text}
+                    </a>
+                </td>
+            </tr>
+        </table>
+    `,
+    alertBox: (content: string, type: 'warning' | 'error' | 'info' = 'warning') => {
+        const colors = {
+            warning: { bg: '#fffbeb', border: '#f59e0b', text: '#92400e' },
+            error: { bg: '#fef2f2', border: '#ef4444', text: '#991b1b' },
+            info: { bg: '#f0fdf4', border: '#10b981', text: '#065f46' },
+        };
+        const c = colors[type];
+        return `
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: ${c.bg}; border-radius: 8px; margin-bottom: 24px; border-left: 4px solid ${c.border};">
+            <tr>
+                <td style="padding: 16px 20px;">
+                    <div style="margin: 0; color: ${c.text}; font-size: 15px;">${content}</div>
+                </td>
+            </tr>
+        </table>`;
+    },
+    highlightBox: (content: string) => `
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9fafb; border-radius: 8px; margin-bottom: 24px; border: 1px solid #e5e7eb;">
+            <tr>
+                <td style="padding: 24px;">
+                    ${content}
+                </td>
+            </tr>
+        </table>
+    `
+};
+
 export const emailTemplates = {
   userCreated: (name: string, email: string, role: string, setupToken?: string) => ({
-    subject: 'Welcome to QA Review System - Set Your Password',
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #4F46E5;">Welcome to QA Review System!</h2>
-        <p>Hello <strong>${esc(name)}</strong>,</p>
-        <p>Your account has been created successfully.</p>
-        <div style="background-color: #F3F4F6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <p><strong>Email:</strong> ${esc(email)}</p>
-          <p><strong>Role:</strong> ${esc(role.replace('_', ' '))}</p>
-        </div>
-        ${setupToken ? `
-        <div style="background-color: #FEF3C7; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #F59E0B;">
-          <p style="color: #92400E; margin: 0;"><strong>⚠️ Action Required:</strong> Please set your password to activate your account.</p>
-        </div>
-        <p>Click the button below to set your password. This link will expire in 24 hours.</p>
-        <a href="${APP_URL}/set-password?token=${encodeURIComponent(setupToken)}" 
-           style="display: inline-block; background-color: #10B981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px;">
-          Set Your Password
-        </a>
-        ` : `
-        <p>You can now log in to the QA Review System using your email address.</p>
-        <a href="${APP_URL}" 
-           style="display: inline-block; background-color: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px;">
-          Login to Dashboard
-        </a>
-        `}
-        <p style="margin-top: 30px; color: #6B7280; font-size: 14px;">
-          If you have any questions, please contact your administrator.
-        </p>
-      </div>
-    `,
+    subject: 'Welcome to QA Review System',
+    html: emailWrapper('Welcome to QA Review System', `
+      ${UI.h2('Welcome to QA Review System!')}
+      ${UI.p(`Hello ${UI.strong(esc(name))},`)}
+      ${UI.p('Your account has been created successfully.')}
+      
+      ${UI.highlightBox(`
+        <p style="margin: 0 0 8px 0; font-size: 14px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Account Details</p>
+        <p style="margin: 0 0 4px 0; font-size: 16px;"><strong>Email:</strong> ${esc(email)}</p>
+        <p style="margin: 0; font-size: 16px;"><strong>Role:</strong> ${esc(role.replace(/_/g, ' '))}</p>
+      `)}
+
+      ${setupToken ? `
+        ${UI.alertBox('<strong>⚠️ Action Required:</strong> Please set your password to activate your account.', 'warning')}
+        ${UI.p('Click the button below to set your password. This link will expire in 24 hours.')}
+        ${UI.button(`${APP_URL}/set-password?token=${encodeURIComponent(setupToken)}`, 'Set Your Password')}
+      ` : `
+        ${UI.p('You can now log in to the QA Review System using your email address.')}
+        ${UI.button(APP_URL, 'Login to Dashboard')}
+      `}
+    `),
   }),
 
   projectAssigned: (recipientName: string, projectName: string, leadName: string, contactName: string, primaryReviewerName: string, secondaryReviewerName?: string) => ({
     subject: `New Project Assignment: ${esc(projectName)}`,
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #4F46E5;">New Project Assignment</h2>
-        <p>Hello <strong>${esc(recipientName)}</strong>,</p>
-        <p>You have been assigned as a reviewer for a new project.</p>
-        <div style="background-color: #F3F4F6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <h3 style="margin-top: 0;">${esc(projectName)}</h3>
-          <p><strong>Primary Reviewer:</strong> ${esc(primaryReviewerName)}</p>
-          ${secondaryReviewerName ? `<p><strong>Secondary Reviewer:</strong> ${esc(secondaryReviewerName)}</p>` : ''}
-          <p><strong>Review Lead:</strong> ${esc(leadName)}</p>
-          <p><strong>Contact Person:</strong> ${esc(contactName)}</p>
-        </div>
-        <p>You will receive review invitations for this project when review cycles are initiated.</p>
-        <a href="${APP_URL}/reviewer/dashboard" 
-           style="display: inline-block; background-color: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px;">
-          View Dashboard
-        </a>
-      </div>
-    `,
+    html: emailWrapper('New Project Assignment', `
+      ${UI.h2('New Project Assignment')}
+      ${UI.p(`Hello ${UI.strong(esc(recipientName))},`)}
+      ${UI.p('You have been assigned as a reviewer for a new project.')}
+      
+      ${UI.highlightBox(`
+        <h3 style="margin-top: 0; margin-bottom: 16px; color: #111827;">${esc(projectName)}</h3>
+        <p style="margin: 0 0 8px 0;"><strong>Primary Reviewer:</strong> ${esc(primaryReviewerName)}</p>
+        ${secondaryReviewerName ? `<p style="margin: 0 0 8px 0;"><strong>Secondary Reviewer:</strong> ${esc(secondaryReviewerName)}</p>` : ''}
+        <p style="margin: 0 0 8px 0;"><strong>Review Lead:</strong> ${esc(leadName)}</p>
+        <p style="margin: 0;"><strong>Contact Person:</strong> ${esc(contactName)}</p>
+      `)}
+      
+      ${UI.p('You will receive review invitations for this project when review cycles are initiated.')}
+      ${UI.button(`${APP_URL}/reviewer/dashboard`, 'View Dashboard')}
+    `),
   }),
 
   reviewInvite: (reviewerName: string, projectName: string, formTitle: string, deadline: string, secondaryReviewerName?: string, isSecondary?: boolean, isLead?: boolean) => ({
     subject: `A monthly QA review assignment request for ${esc(projectName)}`,
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #4F46E5;">A monthly QA review assignment request for ${esc(projectName)}</h2>
-        <p>Hello <strong>${esc(reviewerName)}</strong>,</p>
-        <p>${isLead ? 'A new review cycle has been initiated for a project you lead.' : isSecondary ? 'A new review cycle has been initiated where you are assigned as an observer/secondary reviewer.' : 'A new review cycle has been initiated for your project.'}</p>
-        <div style="background-color: #FEF3C7; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #F59E0B;">
-          <h3 style="margin-top: 0; color: #92400E;">${esc(projectName)}</h3>
-          <p><strong>Review Form:</strong> ${esc(formTitle)}</p>
-          ${(!isSecondary && !isLead) ? `
-          <p style="color: #92400E;"><strong>⚠️ Important Deadlines:</strong></p>
-          <ul style="color: #92400E;">
-            <li>Schedule by: <strong>10th of the month</strong></li>
+    html: emailWrapper(`Review Assignment: ${esc(projectName)}`, `
+      ${UI.h2(`Review Request: ${esc(projectName)}`)}
+      ${UI.p(`Hello ${UI.strong(esc(reviewerName))},`)}
+      ${UI.p(isLead ? 'A new review cycle has been initiated for a project you lead.' : isSecondary ? 'A new review cycle has been initiated where you are assigned as an observer/secondary reviewer.' : 'A new review cycle has been initiated for your project.')}
+      
+      ${UI.alertBox(`
+        <h3 style="margin-top: 0; margin-bottom: 12px;">${esc(projectName)}</h3>
+        <p style="margin: 0 0 12px 0;"><strong>Review Form:</strong> ${esc(formTitle)}</p>
+        ${(!isSecondary && !isLead) ? `
+          <p style="margin: 0 0 8px 0;"><strong>⚠️ Important Deadlines:</strong></p>
+          <ul style="margin: 0; padding-left: 20px;">
+            <li style="margin-bottom: 4px;">Schedule by: <strong>10th of the month</strong></li>
             <li>Complete by: <strong>20th of the month</strong></li>
           </ul>
-          ` : isLead ? '<p style="color: #92400E;">You can monitor the progress of this review from your dashboard.</p>' : '<p style="color: #92400E;">Please observe and support the primary reviewer as needed.</p>'}
-          <p style="margin-top: 10px; font-size: 13px;"><strong>Collaborators:</strong> ${esc(reviewerName)}${secondaryReviewerName ? `, ${esc(secondaryReviewerName)}` : ''}</p>
-        </div>
-        <p>${(isSecondary || isLead) ? 'Please log in to view the project dashboard.' : 'Please log in to schedule and conduct your review.'}</p>
-        <a href="${APP_URL}/${isLead ? 'lead' : 'reviewer'}/dashboard" 
-           style="display: inline-block; background-color: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px;">
-          ${(isSecondary || isLead) ? 'View Dashboard' : 'Schedule Review'}
-        </a>
-      </div>
-    `,
+        ` : isLead ? '<p style="margin: 0;">You can monitor the progress of this review from your dashboard.</p>' : '<p style="margin: 0;">Please observe and support the primary reviewer as needed.</p>'}
+        <p style="margin: 16px 0 0 0; font-size: 14px;"><strong>Collaborators:</strong> ${esc(reviewerName)}${secondaryReviewerName ? `, ${esc(secondaryReviewerName)}` : ''}</p>
+      `, (!isSecondary && !isLead) ? 'warning' : 'info')}
+      
+      ${UI.p((isSecondary || isLead) ? 'Please log in to view the project dashboard.' : 'Please log in to schedule and conduct your review.')}
+      ${UI.button(`${APP_URL}/${isLead ? 'lead' : 'reviewer'}/dashboard`, (isSecondary || isLead) ? 'View Dashboard' : 'Schedule Review')}
+    `),
   }),
 
   reviewScheduled: (reviewerName: string, projectName: string, scheduledDate: string) => ({
     subject: `Review Scheduled: ${esc(projectName)}`,
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #10B981;">Review Scheduled Successfully</h2>
-        <p>Hello <strong>${esc(reviewerName)}</strong>,</p>
-        <p>Your review has been scheduled successfully.</p>
-        <div style="background-color: #D1FAE5; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10B981;">
-          <h3 style="margin-top: 0; color: #065F46;">${esc(projectName)}</h3>
-          <p><strong>Scheduled Date:</strong> ${esc(scheduledDate)}</p>
-          <p style="color: #065F46;">Remember to complete the review by the <strong>20th of the month</strong>.</p>
-        </div>
-        <a href="${APP_URL}/reviewer/dashboard" 
-           style="display: inline-block; background-color: #10B981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px;">
-          View Dashboard
-        </a>
-      </div>
-    `,
+    html: emailWrapper(`Review Scheduled: ${esc(projectName)}`, `
+      ${UI.h2('Review Scheduled Successfully')}
+      ${UI.p(`Hello ${UI.strong(esc(reviewerName))},`)}
+      ${UI.p('Your review has been scheduled successfully.')}
+      
+      ${UI.alertBox(`
+        <h3 style="margin-top: 0; margin-bottom: 12px;">${esc(projectName)}</h3>
+        <p style="margin: 0 0 8px 0;"><strong>Scheduled Date:</strong> ${esc(scheduledDate)}</p>
+        <p style="margin: 0;">Remember to complete the review by the <strong>20th of the month</strong>.</p>
+      `, 'info')}
+      
+      ${UI.button(`${APP_URL}/reviewer/dashboard`, 'View Dashboard')}
+    `),
   }),
 
   leadNotification: (leadName: string, projectName: string, reviewerName: string, action: string) => ({
     subject: `Project Update: ${esc(projectName)}`,
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #4F46E5;">Project Update</h2>
-        <p>Hello <strong>${esc(leadName)}</strong>,</p>
-        <p>${esc(action)}</p>
-        <div style="background-color: #F3F4F6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <h3 style="margin-top: 0;">${esc(projectName)}</h3>
-          <p><strong>Reviewer:</strong> ${esc(reviewerName)}</p>
-        </div>
-        <a href="${APP_URL}/lead/dashboard" 
-           style="display: inline-block; background-color: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px;">
-          View Dashboard
-        </a>
-      </div>
-    `,
+    html: emailWrapper(`Project Update: ${esc(projectName)}`, `
+      ${UI.h2('Project Update')}
+      ${UI.p(`Hello ${UI.strong(esc(leadName))},`)}
+      ${UI.p(esc(action))}
+      
+      ${UI.highlightBox(`
+        <h3 style="margin-top: 0; margin-bottom: 12px;">${esc(projectName)}</h3>
+        <p style="margin: 0;"><strong>Reviewer:</strong> ${esc(reviewerName)}</p>
+      `)}
+      
+      ${UI.button(`${APP_URL}/lead/dashboard`, 'View Dashboard')}
+    `),
   }),
 
   reminderScheduling: (reviewerName: string, projectName: string, secondaryReviewerName?: string, isSecondary?: boolean) => ({
     subject: isSecondary ? `Update: Review Scheduling for ${esc(projectName)}` : `Reminder: Schedule Review for ${esc(projectName)}`,
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #F59E0B;">${isSecondary ? 'Review Scheduling Update' : 'Action Required: Schedule Review'}</h2>
-        <p>Hello <strong>${esc(reviewerName)}</strong>,</p>
-        <p>${isSecondary ? `The QA review for <strong>${esc(projectName)}</strong> is currently being scheduled by the primary reviewer.` : `This is a reminder to schedule your QA review for <strong>${esc(projectName)}</strong> for this month.`}</p>
-        <div style="background-color: #FEF3C7; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #F59E0B;">
-          <h3 style="margin-top: 0; color: #92400E;">${esc(projectName)}</h3>
-          ${!isSecondary ? '<p>Please schedule your review as soon as possible.</p>' : ''}
-          <p style="color: #92400E;"><strong>Deadline for scheduling: 10th of the month</strong></p>
-          ${secondaryReviewerName ? `<p style="font-size: 12px; color: #92400E; margin-top: 8px;">Cc: ${esc(secondaryReviewerName)}</p>` : ''}
-        </div>
-        <a href="${APP_URL}/reviewer/dashboard" 
-           style="display: inline-block; background-color: #F59E0B; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px;">
-          View Dashboard
-        </a>
-      </div>
-    `,
+    html: emailWrapper(isSecondary ? 'Review Scheduling Update' : 'Action Required: Schedule Review', `
+      ${UI.h2(isSecondary ? 'Review Scheduling Update' : 'Action Required: Schedule Review')}
+      ${UI.p(`Hello ${UI.strong(esc(reviewerName))},`)}
+      ${UI.p(isSecondary ? `The QA review for <strong>${esc(projectName)}</strong> is currently being scheduled by the primary reviewer.` : `This is a reminder to schedule your QA review for <strong>${esc(projectName)}</strong> for this month.`)}
+      
+      ${UI.alertBox(`
+        <h3 style="margin-top: 0; margin-bottom: 12px;">${esc(projectName)}</h3>
+        ${!isSecondary ? '<p style="margin: 0 0 8px 0;">Please schedule your review as soon as possible.</p>' : ''}
+        <p style="margin: 0;"><strong>Deadline for scheduling: 10th of the month</strong></p>
+        ${secondaryReviewerName ? `<p style="margin: 12px 0 0 0; font-size: 13px;">Cc: ${esc(secondaryReviewerName)}</p>` : ''}
+      `, 'warning')}
+      
+      ${UI.button(`${APP_URL}/reviewer/dashboard`, 'View Dashboard')}
+    `),
   }),
 
   reminderSubmission: (reviewerName: string, projectName: string, secondaryReviewerName?: string) => ({
     subject: `Reminder: Submit Review for ${esc(projectName)}`,
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #EF4444;">Action Required: Submit Review</h2>
-        <p>Hello <strong>${esc(reviewerName)}</strong>,</p>
-        <p>This is a reminder to submit your QA review for <strong>${esc(projectName)}</strong>.</p>
-        <div style="background-color: #FEE2E2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #EF4444;">
-          <h3 style="margin-top: 0; color: #991B1B;">${esc(projectName)}</h3>
-          <p>The review deadline is approaching.</p>
-          <p style="color: #991B1B;"><strong>Deadline for submission: 20th of the month</strong></p>
-          ${secondaryReviewerName ? `<p style="font-size: 12px; color: #991B1B; margin-top: 8px;">Cc: ${esc(secondaryReviewerName)}</p>` : ''}
-        </div>
-        <a href="${APP_URL}/reviewer/dashboard" 
-           style="display: inline-block; background-color: #EF4444; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px;">
-          Submit Review
-        </a>
-      </div>
-    `,
+    html: emailWrapper(`Reminder: Submit Review for ${esc(projectName)}`, `
+      ${UI.h2('Action Required: Submit Review')}
+      ${UI.p(`Hello ${UI.strong(esc(reviewerName))},`)}
+      ${UI.p(`This is a reminder to submit your QA review for <strong>${esc(projectName)}</strong>.`)}
+      
+      ${UI.alertBox(`
+        <h3 style="margin-top: 0; margin-bottom: 12px;">${esc(projectName)}</h3>
+        <p style="margin: 0 0 8px 0;">The review deadline is approaching.</p>
+        <p style="margin: 0;"><strong>Deadline for submission: 20th of the month</strong></p>
+        ${secondaryReviewerName ? `<p style="margin: 12px 0 0 0; font-size: 13px;">Cc: ${esc(secondaryReviewerName)}</p>` : ''}
+      `, 'error')}
+      
+      ${UI.button(`${APP_URL}/reviewer/dashboard`, 'Submit Review')}
+    `),
   }),
 
   passwordReset: (name: string, resetToken: string) => ({
     subject: 'Reset Your Password - QA Review System',
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #4F46E5;">Password Reset Request</h2>
-        <p>Hello <strong>${esc(name)}</strong>,</p>
-        <p>We received a request to reset the password for your QA Review System account.</p>
-        <div style="background-color: #FEF3C7; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #F59E0B;">
-          <p style="color: #92400E; margin: 0;"><strong>⚠️ Security Note:</strong> If you did not make this request, you can safely ignore this email.</p>
-        </div>
-        <p>Click the button below to reset your password. This link will expire in 1 hour.</p>
-        <a href="${APP_URL}/set-password?token=${encodeURIComponent(resetToken)}" 
-           style="display: inline-block; background-color: #EF4444; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px;">
-          Reset Password
-        </a>
-        <p style="margin-top: 30px; color: #6B7280; font-size: 14px;">
-          For security reasons, this link is only valid for 1 hour.
-        </p>
-      </div>
-    `,
+    html: emailWrapper('Password Reset Request', `
+      ${UI.h2('Password Reset Request')}
+      ${UI.p(`Hello ${UI.strong(esc(name))},`)}
+      ${UI.p('We received a request to reset the password for your QA Review System account.')}
+      
+      ${UI.alertBox('<strong>⚠️ Security Note:</strong> If you did not make this request, you can safely ignore this email.', 'warning')}
+      
+      ${UI.p('Click the button below to reset your password. This link will expire in 1 hour.')}
+      ${UI.button(`${APP_URL}/set-password?token=${encodeURIComponent(resetToken)}`, 'Reset Password')}
+    `),
   }),
 
   mentionNotification: (targetName: string, authorName: string, comment: string, reviewId: string) => ({
     subject: `You were mentioned in a QA Review`,
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #4F46E5;">New Mention</h2>
-        <p>Hello <strong>${esc(targetName)}</strong>,</p>
-        <p><strong>${esc(authorName)}</strong> tagged you in a comment:</p>
-        <div style="background-color: #F3F4F6; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4F46E5;">
-          <p style="font-style: italic; color: #4B5563;">"${esc(comment)}"</p>
-        </div>
-        <a href="${APP_URL}/reviews/${reviewId}" 
-           style="display: inline-block; background-color: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px;">
-          View Comment
-        </a>
-      </div>
-    `,
+    html: emailWrapper('New Mention in QA Review', `
+      ${UI.h2('New Mention')}
+      ${UI.p(`Hello ${UI.strong(esc(targetName))},`)}
+      ${UI.p(`<strong>${esc(authorName)}</strong> tagged you in a comment:`)}
+      
+      ${UI.highlightBox(`
+        <p style="margin: 0; font-style: italic; color: #4B5563; border-left: 3px solid #2563eb; padding-left: 16px;">"${esc(comment)}"</p>
+      `)}
+      
+      ${UI.button(`${APP_URL}/reviews/${reviewId}`, 'View Comment')}
+    `),
   }),
 
   aiAlert: (name: string, projectName: string, riskLevel: string, riskScore: number, actionItems: string[], reviewId: string) => ({
     subject: `⚠️ AI Risk Alert: ${esc(projectName)} [${riskLevel}]`,
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #EF4444;">AI Risk Evaluation: ${riskLevel}</h2>
-        <p>Hello <strong>${esc(name)}</strong>,</p>
-        <p>The AI Analysis Engine has flagged a high-risk project state for <strong>${esc(projectName)}</strong>.</p>
-        <div style="background-color: #FEE2E2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #EF4444;">
-          <p><strong>Risk Score:</strong> ${riskScore}/10</p>
-          <p><strong>Status:</strong> ${riskLevel}</p>
-          <p><strong>Action Items:</strong></p>
-          <ul>
-            ${actionItems.map(item => `<li>${esc(item)}</li>`).join('')}
-          </ul>
-        </div>
-        <a href="${APP_URL}/reviews/${reviewId}" 
-           style="display: inline-block; background-color: #EF4444; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px;">
-          Investigate Review
-        </a>
-      </div>
-    `,
+    html: emailWrapper(`AI Risk Evaluation: ${riskLevel}`, `
+      ${UI.h2(`AI Risk Evaluation: ${riskLevel}`)}
+      ${UI.p(`Hello ${UI.strong(esc(name))},`)}
+      ${UI.p(`The AI Analysis Engine has flagged a high-risk project state for <strong>${esc(projectName)}</strong>.`)}
+      
+      ${UI.alertBox(`
+        <p style="margin: 0 0 8px 0;"><strong>Risk Score:</strong> ${riskScore}/10</p>
+        <p style="margin: 0 0 16px 0;"><strong>Status:</strong> ${riskLevel}</p>
+        <p style="margin: 0 0 8px 0;"><strong>Action Items:</strong></p>
+        <ul style="margin: 0; padding-left: 20px;">
+          ${actionItems.map(item => `<li style="margin-bottom: 4px;">${esc(item)}</li>`).join('')}
+        </ul>
+      `, 'error')}
+      
+      ${UI.button(`${APP_URL}/reviews/${reviewId}`, 'Investigate Review')}
+    `),
   }),
 
   roleChanged: (name: string, oldRoles: string[], newRoles: string[]) => ({
     subject: '🔔 Your Role Has Been Updated - QA Review System',
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1F2937;">
-        <div style="background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); padding: 32px 40px; border-radius: 12px 12px 0 0;">
-          <h2 style="color: #ffffff; margin: 0; font-size: 24px;">Your Role Has Been Updated</h2>
-          <p style="color: #C7D2FE; margin: 8px 0 0;">QA Review System — Account Notice</p>
-        </div>
-        <div style="background-color: #ffffff; padding: 32px 40px; border: 1px solid #E5E7EB; border-top: none; border-radius: 0 0 12px 12px;">
-          <p>Hello <strong>${esc(name)}</strong>,</p>
-          <p>An administrator has updated your role in the <strong>QA Review System</strong>. Here is a summary of the change:</p>
-          
-          <table style="width: 100%; border-collapse: collapse; margin: 24px 0; border-radius: 8px; overflow: hidden;">
-            <tr style="background-color: #F9FAFB;">
-              <th style="padding: 12px 16px; text-align: left; font-size: 13px; color: #6B7280; border-bottom: 1px solid #E5E7EB;">Change</th>
-              <th style="padding: 12px 16px; text-align: left; font-size: 13px; color: #6B7280; border-bottom: 1px solid #E5E7EB;">Roles</th>
-            </tr>
-            <tr>
-              <td style="padding: 14px 16px; border-bottom: 1px solid #E5E7EB;"><span style="background: #FEE2E2; color: #991B1B; padding: 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 600;">Previous</span></td>
-              <td style="padding: 14px 16px; border-bottom: 1px solid #E5E7EB; color: #4B5563;">${oldRoles.length > 0 ? oldRoles.map(r => esc(r.replace(/_/g, ' '))).join(', ') : 'No roles assigned'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 14px 16px;"><span style="background: #D1FAE5; color: #065F46; padding: 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 600;">New</span></td>
-              <td style="padding: 14px 16px; color: #4B5563;">${newRoles.length > 0 ? newRoles.map(r => esc(r.replace(/_/g, ' '))).join(', ') : 'No roles assigned'}</td>
-            </tr>
-          </table>
-
-          <div style="background-color: #FEF3C7; border-left: 4px solid #F59E0B; padding: 16px 20px; border-radius: 6px; margin: 24px 0;">
-            <p style="margin: 0; color: #92400E;"><strong>⚠️ Action Required</strong></p>
-            <p style="margin: 8px 0 0; color: #78350F;">To see your new role and access your updated dashboard, please <strong>log out and log back in</strong>.</p>
-          </div>
-
-          <a href="${APP_URL}/login"
-             style="display: inline-block; background-color: #4F46E5; color: white; padding: 12px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; margin-top: 8px;">
-            Log In Now
-          </a>
-
-          <p style="margin-top: 32px; color: #6B7280; font-size: 13px;">
-            If you believe this change was made in error, please contact your system administrator.
-          </p>
-        </div>
-      </div>
-    `,
+    html: emailWrapper('Role Updated', `
+      ${UI.h2('Role Updated')}
+      ${UI.p(`Hello ${UI.strong(esc(name))},`)}
+      ${UI.p('An administrator has updated your role in the <strong>QA Review System</strong>. Here is a summary of the change:')}
+      
+      ${UI.highlightBox(`
+        <p style="margin: 0 0 8px 0; font-size: 14px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Previous Role</p>
+        <p style="margin: 0 0 24px 0; font-size: 16px; color: #ef4444; font-weight: 500;">
+          ${oldRoles.length > 0 ? oldRoles.map(r => esc(r.replace(/_/g, ' '))).join(', ') : 'No roles assigned'}
+        </p>
+        
+        <p style="margin: 0 0 8px 0; font-size: 14px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">New Role</p>
+        <p style="margin: 0; font-size: 18px; color: #10b981; font-weight: 600;">
+          ${newRoles.length > 0 ? newRoles.map(r => esc(r.replace(/_/g, ' '))).join(', ') : 'No roles assigned'}
+        </p>
+      `)}
+      
+      ${UI.alertBox('<strong>Action Required:</strong> To see your new role and access your updated dashboard, please <strong>log out and log back in</strong>.', 'warning')}
+      
+      ${UI.button(`${APP_URL}/login`, 'Log In Now')}
+      
+      <p style="margin-top: 32px; color: #6b7280; font-size: 14px;">If you believe this change was made in error, please contact your system administrator.</p>
+    `),
   }),
 };
 
@@ -313,7 +337,7 @@ export async function sendEmail(to: string, template: { subject: string; html: s
     }
 
     const info = await transporter.sendMail({
-      from: `"QA Review System" <${process.env.SMTP_USER}>`,
+      from: \`"QA Review System" <\${process.env.SMTP_USER}>\`,
       to,
       subject: template.subject,
       html: template.html,
