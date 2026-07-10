@@ -23,7 +23,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://qa-review-app.vercel.app').replace(/\/$/, '');
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://qa-review-app.vercel.app').replace(/\/$/, '');
 
 export const emailTemplates = {
   userCreated: (name: string, email: string, role: string, setupToken?: string) => ({
