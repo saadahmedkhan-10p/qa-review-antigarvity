@@ -14,7 +14,8 @@ import { readSsoCookies, clearSsoCookies } from "@/lib/sso/cookies";
 const PROVIDER = "microsoft";
 
 function redirectWithError(req: NextRequest, code: string): NextResponse {
-    const url = new URL("/", req.url);
+    const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || req.url;
+    const url = new URL("/", baseUrl);
     url.searchParams.set("error", code);
     return NextResponse.redirect(url);
 }
@@ -104,5 +105,6 @@ export async function GET(req: NextRequest) {
     });
 
     const dashboardPath = getDashboardPath(roles);
-    return NextResponse.redirect(new URL(dashboardPath, req.url));
+    const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || req.url;
+    return NextResponse.redirect(new URL(dashboardPath, baseUrl));
 }
