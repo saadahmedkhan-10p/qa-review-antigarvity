@@ -337,7 +337,7 @@ export async function sendEmail(to: string, template: { subject: string; html: s
     }
 
     const info = await transporter.sendMail({
-      from: \`"QA Review System" <\${process.env.SMTP_USER}>\`,
+      from: `"QA Review System" <${process.env.SMTP_USER}>`,
       to,
       subject: template.subject,
       html: template.html,
