@@ -12,8 +12,8 @@ export const metadata: Metadata = {
   title: "QA Review App",
   description: "Quality Assurance Review Application",
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon.ico',
+    icon: '/favicon.png',
+    shortcut: '/favicon.png',
     apple: '/logo.png',
   },
 };
