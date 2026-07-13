@@ -10,6 +10,7 @@ import {
     verifyIdToken,
 } from "@/lib/sso/microsoft";
 import { readSsoCookies, clearSsoCookies } from "@/lib/sso/cookies";
+import { sendEmail, emailTemplates } from "@/lib/email";
 
 const PROVIDER = "microsoft";
 
@@ -80,6 +81,26 @@ export async function GET(req: NextRequest) {
                     roles: JSON.stringify(["GUEST"]),
                 },
             });
+
+            // Notify the new user and all admins about the new account
+            try {
+                // 1. Welcome email to the new user
+                await sendEmail(email, emailTemplates.ssoWelcome(name, email));
+
+                // 2. Notify all admins
+                const admins = await prisma.user.findMany({
+                    where: { roles: { contains: "ADMIN" } },
+                    select: { name: true, email: true },
+                });
+                await Promise.all(
+                    admins.map((admin) =>
+                        sendEmail(admin.email, emailTemplates.ssoAdminNotification(admin.name, name, email))
+                    )
+                );
+            } catch (emailErr) {
+                // Non-fatal: log but don't block the user from logging in
+                console.error("SSO onboarding email failed:", emailErr);
+            }
         } else if (!user.ssoSubject) {
             user = await prisma.user.update({
                 where: { id: user.id },

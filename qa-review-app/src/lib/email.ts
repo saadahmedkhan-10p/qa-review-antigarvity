@@ -323,6 +323,46 @@ export const emailTemplates = {
       <p style="margin-top: 32px; color: #6b7280; font-size: 14px;">If you believe this change was made in error, please contact your system administrator.</p>
     `),
   }),
+
+  ssoWelcome: (name: string, email: string) => ({
+    subject: 'Welcome to QA Review System - Account Created',
+    html: emailWrapper('Welcome to QA Review System', `
+      ${UI.h2('Welcome to QA Review System!')}
+      ${UI.p(`Hello ${UI.strong(esc(name))},`)}
+      ${UI.p('Your account has been successfully created using your <strong>Microsoft account</strong>.')}
+
+      ${UI.highlightBox(`
+        <p style="margin: 0 0 8px 0; font-size: 14px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Account Details</p>
+        <p style="margin: 0 0 4px 0; font-size: 16px;"><strong>Email:</strong> ${esc(email)}</p>
+        <p style="margin: 0; font-size: 16px;"><strong>Status:</strong> Pending Role Assignment</p>
+      `)}
+
+      ${UI.alertBox('<strong>Next Step:</strong> Your account is currently awaiting a role assignment from an administrator. You will receive another email once your role has been configured and you are ready to get started.', 'warning')}
+
+      ${UI.p('In the meantime, you can log in to view your account status.')}
+      ${UI.button(`${APP_URL}/login`, 'View My Account')}
+    `),
+  }),
+
+  ssoAdminNotification: (adminName: string, newUserName: string, newUserEmail: string) => ({
+    subject: `👤 New SSO User Needs Role Assignment: ${esc(newUserName)}`,
+    html: emailWrapper('New SSO User Registration', `
+      ${UI.h2('New User Signed In via SSO')}
+      ${UI.p(`Hello ${UI.strong(esc(adminName))},`)}
+      ${UI.p('A new user has signed into the QA Review System for the first time using their Microsoft account. Their account has been created with a <strong>Guest</strong> role and is awaiting your review.')}
+
+      ${UI.highlightBox(`
+        <p style="margin: 0 0 8px 0; font-size: 14px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">New User Details</p>
+        <p style="margin: 0 0 4px 0; font-size: 16px;"><strong>Name:</strong> ${esc(newUserName)}</p>
+        <p style="margin: 0 0 4px 0; font-size: 16px;"><strong>Email:</strong> ${esc(newUserEmail)}</p>
+        <p style="margin: 0; font-size: 16px;"><strong>Current Role:</strong> <span style="color: #f59e0b; font-weight: 600;">Guest (No Access)</span></p>
+      `)}
+
+      ${UI.alertBox('<strong>Action Required:</strong> Please log in to the admin panel and assign an appropriate role to this user so they can start using the system.', 'warning')}
+
+      ${UI.button(`${APP_URL}/admin/users`, 'Go to User Management')}
+    `),
+  }),
 };
 
 // Send email function
