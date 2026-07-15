@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import path from 'path';
 
 // H-07: HTML-escape helper — prevents HTML injection in email templates
 function esc(value: string): string {
@@ -42,7 +43,7 @@ function emailWrapper(title: string, innerHtml: string): string {
                     <!-- Header -->
                     <tr>
                         <td align="center" style="padding: 32px 40px; background-color: #ffffff; border-bottom: 1px solid #f3f4f6;">
-                            <img src="${APP_URL}/app-logo.png" alt="10Pearls" width="140" style="display: block; width: 140px; max-width: 100%; height: auto;">
+                            <img src="cid:logo" alt="10Pearls" width="140" style="display: block; width: 140px; max-width: 100%; height: auto;">
                         </td>
                     </tr>
                     <!-- Body Content -->
@@ -75,9 +76,15 @@ const UI = {
         <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 32px; margin-bottom: 16px;">
             <tr>
                 <td align="center">
-                    <a href="${href}" style="display: inline-block; background-color: #2563eb; color: #ffffff; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-size: 16px; transition: background-color 0.2s;">
-                        ${text}
-                    </a>
+                    <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate;">
+                        <tr>
+                            <td align="center" bgcolor="#2563eb" style="border-radius: 6px; padding: 12px 28px;">
+                                <a href="${href}" target="_blank" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none; display: block;">
+                                    ${text}
+                                </a>
+                            </td>
+                        </tr>
+                    </table>
                 </td>
             </tr>
         </table>
@@ -381,6 +388,11 @@ export async function sendEmail(to: string, template: { subject: string; html: s
       to,
       subject: template.subject,
       html: template.html,
+      attachments: [{
+        filename: 'logo.png',
+        path: path.join(process.cwd(), 'public/logo.png'),
+        cid: 'logo'
+      }]
     });
 
     console.log('✅ Email sent:', info.messageId);
