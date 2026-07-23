@@ -85,7 +85,7 @@ export const ROLE_CONFIG: Record<Role, {
         dashboardPath: "/qa-manager/dashboard",
         permissions: {
             viewReviews: true,
-            commentOnReviews: true,
+            commentOnReviews: false,
             manageReviews: true,
             manageProjects: true,
             manageUsers: false,
@@ -104,7 +104,7 @@ export const ROLE_CONFIG: Record<Role, {
         dashboardPath: "/qa-architect/dashboard",
         permissions: {
             viewReviews: true,
-            commentOnReviews: true,
+            commentOnReviews: false,
             manageReviews: true,
             manageProjects: true,
             manageUsers: false,
@@ -123,7 +123,7 @@ export const ROLE_CONFIG: Record<Role, {
         dashboardPath: "/lead/dashboard",
         permissions: {
             viewReviews: true,
-            commentOnReviews: true,
+            commentOnReviews: false,
             manageReviews: true,
             manageProjects: false,
             manageUsers: false,
@@ -142,7 +142,7 @@ export const ROLE_CONFIG: Record<Role, {
         dashboardPath: "/reviewer/dashboard",
         permissions: {
             viewReviews: true,
-            commentOnReviews: true,
+            commentOnReviews: false,
             manageReviews: false,
             manageProjects: false,
             manageUsers: false,
@@ -161,7 +161,7 @@ export const ROLE_CONFIG: Record<Role, {
         dashboardPath: "/pm/dashboard",
         permissions: {
             viewReviews: true,
-            commentOnReviews: true,
+            commentOnReviews: false,
             manageReviews: false,
             manageProjects: false,
             manageUsers: false,
@@ -180,7 +180,7 @@ export const ROLE_CONFIG: Record<Role, {
         dashboardPath: "/dev-architect/dashboard",
         permissions: {
             viewReviews: true,
-            commentOnReviews: true,
+            commentOnReviews: false,
             manageReviews: false,
             manageProjects: false,
             manageUsers: false,

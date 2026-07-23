@@ -26,6 +26,7 @@ export default function ConductReviewPage({ params }: { params: Promise<{ id: st
 
     const { user: authUser } = useAuth();
     const isAdmin = authUser?.roles ? (authUser.roles.includes("ADMIN") || authUser.roles.includes("QA_HEAD") || authUser.roles.includes("DIRECTOR")) : false;
+    const isHead = authUser?.roles ? (authUser.roles.includes("ADMIN") || authUser.roles.includes("QA_HEAD")) : false;
 
     const [loading, setLoading] = useState(true);
     const [generatingAI, setGeneratingAI] = useState(false);
@@ -110,6 +111,44 @@ export default function ConductReviewPage({ params }: { params: Promise<{ id: st
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // All questions must be mandatory in form
+        const rawQuestions = typeof review.form.questions === 'string' ? JSON.parse(review.form.questions || "[]") : (review.form.questions || []);
+        let sections: any[] = [];
+        if (rawQuestions.length > 0) {
+            if (rawQuestions[0].questions || rawQuestions[0].items) {
+                sections = rawQuestions;
+            } else {
+                sections = [{ id: "general", title: "General", questions: rawQuestions }];
+            }
+        }
+        const allQuestions = sections.flatMap(sec => sec.questions || sec.items || []);
+        const unanswered = allQuestions.filter(q => {
+            const val = answers[q.id];
+            if (q.type === 'checkbox') {
+                return !val || !Array.isArray(val) || val.length === 0;
+            }
+            return val === undefined || val === null || (typeof val === 'string' && val.trim() === "");
+        });
+
+        // Also check observations and recommendedActions
+        const isObservationsEmpty = !summary.observations || summary.observations.trim() === "";
+        const isRecActionsEmpty = !summary.recommendedActions || summary.recommendedActions.trim() === "";
+
+        if (unanswered.length > 0 || isObservationsEmpty || isRecActionsEmpty) {
+            const errors: string[] = [];
+            if (unanswered.length > 0) {
+                errors.push(...unanswered.map(q => `"${q.label || q.text}"`));
+            }
+            if (isObservationsEmpty) {
+                errors.push('"Observations"');
+            }
+            if (isRecActionsEmpty) {
+                errors.push('"Recommended Actions"');
+            }
+            toast.error(`Please answer all mandatory fields: ${errors.join(", ")}`);
+            return;
+        }
 
         try {
             const finalSummary = {
@@ -214,7 +253,7 @@ export default function ConductReviewPage({ params }: { params: Promise<{ id: st
                                     {(section.questions || section.items || []).map((q: any) => (
                                         <div key={q.id}>
                                             <label className="block text-base font-bold text-gray-900 dark:text-gray-100 mb-4 leading-relaxed">
-                                                {q.label || q.text}
+                                                {q.label || q.text} <span className="text-red-500">*</span>
                                             </label>
 
                                             {q.type === "text" && (
@@ -290,7 +329,7 @@ export default function ConductReviewPage({ params }: { params: Promise<{ id: st
                         </div>
                             <div className="grid grid-cols-1 gap-8">
                                 <div>
-                                    <label className="block text-sm font-bold uppercase tracking-wider !text-gray-900 dark:!text-white mb-2">Observations</label>
+                                    <label className="block text-sm font-bold uppercase tracking-wider !text-gray-900 dark:!text-white mb-2">Observations <span className="text-red-500">*</span></label>
                                     <textarea
                                         disabled={isLocked}
                                         rows={4}
@@ -304,7 +343,7 @@ export default function ConductReviewPage({ params }: { params: Promise<{ id: st
 
                         <div className="grid grid-cols-1 gap-8">
                             <div>
-                                <div className="block text-sm font-bold uppercase tracking-wider !text-gray-900 dark:!text-white mb-2">Recommended Actions</div>
+                                <div className="block text-sm font-bold uppercase tracking-wider !text-gray-900 dark:!text-white mb-2">Recommended Actions <span className="text-red-500">*</span></div>
                                 <textarea
                                     disabled={isLocked}
                                     rows={4}
@@ -315,81 +354,83 @@ export default function ConductReviewPage({ params }: { params: Promise<{ id: st
                                 />
                             </div>
 
-                            <div>
-                                <div className="block text-sm font-bold uppercase tracking-wider !text-indigo-600 dark:!text-indigo-400 mb-2">AI Analysis</div>
-                                
-                                {(() => {
-                                    try {
-                                        if (!summary.aiAnalysis) return null;
-                                        const analysis = JSON.parse(summary.aiAnalysis);
-                                        if (analysis && typeof analysis === 'object' && (analysis.summary || analysis.riskLevel)) {
-                                            return (
-                                                <div className="mb-4 p-6 bg-indigo-50/30 dark:bg-indigo-900/20 rounded-2xl border-2 border-indigo-100 dark:border-indigo-800/50">
-                                                    <div className="flex justify-between items-start mb-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                                                                analysis.riskLevel === 'CRITICAL' ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' :
-                                                                analysis.riskLevel === 'HIGH' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' :
-                                                                analysis.riskLevel === 'MEDIUM' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' :
-                                                                'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
-                                                            }`}>
-                                                                {analysis.riskLevel || 'ANALYZED'} RISK
-                                                            </span>
-                                                            {analysis.riskScore !== undefined && (
-                                                                <span className="text-sm font-bold text-gray-500 dark:text-gray-400">
-                                                                    Score: {analysis.riskScore}/10
+                            {isHead && (
+                                <div>
+                                    <div className="block text-sm font-bold uppercase tracking-wider !text-indigo-600 dark:!text-indigo-400 mb-2">AI Analysis</div>
+                                    
+                                    {(() => {
+                                        try {
+                                            if (!summary.aiAnalysis) return null;
+                                            const analysis = JSON.parse(summary.aiAnalysis);
+                                            if (analysis && typeof analysis === 'object' && (analysis.summary || analysis.riskLevel)) {
+                                                return (
+                                                    <div className="mb-4 p-6 bg-indigo-50/30 dark:bg-indigo-900/20 rounded-2xl border-2 border-indigo-100 dark:border-indigo-800/50">
+                                                        <div className="flex justify-between items-start mb-4">
+                                                            <div className="flex items-center gap-3">
+                                                                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                                                                    analysis.riskLevel === 'CRITICAL' ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' :
+                                                                    analysis.riskLevel === 'HIGH' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' :
+                                                                    analysis.riskLevel === 'MEDIUM' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' :
+                                                                    'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                                                                }`}>
+                                                                    {analysis.riskLevel || 'ANALYZED'} RISK
                                                                 </span>
-                                                            )}
+                                                                {analysis.riskScore !== undefined && (
+                                                                    <span className="text-sm font-bold text-gray-500 dark:text-gray-400">
+                                                                        Score: {analysis.riskScore}/10
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         </div>
+                                                        <p className="text-gray-800 dark:text-gray-200 font-bold mb-3 leading-relaxed">
+                                                            {analysis.summary}
+                                                        </p>
+                                                        {analysis.observations && Array.isArray(analysis.observations) && analysis.observations.length > 0 && (
+                                                            <div className="mb-3">
+                                                                <h4 className="text-[10px] font-black uppercase text-indigo-500 mb-1">Key Observations</h4>
+                                                                <ul className="space-y-0.5">
+                                                                    {analysis.observations.map((obs: string, idx: number) => (
+                                                                        <li key={idx} className="text-xs text-gray-600 dark:text-gray-400 flex gap-2">
+                                                                            <span className="text-indigo-400">•</span> {obs}
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                    <p className="text-gray-800 dark:text-gray-200 font-bold mb-3 leading-relaxed">
-                                                        {analysis.summary}
-                                                    </p>
-                                                    {analysis.observations && Array.isArray(analysis.observations) && analysis.observations.length > 0 && (
-                                                        <div className="mb-3">
-                                                            <h4 className="text-[10px] font-black uppercase text-indigo-500 mb-1">Key Observations</h4>
-                                                            <ul className="space-y-0.5">
-                                                                {analysis.observations.map((obs: string, idx: number) => (
-                                                                    <li key={idx} className="text-xs text-gray-600 dark:text-gray-400 flex gap-2">
-                                                                        <span className="text-indigo-400">•</span> {obs}
-                                                                    </li>
-                                                                ))}
-                                                            </ul>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            );
+                                                );
+                                            }
+                                        } catch (e) {
+                                            // Fallback to textarea
                                         }
-                                    } catch (e) {
-                                        // Fallback to textarea
-                                    }
-                                    return null;
-                                })()}
+                                        return null;
+                                    })()}
 
-                                <textarea
-                                    disabled={isLocked}
-                                    rows={4}
-                                    className="w-full p-4 border-2 border-indigo-200 dark:border-indigo-800/50 bg-indigo-50/10 dark:bg-indigo-900/5 rounded-xl text-gray-900 dark:text-white font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none placeholder-gray-400 dark:placeholder-gray-500 resize-none disabled:opacity-60 text-xs font-mono"
-                                    placeholder="AI generated analysis or external AI feedback (JSON supported)..."
-                                    value={summary.aiAnalysis}
-                                    onChange={(e) => setSummary(prev => ({ ...prev, aiAnalysis: e.target.value }))}
-                                />
-                                <div className="mt-2 flex justify-end">
-                                    <button
-                                        type="button"
-                                        onClick={handleGenerateAI}
-                                        disabled={generatingAI || isLocked}
-                                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-all shadow-md disabled:opacity-50"
-                                    >
-                                        {generatingAI ? (
-                                            <span className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></span>
-                                        ) : (
-                                            <span>✨</span>
-                                        )}
-                                        {generatingAI ? "Generating..." : "Generate AI Analysis"}
-                                    </button>
+                                    <textarea
+                                        disabled={isLocked}
+                                        rows={4}
+                                        className="w-full p-4 border-2 border-indigo-200 dark:border-indigo-800/50 bg-indigo-50/10 dark:bg-indigo-900/5 rounded-xl text-gray-900 dark:text-white font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none placeholder-gray-400 dark:placeholder-gray-500 resize-none disabled:opacity-60 text-xs font-mono"
+                                        placeholder="AI generated analysis or external AI feedback (JSON supported)..."
+                                        value={summary.aiAnalysis}
+                                        onChange={(e) => setSummary(prev => ({ ...prev, aiAnalysis: e.target.value }))}
+                                    />
+                                    <div className="mt-2 flex justify-end">
+                                        <button
+                                            type="button"
+                                            onClick={handleGenerateAI}
+                                            disabled={generatingAI || isLocked}
+                                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-all shadow-md disabled:opacity-50"
+                                        >
+                                            {generatingAI ? (
+                                                <span className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></span>
+                                            ) : (
+                                                <span>✨</span>
+                                            )}
+                                            {generatingAI ? "Generating..." : "Generate AI Analysis"}
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
 
                         {isAdmin && (

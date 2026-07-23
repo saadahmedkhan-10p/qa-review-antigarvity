@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/withAuth";
+import { requireAuth, requireRole } from "@/lib/withAuth";
 import { getAIClient } from "@/lib/ai";
 import { NotificationService } from "@/services/notificationService";
 import { sendEmail, emailTemplates } from "@/lib/email";
@@ -9,7 +9,7 @@ import { sendEmail, emailTemplates } from "@/lib/email";
 
 export async function generateAIAnalysis(reviewId: string) {
     try {
-        await requireAuth();
+        await requireRole("ADMIN", "QA_HEAD");
 
         // 1. Get the AI Client
         const { client: openai, model } = await getAIClient();

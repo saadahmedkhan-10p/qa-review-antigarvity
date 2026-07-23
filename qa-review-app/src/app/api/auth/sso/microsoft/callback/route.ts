@@ -78,7 +78,7 @@ export async function GET(req: NextRequest) {
                     password: dummyPassword,
                     ssoProvider: PROVIDER,
                     ssoSubject: subject,
-                    roles: JSON.stringify(["GUEST"]),
+                    roles: JSON.stringify(["CONTACT_PERSON", "GUEST"]),
                 },
             });
 

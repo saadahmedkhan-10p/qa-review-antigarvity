@@ -25,7 +25,7 @@ export const userSchema = z.object({
     email: z.string().email("Invalid email address"),
     roles: z.preprocess(
         (val) => (Array.isArray(val) && val.length === 0 ? undefined : val),
-        z.array(roleSchema).default(["GUEST"])
+        z.array(roleSchema).default(["CONTACT_PERSON", "GUEST"])
     ),
     // H-06: Minimum 12 characters
     password: z.string().min(12, "Password must be at least 12 characters").optional(),

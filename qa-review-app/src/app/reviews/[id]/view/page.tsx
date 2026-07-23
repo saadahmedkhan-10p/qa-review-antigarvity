@@ -4,9 +4,12 @@ import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import CommentsList from "@/components/comments/CommentsList";
+import { useAuth } from "@/context/AuthContext";
 
 export default function ViewReviewPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
+    const { user } = useAuth();
+    const isHead = user?.roles ? (user.roles.includes("ADMIN") || user.roles.includes("QA_HEAD")) : false;
     const [review, setReview] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
@@ -165,7 +168,7 @@ export default function ViewReviewPage({ params }: { params: Promise<{ id: strin
                             </div>
                         </div>
 
-                        {review.aiAnalysis && (
+                        {isHead && review.aiAnalysis && (
                             <div className="mt-8 pt-8 border-t border-gray-100 dark:border-gray-800">
                                 <h3 className="text-sm font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 mb-4 flex items-center gap-2">
                                     <span className="p-1 bg-indigo-100 dark:bg-indigo-900/50 rounded-md">✨</span>

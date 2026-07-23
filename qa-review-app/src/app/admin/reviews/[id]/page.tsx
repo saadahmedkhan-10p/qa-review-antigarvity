@@ -295,111 +295,113 @@ export default function AdminReviewPage({ params }: { params: Promise<{ id: stri
                                 value={summary.recommendedActions}
                                 onChange={(e) => setSummary(prev => ({ ...prev, recommendedActions: e.target.value }))}
                             />
-                        </div>                        <div>
-                            <label className="block text-sm font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 mb-3">AI Analysis (Structured)</label>
-                            
-                            {(() => {
-                                try {
-                                    if (!summary.aiAnalysis) return null;
-                                    const analysis = JSON.parse(summary.aiAnalysis);
-                                    if (analysis && typeof analysis === 'object' && (analysis.summary || analysis.riskLevel)) {
-                                        return (
-                                            <div className="mb-4 p-6 bg-indigo-50/30 dark:bg-indigo-900/20 rounded-2xl border-2 border-indigo-100 dark:border-indigo-800/50">
-                                                <div className="flex justify-between items-start mb-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                                                            String(analysis.riskLevel) === 'CRITICAL' ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' :
-                                                            String(analysis.riskLevel) === 'HIGH' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' :
-                                                            String(analysis.riskLevel) === 'MEDIUM' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' :
-                                                            'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
-                                                        }`}>
-                                                            {typeof analysis.riskLevel === 'string' ? analysis.riskLevel : 'ANALYZED'} RISK
-                                                        </span>
-                                                        {analysis.riskScore !== undefined && (
-                                                            <span className="text-sm font-bold text-gray-500 dark:text-gray-400">
-                                                                Score: {analysis.riskScore}/10
+                        </div>                        {user?.roles && (user.roles.includes('ADMIN') || user.roles.includes('QA_HEAD')) && (
+                            <div>
+                                <label className="block text-sm font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 mb-3">AI Analysis (Structured)</label>
+                                
+                                {(() => {
+                                    try {
+                                        if (!summary.aiAnalysis) return null;
+                                        const analysis = JSON.parse(summary.aiAnalysis);
+                                        if (analysis && typeof analysis === 'object' && (analysis.summary || analysis.riskLevel)) {
+                                            return (
+                                                <div className="mb-4 p-6 bg-indigo-50/30 dark:bg-indigo-900/20 rounded-2xl border-2 border-indigo-100 dark:border-indigo-800/50">
+                                                    <div className="flex justify-between items-start mb-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                                                                String(analysis.riskLevel) === 'CRITICAL' ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' :
+                                                                String(analysis.riskLevel) === 'HIGH' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' :
+                                                                String(analysis.riskLevel) === 'MEDIUM' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' :
+                                                                'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                                                            }`}>
+                                                                {typeof analysis.riskLevel === 'string' ? analysis.riskLevel : 'ANALYZED'} RISK
                                                             </span>
-                                                        )}
+                                                            {analysis.riskScore !== undefined && (
+                                                                <span className="text-sm font-bold text-gray-500 dark:text-gray-400">
+                                                                    Score: {analysis.riskScore}/10
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <button 
+                                                            type="button"
+                                                            onClick={() => setSummary(prev => ({ ...prev, aiAnalysis: "" }))}
+                                                            className="text-gray-400 hover:text-red-500 transition-colors"
+                                                            title="Clear Analysis"
+                                                        >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                                            </svg>
+                                                        </button>
                                                     </div>
-                                                    <button 
-                                                        type="button"
-                                                        onClick={() => setSummary(prev => ({ ...prev, aiAnalysis: "" }))}
-                                                        className="text-gray-400 hover:text-red-500 transition-colors"
-                                                        title="Clear Analysis"
-                                                    >
-                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                                                        </svg>
-                                                    </button>
+                                                    
+                                                    <p className="text-gray-800 dark:text-gray-200 font-bold mb-4 leading-relaxed">
+                                                        {typeof analysis.summary === 'string' ? analysis.summary : JSON.stringify(analysis.summary)}
+                                                    </p>
+                                                    
+                                                    {analysis.observations && Array.isArray(analysis.observations) && analysis.observations.length > 0 && (
+                                                        <div className="mb-4">
+                                                            <h4 className="text-[10px] font-black uppercase text-indigo-500 mb-2">Key Observations</h4>
+                                                            <ul className="space-y-1">
+                                                                {analysis.observations.map((obs: any, idx: number) => (
+                                                                    <li key={idx} className="text-xs text-gray-600 dark:text-gray-400 flex gap-2">
+                                                                        <span className="text-indigo-400">•</span> {typeof obs === 'string' ? obs : JSON.stringify(obs)}
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    )}
+ 
+                                                    {analysis.actionItems && Array.isArray(analysis.actionItems) && analysis.actionItems.length > 0 && (
+                                                        <div>
+                                                            <h4 className="text-[10px] font-black uppercase text-emerald-500 mb-2">Recommended Actions</h4>
+                                                            <ul className="space-y-1">
+                                                                {analysis.actionItems.map((item: any, idx: number) => (
+                                                                    <li key={idx} className="text-xs text-gray-600 dark:text-gray-400 flex gap-2">
+                                                                        <span className="text-emerald-400">→</span> {typeof item === 'string' ? item : JSON.stringify(item)}
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                
-                                                <p className="text-gray-800 dark:text-gray-200 font-bold mb-4 leading-relaxed">
-                                                    {typeof analysis.summary === 'string' ? analysis.summary : JSON.stringify(analysis.summary)}
-                                                </p>
-                                                
-                                                {analysis.observations && Array.isArray(analysis.observations) && analysis.observations.length > 0 && (
-                                                    <div className="mb-4">
-                                                        <h4 className="text-[10px] font-black uppercase text-indigo-500 mb-2">Key Observations</h4>
-                                                        <ul className="space-y-1">
-                                                            {analysis.observations.map((obs: any, idx: number) => (
-                                                                <li key={idx} className="text-xs text-gray-600 dark:text-gray-400 flex gap-2">
-                                                                    <span className="text-indigo-400">•</span> {typeof obs === 'string' ? obs : JSON.stringify(obs)}
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    </div>
-                                                )}
-
-                                                {analysis.actionItems && Array.isArray(analysis.actionItems) && analysis.actionItems.length > 0 && (
-                                                    <div>
-                                                        <h4 className="text-[10px] font-black uppercase text-emerald-500 mb-2">Recommended Actions</h4>
-                                                        <ul className="space-y-1">
-                                                            {analysis.actionItems.map((item: any, idx: number) => (
-                                                                <li key={idx} className="text-xs text-gray-600 dark:text-gray-400 flex gap-2">
-                                                                    <span className="text-emerald-400">→</span> {typeof item === 'string' ? item : JSON.stringify(item)}
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        );
+                                            );
+                                        }
+                                    } catch (e) {
+                                        // Not JSON, just show textarea
                                     }
-                                } catch (e) {
-                                    // Not JSON, just show textarea
-                                }
-                                return null;
-                            })()}
-
-                            <div className="relative group">
-                                <textarea
-                                    rows={4}
-                                    className="w-full p-4 border-2 border-indigo-200 dark:border-indigo-900/5 bg-indigo-50/10 dark:bg-indigo-900/5 rounded-xl text-gray-900 dark:text-white font-medium focus:ring-4 focus:ring-indigo-500/50 transition-all outline-none placeholder-gray-400 dark:placeholder-gray-500 text-xs font-mono"
-                                    placeholder="AI generated feedback or external analysis summary (JSON supported)..."
-                                    value={summary.aiAnalysis}
-                                    onChange={(e) => setSummary(prev => ({ ...prev, aiAnalysis: e.target.value }))}
-                                />
-                                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <span className="text-[10px] font-bold bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 px-2 py-1 rounded">RAW JSON/TEXT</span>
+                                    return null;
+                                })()}
+ 
+                                <div className="relative group">
+                                    <textarea
+                                        rows={4}
+                                        className="w-full p-4 border-2 border-indigo-200 dark:border-indigo-900/5 bg-indigo-50/10 dark:bg-indigo-900/5 rounded-xl text-gray-900 dark:text-white font-medium focus:ring-4 focus:ring-indigo-500/50 transition-all outline-none placeholder-gray-400 dark:placeholder-gray-500 text-xs font-mono"
+                                        placeholder="AI generated feedback or external analysis summary (JSON supported)..."
+                                        value={summary.aiAnalysis}
+                                        onChange={(e) => setSummary(prev => ({ ...prev, aiAnalysis: e.target.value }))}
+                                    />
+                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <span className="text-[10px] font-bold bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 px-2 py-1 rounded">RAW JSON/TEXT</span>
+                                    </div>
+                                </div>
+                                
+                                <div className="mt-3 flex justify-end">
+                                    <button
+                                        type="button"
+                                        onClick={handleGenerateAI}
+                                        disabled={generatingAI}
+                                        className="flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-black transition-all shadow-lg hover:shadow-indigo-500/30 disabled:opacity-50 transform hover:-translate-y-0.5"
+                                    >
+                                        {generatingAI ? (
+                                            <span className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></span>
+                                        ) : (
+                                            <span className="text-lg">✨</span>
+                                        )}
+                                        {generatingAI ? "AI is thinking..." : "Generate AI Analysis"}
+                                    </button>
                                 </div>
                             </div>
-                            
-                            <div className="mt-3 flex justify-end">
-                                <button
-                                    type="button"
-                                    onClick={handleGenerateAI}
-                                    disabled={generatingAI}
-                                    className="flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-black transition-all shadow-lg hover:shadow-indigo-500/30 disabled:opacity-50 transform hover:-translate-y-0.5"
-                                >
-                                    {generatingAI ? (
-                                        <span className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></span>
-                                    ) : (
-                                        <span className="text-lg">✨</span>
-                                    )}
-                                    {generatingAI ? "AI is thinking..." : "Generate AI Analysis"}
-                                </button>
-                            </div>
-                        </div>
+                        )}
 
                         {/* Admin/Head Only Section */}
                         {user?.roles && (user.roles.includes('ADMIN') || user.roles.includes('QA_HEAD') || user.roles.includes('DIRECTOR')) && (

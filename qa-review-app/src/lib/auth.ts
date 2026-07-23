@@ -45,7 +45,7 @@ export function parseRoles(roles: any): Role[] {
             return [roles as Role];
         }
     }
-    return ["GUEST"]; // Default fallback
+    return ["CONTACT_PERSON", "GUEST"]; // Default fallback
 
 }
 
