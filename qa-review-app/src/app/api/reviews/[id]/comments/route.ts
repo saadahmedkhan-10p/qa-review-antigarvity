@@ -9,33 +9,8 @@ import { sendEmail, emailTemplates } from "@/lib/email";
 async function canAccessReview(reviewId: string, userId: string, roles: string[], isWrite: boolean = false): Promise<boolean> {
     const roleList = roles as any[];
     
-    // If writing, restrict to Directors and Heads only (Admin, QA Head, Director)
-    if (isWrite) {
-        return roleList.some(r => ["ADMIN", "QA_HEAD", "DIRECTOR"].includes(r));
-    }
-    
-    // For read access:
-    // Admin, QA Head/Manager, Director, and PM have global comment access
-    const hasGlobalAccess = roleList.some(r => 
-        ["ADMIN", "QA_HEAD", "QA_MANAGER", "QA_ARCHITECT", "DIRECTOR", "PM"].includes(r)
-    );
-    
-    if (hasGlobalAccess) return true;
-
-    // For assigned roles (Lead, Reviewer, Dev Arch), verify they are linked to this specific review/project
-    const review = await prisma.review.findUnique({
-        where: { id: reviewId },
-        include: { project: true },
-    });
-    
-    if (!review) return false;
-    
-    return (
-        review.reviewerId === userId ||
-        review.secondaryReviewerId === userId ||
-        review.project.leadId === userId ||
-        review.project.contactPersonId === userId
-    );
+    // Comments are restricted to Directors and Heads only (Admin, QA Head, Director)
+    return roleList.some(r => ["ADMIN", "QA_HEAD", "DIRECTOR"].includes(r));
 }
 
 // GET - Fetch all comments for a review (H-01: requires auth + access check)

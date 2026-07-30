@@ -10,6 +10,7 @@ export default function ViewReviewPage({ params }: { params: Promise<{ id: strin
     const { id } = use(params);
     const { user } = useAuth();
     const isHead = user?.roles ? (user.roles.includes("ADMIN") || user.roles.includes("QA_HEAD")) : false;
+    const isHeadOrDirector = user?.roles ? (user.roles.includes("ADMIN") || user.roles.includes("QA_HEAD") || user.roles.includes("DIRECTOR")) : false;
     const [review, setReview] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
@@ -240,7 +241,7 @@ export default function ViewReviewPage({ params }: { params: Promise<{ id: strin
                             </div>
                         )}
 
-                        {review.followUpComment && (
+                        {isHeadOrDirector && review.followUpComment && (
                             <div>
                                 <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Follow-up Comment (Admin)</h3>
                                 <div className="bg-amber-50/30 dark:bg-amber-900/10 p-4 rounded-xl border border-amber-100/50 dark:border-amber-900/50">

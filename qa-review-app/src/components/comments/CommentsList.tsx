@@ -37,9 +37,13 @@ export default function CommentsList({ reviewId }: CommentsListProps) {
     const canComment = user?.roles ? canCommentOnReviews(user.roles as Role[]) : false;
 
     useEffect(() => {
-        fetchComments();
-        fetchUsers();
-    }, [reviewId]);
+        if (canComment) {
+            fetchComments();
+            fetchUsers();
+        } else {
+            setIsLoading(false);
+        }
+    }, [reviewId, canComment]);
 
     const fetchUsers = async () => {
         try {
@@ -108,6 +112,10 @@ export default function CommentsList({ reviewId }: CommentsListProps) {
             return "User";
         }
     };
+
+    if (!canComment) {
+        return null;
+    }
 
     if (isLoading) {
         return (
