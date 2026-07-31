@@ -28,8 +28,8 @@ function SetPasswordForm() {
         e.preventDefault();
         setError("");
 
-        if (password.length < 6) {
-            setError("Password must be at least 6 characters");
+        if (password.length < 12) {
+            setError("Password must be at least 12 characters");
             return;
         }
 
@@ -69,9 +69,9 @@ function SetPasswordForm() {
                             value={password}
                             onChange={(e) => setPasswordValue(e.target.value)}
                             required
-                            minLength={6}
+                            minLength={12}
                             className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 dark:text-white dark:bg-gray-700 dark:placeholder-gray-400"
-                            placeholder="Minimum 6 characters"
+                            placeholder="Minimum 12 characters"
                         />
                     </div>
 
@@ -84,7 +84,7 @@ function SetPasswordForm() {
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             required
-                            minLength={6}
+                            minLength={12}
                             className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 dark:text-white dark:bg-gray-700 dark:placeholder-gray-400"
                             placeholder="Re-enter your password"
                         />
@@ -110,7 +110,7 @@ function SetPasswordForm() {
                         Password requirements:
                     </p>
                     <ul className="text-xs text-gray-500 dark:text-gray-500 mt-2 space-y-1">
-                        <li>• At least 6 characters long</li>
+                        <li>• At least 12 characters long</li>
                         <li>• Must match confirmation</li>
                     </ul>
                 </div>
