@@ -24,7 +24,11 @@ export function CreateProjectForm({ leads, reviewers, contactPersons, pms, devAr
     async function handleSubmit(formData: FormData) {
         setIsPending(true);
         try {
-            await createProject(formData);
+            const result = await createProject(formData);
+            if (result && !result.success) {
+                toast.error(result.error || "Failed to create project");
+                return;
+            }
             toast.success("Project created successfully");
             formRef.current?.reset();
         } catch (error) {
@@ -113,7 +117,7 @@ export function CreateProjectForm({ leads, reviewers, contactPersons, pms, devAr
                         disabled={isPending}
                         className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm p-2 text-gray-900 dark:text-white dark:bg-gray-700 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
                     >
-                        <option value="">-- Select QA Contact --</option>
+                        <option value="">-- None --</option>
                         {contactPersons.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
                 </div>

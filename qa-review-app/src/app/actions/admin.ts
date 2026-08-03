@@ -51,10 +51,20 @@ export async function createProject(formData: FormData) {
         devArchitectId: formData.get("devArchitectId") as string || null,
     };
     const parsed = projectSchema.omit({ id: true, status: true }).safeParse(raw);
-    if (!parsed.success) throw new Error("Invalid input");
+    if (!parsed.success) return { success: false, error: "Please fill out all required fields correctly." };
 
-    await ProjectService.create({ ...parsed.data, status: "ACTIVE" }, user);
-    revalidatePath("/admin/projects");
+    try {
+        await ProjectService.create({ ...parsed.data, status: "ACTIVE" }, user);
+        revalidatePath("/admin/projects");
+        return { success: true };
+    } catch (error: any) {
+        console.error("Failed to create project:", error);
+        // Check for Prisma unique constraint violation (P2002)
+        if (error?.code === 'P2002') {
+            return { success: false, error: "A project with this name already exists." };
+        }
+        return { success: false, error: "An unexpected error occurred while creating the project." };
+    }
 }
 
 export async function updateProject(projectId: string, data: any) {
