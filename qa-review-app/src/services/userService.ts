@@ -54,8 +54,10 @@ export class UserService {
         // Validation
         const validatedData = userSchema.parse(data);
 
-        // Check for existing email
-        const existing = await prisma.user.findUnique({ where: { email: validatedData.email } });
+        // Check for existing email (case-insensitive)
+        const targetEmail = validatedData.email.toLowerCase().trim();
+        const allUsers = await prisma.user.findMany();
+        const existing = allUsers.find(u => u.email.toLowerCase().trim() === targetEmail);
         if (existing) {
             throw new Error(`User with email ${validatedData.email} already exists.`);
         }

@@ -65,9 +65,21 @@ export async function GET(req: NextRequest) {
     });
 
     if (!user) {
-        user = await prisma.user.findUnique({ where: { email } });
-        
-        if (!user) {
+        // Case-insensitive lookup to match manually created users (e.g. Umar.farooq vs umar.farooq)
+        const allUsers = await prisma.user.findMany();
+        user = allUsers.find(u => u.email.toLowerCase().trim() === email) || null;
+
+        if (user) {
+            // Update existing user with normalized email and link SSO credentials
+            user = await prisma.user.update({
+                where: { id: user.id },
+                data: {
+                    email,
+                    ssoProvider: PROVIDER,
+                    ssoSubject: subject,
+                },
+            });
+        } else {
             const name = (claims.name || email.split("@")[0]).toString();
             // Provide a random password since this is an SSO user and the schema requires it
             const dummyPassword = Math.random().toString(36).slice(-10);
@@ -101,12 +113,12 @@ export async function GET(req: NextRequest) {
                 // Non-fatal: log but don't block the user from logging in
                 console.error("SSO onboarding email failed:", emailErr);
             }
-        } else if (!user.ssoSubject) {
-            user = await prisma.user.update({
-                where: { id: user.id },
-                data: { ssoProvider: PROVIDER, ssoSubject: subject },
-            });
         }
+    } else if (!user.ssoSubject) {
+        user = await prisma.user.update({
+            where: { id: user.id },
+            data: { ssoProvider: PROVIDER, ssoSubject: subject },
+        });
     }
 
     const roles = parseRoles(user.roles);

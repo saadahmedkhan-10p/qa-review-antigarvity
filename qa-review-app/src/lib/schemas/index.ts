@@ -22,7 +22,7 @@ export const userSchema = z.object({
     id: z.string().cuid().optional(),
     // M-07: Cap name length
     name: z.string().min(2, "Name must be at least 2 characters").max(200),
-    email: z.string().email("Invalid email address"),
+    email: z.string().email("Invalid email address").transform(v => v.toLowerCase().trim()),
     roles: z.preprocess(
         (val) => (Array.isArray(val) && val.length === 0 ? undefined : val),
         z.array(roleSchema).default(["CONTACT_PERSON", "GUEST"])
