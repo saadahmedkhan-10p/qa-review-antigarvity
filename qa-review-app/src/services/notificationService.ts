@@ -67,7 +67,7 @@ export class NotificationService {
                     uid,
                     "COMMENT",
                     `${commenterName} commented on the review for "${projectName}"`,
-                    `/reviews/${reviewId}`
+                    `/reviews/${reviewId}/view`
                 )
             )
         );
@@ -82,7 +82,7 @@ export class NotificationService {
             reviewerUserId,
             "REVIEW_ASSIGNED",
             `You have been assigned to conduct the QA review for "${projectName}"`,
-            `/reviews/${reviewId}`
+            `/reviews/${reviewId}/conduct`
         );
     }
 
@@ -126,7 +126,7 @@ export class NotificationService {
                     uid,
                     "REVIEW_SCHEDULED",
                     `The QA review for "${projectName}" has been scheduled for ${scheduledDate}`,
-                    `/reviews/${reviewId}`
+                    `/reviews/${reviewId}/conduct`
                 )
             )
         );
@@ -150,7 +150,7 @@ export class NotificationService {
                     uid,
                     "AI_ALERT",
                     `AI Alert: "${projectName}" flagged as ${riskLevel} risk (Score: ${riskScore}/10)`,
-                    `/reviews/${reviewId}`
+                    `/reviews/${reviewId}/view`
                 )
             )
         );
