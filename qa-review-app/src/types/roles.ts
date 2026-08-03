@@ -318,10 +318,10 @@ export function getPrimaryRole(roles: Role[]): Role {
         "QA_ARCHITECT",
         "DIRECTOR",
         "REVIEW_LEAD",
+        "REVIEWER",
         "PM",
         "DEV_ARCHITECT",
         "CONTACT_PERSON",
-        "REVIEWER",
         "GUEST"
     ];
 

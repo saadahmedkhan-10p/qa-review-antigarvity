@@ -36,17 +36,37 @@ export interface SessionPayload {
  * Helper to safely parse roles from the session payload
  */
 export function parseRoles(roles: any): Role[] {
-    if (Array.isArray(roles)) return roles as Role[];
-    if (typeof roles === 'string') {
+    if (!roles) return ["GUEST"];
+
+    let parsed: any = roles;
+
+    if (typeof parsed === 'string') {
         try {
-            const parsed = JSON.parse(roles);
-            return Array.isArray(parsed) ? (parsed as Role[]) : [roles as Role];
+            parsed = JSON.parse(parsed);
+            if (typeof parsed === 'string') {
+                try { parsed = JSON.parse(parsed); } catch {}
+            }
         } catch {
-            return [roles as Role];
+            if (parsed.includes(',')) {
+                parsed = parsed.split(',').map((r: string) => r.trim());
+            } else {
+                parsed = [parsed.trim()];
+            }
         }
     }
-    return ["CONTACT_PERSON", "GUEST"]; // Default fallback
 
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        parsed = Object.values(parsed);
+    }
+
+    if (Array.isArray(parsed)) {
+        const valid = parsed
+            .map((r: any) => typeof r === 'string' ? r.trim() : '')
+            .filter((r: string) => Boolean(r));
+        if (valid.length > 0) return valid as Role[];
+    }
+
+    return ["GUEST"];
 }
 
 export async function encrypt(payload: any) {
