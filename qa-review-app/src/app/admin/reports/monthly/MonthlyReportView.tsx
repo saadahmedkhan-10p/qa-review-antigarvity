@@ -97,17 +97,27 @@ export default function MonthlyReportView({ reviews }: MonthlyReportViewProps) {
         };
 
         monthReviews.forEach(r => {
-            // Determine effective health status
-            // If status is DEFERRED or PROJECT_ENDED or NOT_COMPLETED, map to health status equivalent if not set
-            let health = r.healthStatus || 'On Track';
-            if (r.status === 'DEFERRED') health = 'Deferred';
-            if (r.status === 'PROJECT_ENDED') health = 'Ended';
-            if (r.status === 'NOT_COMPLETED') return; // Exclude from health counts entirely
+            // DEFERRED and PROJECT_ENDED are always counted regardless of healthStatus
+            if (r.status === 'DEFERRED') {
+                counts['Deferred']++;
+                details.deferred.push(r);
+                return;
+            }
+            if (r.status === 'PROJECT_ENDED') {
+                counts['Ended']++;
+                details.ended.push(r);
+                return;
+            }
+            // Skip statuses that haven't had a review submitted yet
+            if (r.status !== 'SUBMITTED') return;
+            if (r.status === 'NOT_COMPLETED') return;
+
+            // Only use explicitly set health status; don't default unsubmitted to On Track
+            const health = r.healthStatus || 'On Track';
 
             if (counts.hasOwnProperty(health)) {
                 counts[health as keyof typeof counts]++;
             } else {
-                // Fallback for unexpected values
                 counts['On Track']++;
             }
 

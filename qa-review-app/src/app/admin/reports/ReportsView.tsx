@@ -115,6 +115,9 @@ export function ReportsView({ reviews, pageTitle, typeFilter, initialMonth, init
 
     // Calculate stats for filtered reviews
     const stats = useMemo(() => {
+        // Project Health Stats — only count SUBMITTED reviews (health status is
+        // meaningless on pending/scheduled reviews since it defaults to "On Track")
+        const submittedReviews = baseFilteredReviews.filter(r => r.status === "SUBMITTED");
         return {
             totalReviews: baseFilteredReviews.length,
             submittedReviews: baseFilteredReviews.filter(r => r.status === "SUBMITTED").length,
@@ -123,10 +126,9 @@ export function ReportsView({ reviews, pageTitle, typeFilter, initialMonth, init
             deferredReviews: baseFilteredReviews.filter(r => r.status === "DEFERRED").length,
             onHoldReviews: baseFilteredReviews.filter(r => r.status === "ON_HOLD").length,
             endedReviews: baseFilteredReviews.filter(r => r.status === "PROJECT_ENDED").length,
-            // Project Health Stats
-            onTrack: baseFilteredReviews.filter(r => r.healthStatus === "On Track").length,
-            challenged: baseFilteredReviews.filter(r => r.healthStatus === "Slightly Challenged" || r.healthStatus === "Extremely Challenged").length,
-            critical: baseFilteredReviews.filter(r => r.healthStatus === "Critical").length,
+            onTrack: submittedReviews.filter(r => r.healthStatus === "On Track").length,
+            challenged: submittedReviews.filter(r => r.healthStatus === "Slightly Challenged" || r.healthStatus === "Extremely Challenged").length,
+            critical: submittedReviews.filter(r => r.healthStatus === "Critical").length,
         };
     }, [baseFilteredReviews]);
 
