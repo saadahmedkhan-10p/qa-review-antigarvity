@@ -5,6 +5,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import Navbar from "@/components/Navbar";
 import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { ChatBot } from "@/components/ChatBot";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -61,6 +62,7 @@ export default function RootLayout({
                 },
               }}
             />
+            <ChatBot />
           </ThemeProvider>
         </AuthProvider>
       </body>
