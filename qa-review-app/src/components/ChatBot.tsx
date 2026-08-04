@@ -11,8 +11,9 @@ interface Message {
     timestamp: number;
 }
 
-const STORAGE_KEY = "qa_chatbot_history";
 const MAX_STORED_MESSAGES = 40;
+
+const getStorageKey = (userId: string) => `qa_chatbot_history_${userId}`;
 
 const SUGGESTED_QUESTIONS = [
     "How do I conduct a review?",
@@ -38,8 +39,9 @@ export function ChatBot() {
     // Load from localStorage on mount
     useEffect(() => {
         setIsHydrated(true);
+        if (!user?.id) return;
         try {
-            const stored = localStorage.getItem(STORAGE_KEY);
+            const stored = localStorage.getItem(getStorageKey(user.id));
             if (stored) {
                 const parsed = JSON.parse(stored) as Message[];
                 setMessages(parsed);
@@ -47,18 +49,18 @@ export function ChatBot() {
         } catch {
             // ignore
         }
-    }, []);
+    }, [user?.id]);
 
     // Persist to localStorage whenever messages change
     useEffect(() => {
-        if (!isHydrated) return;
+        if (!isHydrated || !user?.id) return;
         try {
             const toStore = messages.slice(-MAX_STORED_MESSAGES);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
+            localStorage.setItem(getStorageKey(user.id), JSON.stringify(toStore));
         } catch {
             // ignore storage errors
         }
-    }, [messages, isHydrated]);
+    }, [messages, isHydrated, user?.id]);
 
     // Scroll to bottom on new messages
     useEffect(() => {
@@ -121,7 +123,7 @@ export function ChatBot() {
 
     const clearHistory = () => {
         setMessages([]);
-        localStorage.removeItem(STORAGE_KEY);
+        if (user?.id) localStorage.removeItem(getStorageKey(user.id));
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
