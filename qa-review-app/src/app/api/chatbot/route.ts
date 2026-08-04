@@ -233,16 +233,55 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ reply });
 
     } catch (error: any) {
-        console.error("Chatbot error:", error);
+        console.error("Chatbot error:", error?.message || error);
 
-        if (error.message?.includes("API Key not configured") || error.message?.includes("not configured")) {
+        const msg: string = error?.message || "";
+        const status: number = error?.status || error?.response?.status || 0;
+
+        // AI not configured
+        if (msg.includes("not configured") || msg.includes("API Key not configured")) {
             return NextResponse.json({
-                reply: "⚙️ The AI assistant is not configured yet. Please ask your Admin to set up an AI provider in Settings."
+                reply: "⚙️ The AI assistant is not configured yet. Please ask your Admin to set up an AI provider in **Admin → Settings**."
+            });
+        }
+
+        // Invalid / expired API key
+        if (status === 401 || msg.includes("401") || msg.includes("Incorrect API key") || msg.includes("invalid_api_key") || msg.includes("authentication")) {
+            return NextResponse.json({
+                reply: "🔑 The AI API key appears to be invalid or expired. Please ask your Admin to update it in **Admin → Settings**."
+            });
+        }
+
+        // Rate limit / quota exceeded
+        if (status === 429 || msg.includes("429") || msg.includes("rate limit") || msg.includes("quota") || msg.includes("insufficient_quota")) {
+            return NextResponse.json({
+                reply: "⏳ The AI service is rate-limited or the quota has been exceeded. Please wait a moment and try again, or ask your Admin to check the API quota."
+            });
+        }
+
+        // Model not found
+        if (status === 404 || msg.includes("model") || msg.includes("does not exist") || msg.includes("not found")) {
+            return NextResponse.json({
+                reply: "🤖 The configured AI model could not be found. Please ask your Admin to verify the model name in **Admin → Settings**."
+            });
+        }
+
+        // Network / timeout
+        if (msg.includes("fetch") || msg.includes("network") || msg.includes("ECONNREFUSED") || msg.includes("timeout")) {
+            return NextResponse.json({
+                reply: "🌐 Could not reach the AI service. Please check your network connection and try again."
+            });
+        }
+
+        // Context too long
+        if (msg.includes("context") || msg.includes("token") || msg.includes("maximum")) {
+            return NextResponse.json({
+                reply: "📝 The conversation is too long for the AI to process. Try clearing the chat history using the 🗑️ button and starting fresh."
             });
         }
 
         return NextResponse.json({
-            reply: "Sorry, I ran into an error. Please try again in a moment."
+            reply: `❌ An unexpected error occurred: ${msg || "Unknown error"}. Please try again or contact your Admin if the problem persists.`
         });
     }
 }
