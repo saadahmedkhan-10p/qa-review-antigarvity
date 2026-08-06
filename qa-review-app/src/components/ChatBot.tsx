@@ -36,18 +36,22 @@ export function ChatBot() {
     // Hide on login page
     const isLoginPage = pathname === "/";
 
-    // Load from localStorage on mount
+    // Load from localStorage on mount — re-runs whenever the logged-in user changes
     useEffect(() => {
-        setIsHydrated(true);
         if (!user?.id) return;
+        setIsHydrated(true);
         try {
             const stored = localStorage.getItem(getStorageKey(user.id));
             if (stored) {
                 const parsed = JSON.parse(stored) as Message[];
-                setMessages(parsed);
+                // Only restore if the array has valid entries
+                setMessages(Array.isArray(parsed) ? parsed : []);
+            } else {
+                // No history for this user — clear any stale messages from a previous user
+                setMessages([]);
             }
         } catch {
-            // ignore
+            setMessages([]);
         }
     }, [user?.id]);
 

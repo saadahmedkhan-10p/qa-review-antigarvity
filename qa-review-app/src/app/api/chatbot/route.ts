@@ -194,10 +194,114 @@ A: Go to Projects page (Admin/QA Head only), click "Add Project", fill in the de
 
 Always be helpful and specific. If the user asks about something outside the app's scope, politely redirect them to app-related topics.`;
 
+const ROLE_PERMISSIONS: Record<string, { can: string[]; cannot: string[] }> = {
+    ADMIN: {
+        can: [
+            "manage all projects, users, forms, reviews, and settings",
+            "view all reports and activity logs",
+            "configure AI provider and email settings",
+            "create and delete anything in the system",
+            "comment on any review",
+            "trigger AI analysis on submitted reviews",
+        ],
+        cannot: [],
+    },
+    QA_HEAD: {
+        can: [
+            "manage projects, reviews, and users",
+            "view all reports",
+            "comment on reviews",
+            "trigger AI analysis",
+        ],
+        cannot: ["delete projects or forms", "access system settings"],
+    },
+    QA_MANAGER: {
+        can: [
+            "manage reviews for assigned projects",
+            "view reports for their scope",
+            "access the admin dashboard",
+        ],
+        cannot: ["manage users", "create projects", "access system settings", "comment on reviews"],
+    },
+    QA_ARCHITECT: {
+        can: ["view reviews and reports", "comment on reviews", "access the admin dashboard"],
+        cannot: ["manage users", "create or delete projects", "conduct reviews"],
+    },
+    REVIEW_LEAD: {
+        can: [
+            "view the Lead Dashboard",
+            "view review details and history for their assigned projects",
+            "see reviewer assignments and schedules",
+        ],
+        cannot: ["conduct reviews", "manage users", "create projects", "comment on reviews"],
+    },
+    REVIEWER: {
+        can: [
+            "conduct QA reviews by filling out review forms",
+            "schedule, defer, or put reviews on hold",
+            "submit reviews with health status",
+            "view their Reviewer Dashboard with assigned projects",
+        ],
+        cannot: ["manage users", "create projects or forms", "view other users' reviews", "comment on reviews"],
+    },
+    PM: {
+        can: [
+            "view their PM Dashboard",
+            "view project status and review outcomes for assigned projects",
+        ],
+        cannot: ["conduct reviews", "manage users", "create or edit projects", "comment on reviews"],
+    },
+    DEV_ARCHITECT: {
+        can: [
+            "view the Dev Architect Dashboard",
+            "view architecture-related review results for assigned projects",
+        ],
+        cannot: ["conduct reviews", "manage users", "create projects", "comment on reviews"],
+    },
+    CONTACT_PERSON: {
+        can: [
+            "view the Contact Person Dashboard",
+            "view assigned projects and their review history",
+        ],
+        cannot: ["conduct or manage reviews", "comment on reviews", "manage users or projects"],
+    },
+    DIRECTOR: {
+        can: [
+            "view the Director Dashboard with executive project health overview",
+            "comment on reviews",
+            "view reports",
+        ],
+        cannot: ["manage users", "create or delete projects", "conduct reviews", "access system settings"],
+    },
+    GUEST: {
+        can: ["view basic information in read-only mode"],
+        cannot: ["conduct reviews", "manage anything", "comment on reviews", "view reports"],
+    },
+};
+
 function getRoleContext(roles: string[]): string {
     if (!roles || roles.length === 0) return "";
-    return `\n\nThe user you are helping has the following roles: ${roles.join(", ")}. Tailor your answers to be relevant to what they can do in the app.`;
+
+    const lines: string[] = [
+        `\n\n## CURRENT USER CONTEXT`,
+        `The user you are helping has the following roles: **${roles.join(", ")}**.`,
+        ``,
+        `Based on their roles, here is exactly what they CAN and CANNOT do. Always tailor your answers to this — never tell them they can do something outside their permissions:`,
+    ];
+
+    for (const role of roles) {
+        const perms = ROLE_PERMISSIONS[role];
+        if (!perms) continue;
+        lines.push(`\n### ${role}`);
+        if (perms.can.length) lines.push(`**Can:** ${perms.can.join("; ")}.`);
+        if (perms.cannot.length) lines.push(`**Cannot:** ${perms.cannot.join("; ")}.`);
+    }
+
+    lines.push(`\nIMPORTANT: If the user asks how to do something they don't have access to (based on the above), politely tell them they don't have permission for that action with their current role, and suggest they contact their Admin or QA Head if they need access.`);
+
+    return lines.join("\n");
 }
+
 
 export async function POST(req: NextRequest) {
     const session = await getSession();
