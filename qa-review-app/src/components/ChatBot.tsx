@@ -36,33 +36,38 @@ export function ChatBot() {
     // Hide on login page
     const isLoginPage = pathname === "/";
 
-    // Load from localStorage on mount — re-runs whenever the logged-in user changes
+    // 1. Load from localStorage when user.id changes
     useEffect(() => {
+        // Reset hydration and messages immediately on user change/logout
+        setIsHydrated(false);
+        setMessages([]);
+
         if (!user?.id) return;
-        setIsHydrated(true);
+
         try {
             const stored = localStorage.getItem(getStorageKey(user.id));
             if (stored) {
                 const parsed = JSON.parse(stored) as Message[];
-                // Only restore if the array has valid entries
-                setMessages(Array.isArray(parsed) ? parsed : []);
-            } else {
-                // No history for this user — clear any stale messages from a previous user
-                setMessages([]);
+                if (Array.isArray(parsed)) {
+                    setMessages(parsed);
+                }
             }
-        } catch {
-            setMessages([]);
+        } catch (e) {
+            console.error("Failed to load chat history", e);
+        } finally {
+            // Mark as hydrated only after load attempt finishes
+            setIsHydrated(true);
         }
     }, [user?.id]);
 
-    // Persist to localStorage whenever messages change
+    // 2. Save to localStorage ONLY when hydrated and messages change
     useEffect(() => {
         if (!isHydrated || !user?.id) return;
         try {
             const toStore = messages.slice(-MAX_STORED_MESSAGES);
             localStorage.setItem(getStorageKey(user.id), JSON.stringify(toStore));
-        } catch {
-            // ignore storage errors
+        } catch (e) {
+            console.error("Failed to save chat history", e);
         }
     }, [messages, isHydrated, user?.id]);
 
