@@ -213,7 +213,7 @@ export default function ReviewerDashboard() {
                                             const currentStatus = staged?.status || review.status;
                                             const isScheduled = review.status === 'SCHEDULED';
                                             const isPending = review.status === 'PENDING';
-                                            const isTerminal = ["SUBMITTED", "DEFERRED", "ON_HOLD", "PROJECT_ENDED"].includes(review.status);
+                                            const isTerminal = ["SUBMITTED", "DEFERRED", "ON_HOLD", "PROJECT_ENDED", "NOT_COMPLETED"].includes(review.status);
                                             const isPrimaryReviewer = review.reviewerId === user.id;
                                             const allowStatusChange = isPending && isPrimaryReviewer;
 
@@ -241,6 +241,7 @@ export default function ReviewerDashboard() {
                                                                 review.status === 'SUBMITTED' ? 'bg-green-200 text-green-900 dark:bg-green-900/40 dark:text-green-300' :
                                                                 review.status === 'DEFERRED' ? 'bg-orange-200 text-orange-900 dark:bg-orange-900/40 dark:text-orange-300' :
                                                                 review.status === 'ON_HOLD' ? 'bg-purple-200 text-purple-900 dark:bg-purple-900/40 dark:text-purple-300' :
+                                                                review.status === 'NOT_COMPLETED' ? 'bg-orange-200 text-orange-900 dark:bg-orange-900/40 dark:text-orange-300' :
                                                                 'bg-red-200 text-red-900 dark:bg-red-900/40 dark:text-red-300'
                                                             }`}>
                                                                 {review.status?.replace('_', ' ')}
@@ -270,7 +271,8 @@ export default function ReviewerDashboard() {
                                                                     Reason: {
                                                                         review.status === 'DEFERRED' ? (review.deferredReason || 'No reason provided') :
                                                                         review.status === 'ON_HOLD' ? (review.onHoldReason || 'No reason provided') :
-                                                                        review.status === 'PROJECT_ENDED' ? (review.endedReason || 'No reason provided') : '-'
+                                                                        review.status === 'PROJECT_ENDED' ? (review.endedReason || 'No reason provided') :
+                                                                        review.status === 'NOT_COMPLETED' ? (review.notCompletedReason || 'No reason provided') : '-'
                                                                     }
                                                                 </div>
                                                             )}

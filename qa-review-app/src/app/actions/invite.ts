@@ -39,7 +39,7 @@ export async function sendProjectInvites(projectId: string) {
     let emailCount = 0;
 
     // Filter pending reviews in-memory
-    const pendingReviews = project.reviews.filter(r => r.status !== "SUBMITTED");
+    const pendingReviews = project.reviews.filter(r => r.status === "PENDING" || r.status === "SCHEDULED");
     const totalReviewsCount = project.reviews.length;
 
     // If NO pending reviews exist, automatically create one so the reviewer can schedule it
