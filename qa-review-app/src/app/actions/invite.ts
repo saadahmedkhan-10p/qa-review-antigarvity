@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { sendEmail, emailTemplates } from "@/lib/email";
 import { requireRole } from "@/lib/withAuth";
+import { revalidatePath } from "next/cache";
 
 export async function sendProjectInvites(projectId: string) {
     // Auth matrix: requires ADMIN or QA_HEAD
@@ -127,6 +128,10 @@ export async function sendProjectInvites(projectId: string) {
         }
     }
 
+
+    revalidatePath("/admin/reviews");
+    revalidatePath("/admin/projects");
+    revalidatePath("/reviewer/dashboard");
 
     return { success: true, count: emailCount };
 }
