@@ -22,7 +22,17 @@ export default async function AdminReviewsPage({ searchParams }: PageProps) {
             project: {
                 select: {
                     name: true,
-                    type: true
+                    type: true,
+                    reviewer: {
+                        select: {
+                            name: true
+                        }
+                    },
+                    secondaryReviewer: {
+                        select: {
+                            name: true
+                        }
+                    }
                 }
             },
             reviewer: {

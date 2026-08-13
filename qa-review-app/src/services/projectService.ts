@@ -178,7 +178,7 @@ export class ProjectService {
                         await prisma.review.updateMany({
                             where: {
                                 projectId: id,
-                                status: { in: ['PENDING', 'SCHEDULED'] }
+                                status: { not: 'SUBMITTED' }
                             },
                             data: updateReviewData
                         });

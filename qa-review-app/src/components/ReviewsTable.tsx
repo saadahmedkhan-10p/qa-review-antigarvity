@@ -25,10 +25,16 @@ interface Review {
     project: {
         name: string;
         type?: string;
+        reviewer?: {
+            name: string;
+        } | null;
+        secondaryReviewer?: {
+            name: string;
+        } | null;
     };
-    reviewer: {
+    reviewer?: {
         name: string;
-    };
+    } | null;
     secondaryReviewer?: {
         name: string;
     } | null;
@@ -272,10 +278,10 @@ export function ReviewsTable({ reviews, initialType = 'ALL' }: { reviews: Review
                                             {review.project.name}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            {review.reviewer?.name || '-'}
+                                            {(review.status !== 'SUBMITTED' ? review.project?.reviewer?.name : null) || review.reviewer?.name || review.project?.reviewer?.name || '-'}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            {review.secondaryReviewer?.name || '-'}
+                                            {(review.status !== 'SUBMITTED' ? review.project?.secondaryReviewer?.name : null) || review.secondaryReviewer?.name || review.project?.secondaryReviewer?.name || '-'}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                                             <span className={`px-2 inline-flex text-xs leading-5 font-bold rounded-full uppercase tracking-tight ${review.status !== 'SUBMITTED' ? 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400' :
