@@ -87,6 +87,8 @@ export async function updateProject(projectId: string, data: any) {
     try {
         await ProjectService.update(projectId, parsed.data, user);
         revalidatePath("/admin/projects");
+        revalidatePath("/admin/reviews");
+        revalidatePath("/reviewer/dashboard");
         return { success: true };
     } catch (error: unknown) {
         // L-03: Log full error server-side; return generic message to client

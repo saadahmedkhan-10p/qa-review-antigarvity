@@ -166,6 +166,25 @@ export class ProjectService {
                 const reviewersChanged = oldProject.reviewerId !== project.reviewerId;
                 const secondaryReviewersChanged = oldProject.secondaryReviewerId !== project.secondaryReviewerId;
 
+                if (reviewersChanged || secondaryReviewersChanged) {
+                    const updateReviewData: any = {};
+                    if (reviewersChanged && project.reviewerId) {
+                        updateReviewData.reviewerId = project.reviewerId;
+                    }
+                    if (secondaryReviewersChanged) {
+                        updateReviewData.secondaryReviewerId = project.secondaryReviewerId;
+                    }
+                    if (Object.keys(updateReviewData).length > 0) {
+                        await prisma.review.updateMany({
+                            where: {
+                                projectId: id,
+                                status: { in: ['PENDING', 'SCHEDULED'] }
+                            },
+                            data: updateReviewData
+                        });
+                    }
+                }
+
                 if (leadsChanged || reviewersChanged || secondaryReviewersChanged) {
                     await this.handleProjectAssignmentsEmails(project as any, oldProject as any);
                 }

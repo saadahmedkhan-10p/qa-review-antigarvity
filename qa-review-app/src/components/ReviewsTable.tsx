@@ -29,6 +29,9 @@ interface Review {
     reviewer: {
         name: string;
     };
+    secondaryReviewer?: {
+        name: string;
+    } | null;
     healthStatus: string | null;
     createdAt: string;
 }
@@ -195,7 +198,15 @@ export function ReviewsTable({ reviews, initialType = 'ALL' }: { reviews: Review
                                     onClick={() => handleSort('reviewer.name')}
                                 >
                                     <div className="flex items-center">
-                                        Reviewer <SortIcon direction={sortConfig.key === 'reviewer.name' ? sortConfig.direction : null} active={sortConfig.key === 'reviewer.name'} />
+                                        Reviewer (P) <SortIcon direction={sortConfig.key === 'reviewer.name' ? sortConfig.direction : null} active={sortConfig.key === 'reviewer.name'} />
+                                    </div>
+                                </th>
+                                <th
+                                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+                                    onClick={() => handleSort('secondaryReviewer.name')}
+                                >
+                                    <div className="flex items-center">
+                                        Reviewer (S) <SortIcon direction={sortConfig.key === 'secondaryReviewer.name' ? sortConfig.direction : null} active={sortConfig.key === 'secondaryReviewer.name'} />
                                     </div>
                                 </th>
                                 <th
@@ -233,6 +244,9 @@ export function ReviewsTable({ reviews, initialType = 'ALL' }: { reviews: Review
                                     <ColumnFilter value={searchFilters['reviewer.name']} onChange={(val) => handleSearch('reviewer.name', val)} placeholder="Search..." />
                                 </th>
                                 <th className="px-6 py-2">
+                                    <ColumnFilter value={searchFilters['secondaryReviewer.name']} onChange={(val) => handleSearch('secondaryReviewer.name', val)} placeholder="Search..." />
+                                </th>
+                                <th className="px-6 py-2">
                                     <ColumnFilter value={searchFilters['healthStatus']} onChange={(val) => handleSearch('healthStatus', val)} placeholder="Search..." />
                                 </th>
                                 <th className="px-6 py-2">
@@ -247,7 +261,7 @@ export function ReviewsTable({ reviews, initialType = 'ALL' }: { reviews: Review
                         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                             {paginatedReviews.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400 text-lg">
+                                    <td colSpan={7} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400 text-lg">
                                         No reviews found matching your criteria
                                     </td>
                                 </tr>
@@ -258,7 +272,10 @@ export function ReviewsTable({ reviews, initialType = 'ALL' }: { reviews: Review
                                             {review.project.name}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            {review.reviewer.name}
+                                            {review.reviewer?.name || '-'}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                            {review.secondaryReviewer?.name || '-'}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                                             <span className={`px-2 inline-flex text-xs leading-5 font-bold rounded-full uppercase tracking-tight ${review.status !== 'SUBMITTED' ? 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400' :

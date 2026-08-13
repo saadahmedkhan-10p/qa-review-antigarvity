@@ -29,6 +29,11 @@ export default async function AdminReviewsPage({ searchParams }: PageProps) {
                 select: {
                     name: true
                 }
+            },
+            secondaryReviewer: {
+                select: {
+                    name: true
+                }
             }
         },
         where: typeFilter ? {
