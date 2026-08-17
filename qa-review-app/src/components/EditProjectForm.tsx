@@ -167,7 +167,7 @@ export function EditProjectForm({
                     required
                     className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm p-3 text-gray-900 dark:text-white dark:bg-gray-700 focus:ring-indigo-500 focus:border-indigo-500"
                 >
-                    <option value="">-- Select QA Contact --</option>
+                    <option value="">-- None --</option>
                     {contactPersons.map((c: any) => (
                         <option key={c.id} value={c.id}>
                             {c.name}

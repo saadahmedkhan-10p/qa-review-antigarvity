@@ -36,8 +36,17 @@ interface Review {
         id: string;
         name: string;
         type?: string;
+        reviewer?: {
+            name: string;
+        } | null;
+        secondaryReviewer?: {
+            name: string;
+        } | null;
     };
     reviewer: {
+        name: string;
+    } | null;
+    secondaryReviewer?: {
         name: string;
     } | null;
     form: {
