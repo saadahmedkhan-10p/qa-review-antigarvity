@@ -4,10 +4,14 @@ import { prisma } from "@/lib/prisma";
 import { sendEmail, emailTemplates } from "@/lib/email";
 import { requireRole } from "@/lib/withAuth";
 import { revalidatePath } from "next/cache";
+import { syncAllPendingReviewers } from "@/lib/syncReviewers";
 
 export async function sendProjectInvites(projectId: string) {
     // Auth matrix: requires ADMIN or QA_HEAD
     await requireRole("ADMIN", "QA_HEAD");
+
+    // Sync any out-of-date reviewer assignments on non-submitted reviews first
+    await syncAllPendingReviewers(projectId);
 
     // Get project with all related data
     const project = await prisma.project.findUnique({

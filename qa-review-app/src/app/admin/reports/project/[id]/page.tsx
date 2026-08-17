@@ -2,14 +2,19 @@ import { prisma } from "@/lib/prisma";
 import ProjectReportView from "./ProjectReportView";
 import { notFound } from "next/navigation";
 
+import { syncAllPendingReviewers } from "@/lib/syncReviewers";
+
 export default async function ProjectReportPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
+    await syncAllPendingReviewers(id);
+
     const project = await prisma.project.findUnique({
         where: { id },
         include: {
             reviews: {
                 include: {
                     reviewer: true,
+                    secondaryReviewer: true,
                     form: true
                 },
                 orderBy: {
@@ -17,6 +22,8 @@ export default async function ProjectReportPage({ params }: { params: Promise<{ 
                 }
             },
             lead: true,
+            reviewer: true,
+            secondaryReviewer: true,
             contactPerson: true
         }
     });

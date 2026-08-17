@@ -530,7 +530,16 @@ export function ReportsView({ reviews, pageTitle, typeFilter, initialMonth, init
                                                     )}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                                    {review.reviewer?.name || 'Unassigned'}
+                                                    <div>
+                                                        <span className="font-medium text-gray-900 dark:text-white">
+                                                            {(review.status !== 'SUBMITTED' ? review.project?.reviewer?.name : null) || review.reviewer?.name || review.project?.reviewer?.name || 'Unassigned'}
+                                                        </span>
+                                                        {((review.status !== 'SUBMITTED' ? review.project?.secondaryReviewer?.name : null) || review.secondaryReviewer?.name || review.project?.secondaryReviewer?.name) && (
+                                                            <div className="text-xs text-purple-600 dark:text-purple-400 font-semibold">
+                                                                S: {(review.status !== 'SUBMITTED' ? review.project?.secondaryReviewer?.name : null) || review.secondaryReviewer?.name || review.project?.secondaryReviewer?.name}
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                                     {review.form.title}

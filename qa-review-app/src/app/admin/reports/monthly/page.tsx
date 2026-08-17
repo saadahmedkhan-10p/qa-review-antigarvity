@@ -6,13 +6,24 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 
+import { syncAllPendingReviewers } from "@/lib/syncReviewers";
+
 export default async function MonthlyReportPage() {
+    // Sync review record assignments with project assignments
+    await syncAllPendingReviewers();
+
     // Fetch all reviews to aggregate on client
     // In a real app, we might want to filter by year here
     const reviews = await prisma.review.findMany({
         include: {
-            project: true,
+            project: {
+                include: {
+                    reviewer: true,
+                    secondaryReviewer: true
+                }
+            },
             reviewer: true,
+            secondaryReviewer: true,
             form: true
         },
         orderBy: {

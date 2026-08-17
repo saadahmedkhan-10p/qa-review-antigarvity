@@ -80,10 +80,15 @@ export async function updateReviewStatus(reviewId: string, status: string, optio
 }
 
 
+import { syncAllPendingReviewers } from "@/lib/syncReviewers";
+
 // H-04: reviewerId param removed — always derived from the authenticated session
 export async function getReviewerProjects() {
     const caller = await requireAuth();
     const reviewerId = caller.id;
+
+    // Ensure database records for non-submitted reviews match the project's current reviewer assignments
+    await syncAllPendingReviewers();
 
     console.log('[getReviewerProjects] Called for authenticated user:', reviewerId);
 

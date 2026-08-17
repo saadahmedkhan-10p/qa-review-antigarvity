@@ -10,7 +10,12 @@ interface PageProps {
     searchParams: Promise<{ type?: string; month?: string; year?: string }>;
 }
 
+import { syncAllPendingReviewers } from "@/lib/syncReviewers";
+
 async function getReviews(typeFilter?: string, userId?: string, userRoles?: string[]) {
+    // Ensure review record assignments match current project assignments
+    await syncAllPendingReviewers();
+
     // Build the where clause
     const whereClause: any = {};
 
@@ -31,8 +36,14 @@ async function getReviews(typeFilter?: string, userId?: string, userRoles?: stri
 
     const reviews = await prisma.review.findMany({
         include: {
-            project: true,
+            project: {
+                include: {
+                    reviewer: true,
+                    secondaryReviewer: true
+                }
+            },
             reviewer: true,
+            secondaryReviewer: true,
             form: true
         },
         where: Object.keys(whereClause).length > 0 ? whereClause : undefined

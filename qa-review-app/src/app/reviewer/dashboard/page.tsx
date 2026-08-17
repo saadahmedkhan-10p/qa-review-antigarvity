@@ -214,7 +214,7 @@ export default function ReviewerDashboard() {
                                             const isScheduled = review.status === 'SCHEDULED';
                                             const isPending = review.status === 'PENDING';
                                             const isTerminal = ["SUBMITTED", "DEFERRED", "ON_HOLD", "PROJECT_ENDED", "NOT_COMPLETED"].includes(review.status);
-                                            const isPrimaryReviewer = review.reviewerId === user.id;
+                                            const isPrimaryReviewer = review.status !== 'SUBMITTED' ? (project.reviewerId === user.id || review.reviewerId === user.id) : review.reviewerId === user.id;
                                             const allowStatusChange = isPending && isPrimaryReviewer;
 
                                             return (
