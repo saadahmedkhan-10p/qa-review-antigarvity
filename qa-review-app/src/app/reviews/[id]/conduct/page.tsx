@@ -109,6 +109,37 @@ export default function ConductReviewPage({ params }: { params: Promise<{ id: st
         }
     }
 
+    const isOptionRequiringReason = (q: any, val: any) => {
+        if (!val) return false;
+        
+        // Radio check
+        if (q.type === 'radio') {
+            const strVal = typeof val === 'string' ? val.trim().toLowerCase() : String(val).toLowerCase();
+            if (q.requireReasonFor && Array.isArray(q.requireReasonFor)) {
+                if (q.requireReasonFor.some((r: string) => r.trim().toLowerCase() === strVal)) {
+                    return true;
+                }
+            }
+            // Fallback for Teghub question if not yet re-saved in form builder
+            const label = (q.label || q.text || "").toLowerCase();
+            if (label.includes("teghub") && strVal === "no") {
+                return true;
+            }
+        }
+        
+        // Checkbox check
+        if (q.type === 'checkbox' && Array.isArray(val)) {
+            if (q.requireReasonFor && Array.isArray(q.requireReasonFor)) {
+                const lowerReasons = q.requireReasonFor.map((r: string) => r.trim().toLowerCase());
+                if (val.some((v: string) => lowerReasons.includes(String(v).trim().toLowerCase()))) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -133,15 +164,8 @@ export default function ConductReviewPage({ params }: { params: Promise<{ id: st
 
         // Check if any selected option requires a reason and whether reason is provided
         const missingReasons = allQuestions.filter(q => {
-            if (!q.requireReasonFor || q.requireReasonFor.length === 0) return false;
             const val = answers[q.id];
-            let isRequiringReason = false;
-            if (q.type === 'radio') {
-                isRequiringReason = q.requireReasonFor.includes(val);
-            } else if (q.type === 'checkbox' && Array.isArray(val)) {
-                isRequiringReason = val.some((opt: string) => q.requireReasonFor.includes(opt));
-            }
-            if (isRequiringReason) {
+            if (isOptionRequiringReason(q, val)) {
                 const reason = answers[`${q.id}_reason`];
                 return !reason || (typeof reason === 'string' && reason.trim() === "");
             }
@@ -326,9 +350,7 @@ export default function ConductReviewPage({ params }: { params: Promise<{ id: st
 
                                             {/* Conditional Reason / Explanation Textbox */}
                                             {(() => {
-                                                const isRadioRequiringReason = q.type === "radio" && q.requireReasonFor && q.requireReasonFor.includes(answers[q.id]);
-                                                const isCheckboxRequiringReason = q.type === "checkbox" && q.requireReasonFor && Array.isArray(answers[q.id]) && answers[q.id].some((opt: string) => q.requireReasonFor.includes(opt));
-                                                if (isRadioRequiringReason || isCheckboxRequiringReason) {
+                                                if (isOptionRequiringReason(q, answers[q.id])) {
                                                     return (
                                                         <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 rounded-r-xl space-y-2 animate-fadeIn">
                                                             <label className="block text-sm font-bold text-amber-900 dark:text-amber-200">
