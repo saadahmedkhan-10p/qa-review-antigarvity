@@ -241,6 +241,42 @@ export default function AdminReviewPage({ params }: { params: Promise<{ id: stri
                                                     ))}
                                                 </div>
                                             )}
+
+                                            {/* Reason / Explanation — shown if a reason was submitted or if current selection requires one */}
+                                            {(() => {
+                                                const val = answers[q.id];
+                                                const reasonKey = `${q.id}_reason`;
+                                                const hasStoredReason = !!answers[reasonKey];
+
+                                                // Check if current selection requires a reason
+                                                let requiresReason = false;
+                                                if (q.type === 'radio' && q.requireReasonFor && Array.isArray(q.requireReasonFor)) {
+                                                    requiresReason = q.requireReasonFor.some((r: string) => r.trim().toLowerCase() === String(val || '').trim().toLowerCase());
+                                                } else if (q.type === 'radio' && (q.label || q.text || '').toLowerCase().includes('teghub')) {
+                                                    requiresReason = String(val || '').trim().toLowerCase() === 'no';
+                                                } else if (q.type === 'checkbox' && q.requireReasonFor && Array.isArray(q.requireReasonFor) && Array.isArray(val)) {
+                                                    const lowerReasons = q.requireReasonFor.map((r: string) => r.trim().toLowerCase());
+                                                    requiresReason = val.some((v: string) => lowerReasons.includes(String(v).trim().toLowerCase()));
+                                                }
+
+                                                if (requiresReason || hasStoredReason) {
+                                                    return (
+                                                        <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 rounded-r-xl space-y-2">
+                                                            <label className="block text-sm font-bold text-amber-900 dark:text-amber-200">
+                                                                Reason / Explanation {requiresReason && <span className="text-red-500">*</span>}
+                                                            </label>
+                                                            <textarea
+                                                                rows={3}
+                                                                className="w-full p-3 border border-amber-300 dark:border-amber-700 bg-white dark:bg-gray-800 rounded-lg text-gray-900 dark:text-white text-sm font-medium focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all placeholder-gray-400 resize-none"
+                                                                placeholder="Reason / explanation provided by the reviewer..."
+                                                                value={answers[reasonKey] || ""}
+                                                                onChange={(e) => handleAnswerChange(reasonKey, e.target.value)}
+                                                            />
+                                                        </div>
+                                                    );
+                                                }
+                                                return null;
+                                            })()}
                                         </div>
                                     ))}
                                 </div>
