@@ -226,10 +226,14 @@ export async function createForm(title: string, questions: any, projectType: str
         questions,
         projectType: projectType || null,
     });
-    if (!parsed.success) throw new Error("Invalid input");
+    if (!parsed.success) {
+        console.error("createForm validation failed:", parsed.error);
+        throw new Error("Invalid input: " + parsed.error.issues.map(i => i.message).join(", "));
+    }
 
     await ReviewService.createForm(parsed.data as { title: string, questions: any, projectType: string | null }, user);
     revalidatePath("/admin/forms");
+    revalidatePath("/reviews", "layout");
 }
 
 export async function updateForm(id: string, title: string, questions: any, projectType: string | null) {
@@ -241,10 +245,15 @@ export async function updateForm(id: string, title: string, questions: any, proj
         questions,
         projectType: projectType || null,
     });
-    if (!parsed.success) throw new Error("Invalid input");
+    if (!parsed.success) {
+        console.error("updateForm validation failed:", parsed.error);
+        throw new Error("Invalid input: " + parsed.error.issues.map(i => i.message).join(", "));
+    }
 
     await ReviewService.updateForm(id, parsed.data as { title: string, questions: any, projectType: string | null }, user);
     revalidatePath("/admin/forms");
+    revalidatePath(`/admin/forms/${id}/edit`);
+    revalidatePath("/reviews", "layout");
 }
 
 export async function deleteForm(formData: FormData) {

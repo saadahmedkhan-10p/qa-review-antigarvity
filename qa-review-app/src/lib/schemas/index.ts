@@ -63,6 +63,8 @@ export const formQuestionSchema = z.object({
     // L-02: Cap label and options to prevent DB bloat / stored-XSS amplification
     label: z.string().min(1).max(500),
     options: z.array(z.string().max(200)).max(20).optional(),
+    requireReasonFor: z.array(z.string().max(200)).optional(),
+    reasonPlaceholder: z.string().max(200).optional(),
     required: z.boolean().default(true),
 });
 
