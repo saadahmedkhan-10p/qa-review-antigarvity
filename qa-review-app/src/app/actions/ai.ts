@@ -76,7 +76,8 @@ export async function generateAIAnalysis(reviewId: string) {
             if (answer !== undefined && answer !== null && answer !== "") {
                 const label = q.label || q.text || "Question";
                 const formattedAnswer = Array.isArray(answer) ? answer.join(", ") : answer;
-                prompt += `Q: ${label}\nA: ${formattedAnswer}\n\n`;
+                const reason = answers[`${q.id}_reason`];
+                prompt += `Q: ${label}\nA: ${formattedAnswer}${reason ? ` (Reason/Explanation: ${reason})` : ''}\n\n`;
                 qaCount++;
             }
         });

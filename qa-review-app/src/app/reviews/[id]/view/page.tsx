@@ -293,6 +293,17 @@ export default function ViewReviewPage({ params }: { params: Promise<{ id: strin
                                                 )}
                                             </div>
                                         )}
+
+                                        {answers[`${q.id}_reason`] && (
+                                            <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 rounded-r-lg">
+                                                <span className="text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-200 block">
+                                                    Reason / Explanation:
+                                                </span>
+                                                <p className="text-sm text-gray-800 dark:text-gray-200 mt-1 whitespace-pre-wrap font-medium">
+                                                    {answers[`${q.id}_reason`]}
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>

@@ -10,6 +10,7 @@ export type Question = {
     type: "text" | "radio" | "checkbox";
     label: string;
     options?: string[];
+    requireReasonFor?: string[];
 };
 
 export type Section = {
@@ -142,9 +143,11 @@ export function FormEditor({
                 ...s,
                 questions: s.questions.map(q => {
                     if (q.id === qId && q.options) {
+                        const oldVal = q.options[idx];
                         const newOptions = [...q.options];
                         newOptions[idx] = value;
-                        return { ...q, options: newOptions };
+                        const newRequireReasonFor = (q.requireReasonFor || []).map(r => r === oldVal ? value : r);
+                        return { ...q, options: newOptions, requireReasonFor: newRequireReasonFor };
                     }
                     return q;
                 })
@@ -159,9 +162,28 @@ export function FormEditor({
                 ...s,
                 questions: s.questions.map(q => {
                     if (q.id === qId && q.options) {
-                        return { ...q, options: q.options.filter((_, i) => i !== idx) };
+                        const removedVal = q.options[idx];
+                        const newRequireReasonFor = (q.requireReasonFor || []).filter(r => r !== removedVal);
+                        return { ...q, options: q.options.filter((_, i) => i !== idx), requireReasonFor: newRequireReasonFor };
                     }
                     return q;
+                })
+            };
+        }));
+    };
+
+    const toggleRequireReason = (sectionId: string, qId: string, optionValue: string) => {
+        setSections(sections.map(s => {
+            if (s.id !== sectionId) return s;
+            return {
+                ...s,
+                questions: s.questions.map(q => {
+                    if (q.id !== qId) return q;
+                    const current = q.requireReasonFor || [];
+                    const updated = current.includes(optionValue)
+                        ? current.filter(val => val !== optionValue)
+                        : [...current, optionValue];
+                    return { ...q, requireReasonFor: updated };
                 })
             };
         }));
@@ -307,16 +329,27 @@ export function FormEditor({
                                             <div className="ml-4 space-y-2">
                                                 <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Options:</p>
                                                 {q.options?.map((opt, idx) => (
-                                                    <div key={idx} className="flex gap-2">
+                                                    <div key={idx} className="flex items-center gap-2">
                                                         <input
                                                             value={opt}
                                                             onChange={(e) => updateOption(section.id, q.id, idx, e.target.value)}
                                                             className="block flex-1 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm p-1.5 text-xs text-gray-900 dark:text-white dark:bg-gray-700"
                                                             placeholder={`Option ${idx + 1}`}
                                                         />
+                                                        <label className="flex items-center gap-1.5 text-[11px] text-gray-600 dark:text-gray-300 cursor-pointer select-none bg-gray-100 dark:bg-gray-700/50 px-2 py-1.5 rounded border border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={(q.requireReasonFor || []).includes(opt)}
+                                                                onChange={() => toggleRequireReason(section.id, q.id, opt)}
+                                                                disabled={!opt.trim()}
+                                                                className="rounded text-indigo-600 focus:ring-indigo-500 h-3.5 w-3.5"
+                                                            />
+                                                            <span>Require reason if selected</span>
+                                                        </label>
                                                         <button
                                                             onClick={() => removeOption(section.id, q.id, idx)}
-                                                            className="text-red-500 text-xs px-1"
+                                                            className="text-red-500 hover:text-red-700 text-xs px-1 font-bold"
+                                                            title="Remove option"
                                                         >
                                                             ×
                                                         </button>

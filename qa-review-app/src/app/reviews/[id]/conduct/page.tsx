@@ -131,14 +131,34 @@ export default function ConductReviewPage({ params }: { params: Promise<{ id: st
             return val === undefined || val === null || (typeof val === 'string' && val.trim() === "");
         });
 
+        // Check if any selected option requires a reason and whether reason is provided
+        const missingReasons = allQuestions.filter(q => {
+            if (!q.requireReasonFor || q.requireReasonFor.length === 0) return false;
+            const val = answers[q.id];
+            let isRequiringReason = false;
+            if (q.type === 'radio') {
+                isRequiringReason = q.requireReasonFor.includes(val);
+            } else if (q.type === 'checkbox' && Array.isArray(val)) {
+                isRequiringReason = val.some((opt: string) => q.requireReasonFor.includes(opt));
+            }
+            if (isRequiringReason) {
+                const reason = answers[`${q.id}_reason`];
+                return !reason || (typeof reason === 'string' && reason.trim() === "");
+            }
+            return false;
+        });
+
         // Also check observations and recommendedActions
         const isObservationsEmpty = !summary.observations || summary.observations.trim() === "";
         const isRecActionsEmpty = !summary.recommendedActions || summary.recommendedActions.trim() === "";
 
-        if (unanswered.length > 0 || isObservationsEmpty || isRecActionsEmpty) {
+        if (unanswered.length > 0 || missingReasons.length > 0 || isObservationsEmpty || isRecActionsEmpty) {
             const errors: string[] = [];
             if (unanswered.length > 0) {
                 errors.push(...unanswered.map(q => `"${q.label || q.text}"`));
+            }
+            if (missingReasons.length > 0) {
+                errors.push(...missingReasons.map(q => `Reason for "${q.label || q.text}"`));
             }
             if (isObservationsEmpty) {
                 errors.push('"Observations"');
@@ -146,7 +166,7 @@ export default function ConductReviewPage({ params }: { params: Promise<{ id: st
             if (isRecActionsEmpty) {
                 errors.push('"Recommended Actions"');
             }
-            toast.error(`Please answer all mandatory fields: ${errors.join(", ")}`);
+            toast.error(`Please complete all mandatory fields: ${errors.join(", ")}`);
             return;
         }
 
@@ -303,6 +323,30 @@ export default function ConductReviewPage({ params }: { params: Promise<{ id: st
                                                     ))}
                                                 </div>
                                             )}
+
+                                            {/* Conditional Reason / Explanation Textbox */}
+                                            {(() => {
+                                                const isRadioRequiringReason = q.type === "radio" && q.requireReasonFor && q.requireReasonFor.includes(answers[q.id]);
+                                                const isCheckboxRequiringReason = q.type === "checkbox" && q.requireReasonFor && Array.isArray(answers[q.id]) && answers[q.id].some((opt: string) => q.requireReasonFor.includes(opt));
+                                                if (isRadioRequiringReason || isCheckboxRequiringReason) {
+                                                    return (
+                                                        <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 rounded-r-xl space-y-2 animate-fadeIn">
+                                                            <label className="block text-sm font-bold text-amber-900 dark:text-amber-200">
+                                                                Reason / Explanation <span className="text-red-500">*</span>
+                                                            </label>
+                                                            <textarea
+                                                                disabled={isLocked}
+                                                                rows={3}
+                                                                className="w-full p-3 border border-amber-300 dark:border-amber-700 bg-white dark:bg-gray-800 rounded-lg text-gray-900 dark:text-white text-sm font-medium focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all placeholder-gray-400 resize-none disabled:opacity-60"
+                                                                placeholder="Please provide the mandatory reason / explanation..."
+                                                                value={answers[`${q.id}_reason`] || ""}
+                                                                onChange={(e) => handleAnswerChange(`${q.id}_reason`, e.target.value)}
+                                                            />
+                                                        </div>
+                                                    );
+                                                }
+                                                return null;
+                                            })()}
                                         </div>
                                     ))}
                                 </div>
