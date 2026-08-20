@@ -43,9 +43,10 @@ export async function sendProjectInvites(projectId: string) {
 
     let emailCount = 0;
 
-    // Filter pending reviews in-memory
+    // Filter pending/scheduled reviews in-memory
     const pendingReviews = project.reviews.filter(r => r.status === "PENDING" || r.status === "SCHEDULED");
     const totalReviewsCount = project.reviews.length;
+    const isResend = totalReviewsCount > 0;
 
     // If NO pending reviews exist, automatically create one so the reviewer can schedule it
     if (pendingReviews.length === 0) {
@@ -81,6 +82,21 @@ export async function sendProjectInvites(projectId: string) {
         } else {
             return { error: "No pending reviews found and no active form available for this project type. Please ensure a form exists before sending invites." };
         }
+    } else {
+        // If there are existing SCHEDULED reviews, reset them to PENDING so the reviewer can change the status / reschedule
+        for (const review of pendingReviews) {
+            if (review.status === "SCHEDULED") {
+                await prisma.review.update({
+                    where: { id: review.id },
+                    data: {
+                        status: "PENDING",
+                        scheduledDate: null
+                    }
+                });
+                review.status = "PENDING";
+                review.scheduledDate = null;
+            }
+        }
     }
 
     // Now send "Review Invites" (Scheduling emails) for all reviews found or created
@@ -93,7 +109,10 @@ export async function sendProjectInvites(projectId: string) {
                 project.name,
                 review.form.title,
                 new Date().toLocaleDateString(),
-                project.secondaryReviewer?.name
+                project.secondaryReviewer?.name,
+                false, // isSecondary
+                false, // isLead
+                isResend
             )
         );
         emailCount++;
@@ -108,7 +127,9 @@ export async function sendProjectInvites(projectId: string) {
                     review.form.title,
                     new Date().toLocaleDateString(),
                     project.reviewer.name,
-                    true // isSecondary
+                    true, // isSecondary
+                    false, // isLead
+                    isResend
                 )
             );
             emailCount++;
@@ -125,7 +146,8 @@ export async function sendProjectInvites(projectId: string) {
                     new Date().toLocaleDateString(),
                     `${project.reviewer.name}${project.secondaryReviewer ? ` & ${project.secondaryReviewer.name}` : ''}`,
                     false, // isSecondary
-                    true   // isLead
+                    true,   // isLead
+                    isResend
                 )
             );
             emailCount++;

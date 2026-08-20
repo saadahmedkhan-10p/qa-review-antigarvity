@@ -32,12 +32,17 @@ export async function updateReviewStatus(reviewId: string, status: string, optio
 
         if (status === 'SCHEDULED' && options?.date) {
             data.scheduledDate = options.date;
-        } else if (status === 'DEFERRED' && options?.reason) {
-            data.deferredReason = options.reason;
-        } else if (status === 'ON_HOLD' && options?.reason) {
-            data.onHoldReason = options.reason;
-        } else if (status === 'PROJECT_ENDED' && options?.reason) {
-            data.endedReason = options.reason;
+        } else if (status === 'PENDING') {
+            data.scheduledDate = null;
+        } else if (status === 'DEFERRED') {
+            data.deferredReason = options?.reason || null;
+            data.scheduledDate = null;
+        } else if (status === 'ON_HOLD') {
+            data.onHoldReason = options?.reason || null;
+            data.scheduledDate = null;
+        } else if (status === 'PROJECT_ENDED') {
+            data.endedReason = options?.reason || null;
+            data.scheduledDate = null;
         }
 
         const review = await prisma.review.update({

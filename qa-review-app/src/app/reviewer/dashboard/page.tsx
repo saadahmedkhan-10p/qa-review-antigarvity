@@ -215,7 +215,7 @@ export default function ReviewerDashboard() {
                                             const isPending = review.status === 'PENDING';
                                             const isTerminal = ["SUBMITTED", "DEFERRED", "ON_HOLD", "PROJECT_ENDED", "NOT_COMPLETED"].includes(review.status);
                                             const isPrimaryReviewer = review.status !== 'SUBMITTED' ? (project.reviewerId === user.id || review.reviewerId === user.id) : review.reviewerId === user.id;
-                                            const allowStatusChange = isPending && isPrimaryReviewer;
+                                            const allowStatusChange = (isPending || isScheduled) && isPrimaryReviewer;
 
                                             return (
                                                 <tr key={project.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-700/20 transition-colors">
@@ -280,7 +280,7 @@ export default function ReviewerDashboard() {
                                                     </td>
                                                     <td className="px-8 py-6">
                                                         <div className="flex flex-col gap-3 max-w-[240px]">
-                                                            {/* If review is pending, allow status updates */}
+                                                            {/* If review is pending or scheduled, allow status updates */}
                                                             {allowStatusChange ? (
                                                                 <div className="flex items-center gap-2">
                                                                     <select
@@ -288,14 +288,17 @@ export default function ReviewerDashboard() {
                                                                         onChange={(e) => handleStagedChange(review.id, { status: e.target.value })}
                                                                         className="flex-1 text-xs font-bold border-2 border-gray-300 dark:border-gray-700 rounded-xl p-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:border-indigo-500 outline-none"
                                                                     >
-                                                                        <option value="PENDING">-- SELECT STATUS --</option>
-                                                                        <option value="SCHEDULED">Schedule Review</option>
+                                                                        <option value={isScheduled ? "SCHEDULED" : "PENDING"}>
+                                                                            {isScheduled ? "SCHEDULED (Change Status)" : "-- SELECT STATUS --"}
+                                                                        </option>
+                                                                        {isScheduled && <option value="PENDING">Reset to Pending</option>}
+                                                                        <option value="SCHEDULED">{isScheduled ? "Reschedule Date" : "Schedule Review"}</option>
                                                                         <option value="DEFERRED">Defer</option>
                                                                         <option value="ON_HOLD">Hold</option>
                                                                         <option value="PROJECT_ENDED">End Project</option>
                                                                     </select>
 
-                                                                    {staged && staged.status !== 'PENDING' && (
+                                                                    {staged && staged.status !== (isScheduled ? 'SCHEDULED' : 'PENDING') && (
                                                                         <button
                                                                             onClick={() => handleConfirmAction(review.id)}
                                                                             className="bg-green-600 hover:bg-green-500 text-white p-2 rounded-lg shadow-lg shadow-green-500/20 transition-all font-black flex-shrink-0"
@@ -308,7 +311,7 @@ export default function ReviewerDashboard() {
                                                                     )}
                                                                 </div>
                                                             ) : (
-                                                                isPending && (
+                                                                (isPending || isScheduled) && (
                                                                     <div className="text-[10px] text-gray-700 dark:text-gray-400 font-bold uppercase tracking-tight bg-gray-200 dark:bg-gray-800 p-2 rounded-lg text-center">
                                                                         Lifecycle managed by primary
                                                                     </div>

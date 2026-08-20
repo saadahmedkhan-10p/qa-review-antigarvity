@@ -161,12 +161,25 @@ export const emailTemplates = {
     `),
   }),
 
-  reviewInvite: (reviewerName: string, projectName: string, formTitle: string, deadline: string, secondaryReviewerName?: string, isSecondary?: boolean, isLead?: boolean) => ({
-    subject: `A monthly QA review assignment request for ${esc(projectName)}`,
+  reviewInvite: (reviewerName: string, projectName: string, formTitle: string, deadline: string, secondaryReviewerName?: string, isSecondary?: boolean, isLead?: boolean, isResend?: boolean) => ({
+    subject: isResend 
+      ? `A monthly QA review assignment request for ${esc(projectName)}`
+      : `A monthly QA review assignment request for ${esc(projectName)}`,
     html: emailWrapper(`Review Assignment: ${esc(projectName)}`, `
       ${UI.h2(`Review Request: ${esc(projectName)}`)}
       ${UI.p(`Hello ${UI.strong(esc(reviewerName))},`)}
-      ${UI.p(isLead ? 'A new review cycle has been initiated for a project you lead.' : isSecondary ? 'A new review cycle has been initiated where you are assigned as an observer/secondary reviewer.' : 'A new review cycle has been initiated for your project.')}
+      ${UI.p(isResend 
+        ? (isLead 
+            ? 'This is an updated review invitation / reminder for a project you lead.' 
+            : isSecondary 
+              ? 'This is an updated review invitation / reminder where you are assigned as an observer/secondary reviewer.' 
+              : 'This is an updated review invitation / reminder for your assigned project. Please log in to review the status, schedule, or conduct your review.')
+        : (isLead 
+            ? 'A QA review assignment has been initiated for a project you lead.' 
+            : isSecondary 
+              ? 'A QA review assignment has been initiated where you are assigned as an observer/secondary reviewer.' 
+              : 'A QA review assignment has been initiated for your project.')
+      )}
       
       ${UI.alertBox(`
         <h3 style="margin-top: 0; margin-bottom: 12px;">${esc(projectName)}</h3>
@@ -182,7 +195,7 @@ export const emailTemplates = {
       `, (!isSecondary && !isLead) ? 'warning' : 'info')}
       
       ${UI.p((isSecondary || isLead) ? 'Please log in to view the project dashboard.' : 'Please log in to schedule and conduct your review.')}
-      ${UI.button(`${APP_URL}/${isLead ? 'lead' : 'reviewer'}/dashboard`, (isSecondary || isLead) ? 'View Dashboard' : 'Schedule Review')}
+      ${UI.button(`${APP_URL}/${isLead ? 'lead' : 'reviewer'}/dashboard`, (isSecondary || isLead) ? 'View Dashboard' : 'Schedule / Conduct Review')}
     `),
   }),
 
