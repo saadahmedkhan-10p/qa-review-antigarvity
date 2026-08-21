@@ -2,7 +2,6 @@
 
 import { use, useEffect, useState } from "react";
 import { getReview, submitReview } from "@/app/actions/review";
-import { generateAIAnalysis } from "@/app/actions/ai";
 import CommentsList from "@/components/comments/CommentsList";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -29,7 +28,6 @@ export default function ConductReviewPage({ params }: { params: Promise<{ id: st
     const isHead = authUser?.roles ? (authUser.roles.includes("ADMIN") || authUser.roles.includes("QA_HEAD")) : false;
 
     const [loading, setLoading] = useState(true);
-    const [generatingAI, setGeneratingAI] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -172,23 +170,13 @@ export default function ConductReviewPage({ params }: { params: Promise<{ id: st
             return false;
         });
 
-        // Also check observations and recommendedActions
-        const isObservationsEmpty = !summary.observations || summary.observations.trim() === "";
-        const isRecActionsEmpty = !summary.recommendedActions || summary.recommendedActions.trim() === "";
-
-        if (unanswered.length > 0 || missingReasons.length > 0 || isObservationsEmpty || isRecActionsEmpty) {
+        if (unanswered.length > 0 || missingReasons.length > 0) {
             const errors: string[] = [];
             if (unanswered.length > 0) {
                 errors.push(...unanswered.map(q => `"${q.label || q.text}"`));
             }
             if (missingReasons.length > 0) {
                 errors.push(...missingReasons.map(q => `Reason for "${q.label || q.text}"`));
-            }
-            if (isObservationsEmpty) {
-                errors.push('"Observations"');
-            }
-            if (isRecActionsEmpty) {
-                errors.push('"Recommended Actions"');
             }
             toast.error(`Please complete all mandatory fields: ${errors.join(", ")}`);
             return;
@@ -229,20 +217,6 @@ export default function ConductReviewPage({ params }: { params: Promise<{ id: st
             handleAnswerChange(qId, [...current, option]);
         } else {
             handleAnswerChange(qId, current.filter((o: string) => o !== option));
-        }
-    };
-
-    const handleGenerateAI = async () => {
-        setGeneratingAI(true);
-        try {
-            const result = await generateAIAnalysis(review.id);
-            setSummary(prev => ({ ...prev, aiAnalysis: result.analysis || "" }));
-            toast.success("AI Analysis generated!");
-        } catch (error: any) {
-            toast.error(error.message || "Failed to generate AI analysis");
-            console.error(error);
-        } finally {
-            setGeneratingAI(false);
         }
     };
 
@@ -376,144 +350,6 @@ export default function ConductReviewPage({ params }: { params: Promise<{ id: st
                         ))}
                     </div>
 
-                    {/* Summary Section - Professional Style */}
-                    <div className="bg-white dark:bg-gray-800 rounded-3xl p-10 shadow-lg border-2 border-gray-200 dark:border-gray-700 space-y-8">
-                        <div className="flex justify-between items-center border-b-2 border-gray-200 dark:border-gray-700 pb-6">
-                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                                <span className="p-3 bg-indigo-600 dark:bg-indigo-500 rounded-xl">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                    </svg>
-                                </span>
-                                Conduct Results
-                            </h2>
-                            {isLocked && (
-                                <span className="px-4 py-2 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-lg font-bold text-xs">
-                                    {review.status.replace("_", " ")}
-                                </span>
-                            )}
-                        </div>
-                            <div className="grid grid-cols-1 gap-8">
-                                <div>
-                                    <label className="block text-sm font-bold uppercase tracking-wider !text-gray-900 dark:!text-white mb-2">Observations <span className="text-red-500">*</span></label>
-                                    <textarea
-                                        disabled={isLocked}
-                                        rows={4}
-                                        className="w-full p-4 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 rounded-xl text-gray-900 dark:text-white font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none placeholder-gray-400 dark:placeholder-gray-500 resize-none disabled:opacity-60"
-                                        placeholder="Key findings from this review..."
-                                        value={summary.observations}
-                                        onChange={(e) => setSummary(prev => ({ ...prev, observations: e.target.value }))}
-                                    />
-                                </div>
-                            </div>
-
-                        <div className="grid grid-cols-1 gap-8">
-                            <div>
-                                <div className="block text-sm font-bold uppercase tracking-wider !text-gray-900 dark:!text-white mb-2">Recommended Actions <span className="text-red-500">*</span></div>
-                                <textarea
-                                    disabled={isLocked}
-                                    rows={4}
-                                    className="w-full p-4 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 rounded-xl text-gray-900 dark:text-white font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none placeholder-gray-400 dark:placeholder-gray-500 resize-none disabled:opacity-60"
-                                    placeholder="What needs to happen next? Summarize required improvements..."
-                                    value={summary.recommendedActions}
-                                    onChange={(e) => setSummary(prev => ({ ...prev, recommendedActions: e.target.value }))}
-                                />
-                            </div>
-
-                            {isHead && (
-                                <div>
-                                    <div className="block text-sm font-bold uppercase tracking-wider !text-indigo-600 dark:!text-indigo-400 mb-2">AI Analysis</div>
-                                    
-                                    {(() => {
-                                        try {
-                                            if (!summary.aiAnalysis) return null;
-                                            const analysis = JSON.parse(summary.aiAnalysis);
-                                            if (analysis && typeof analysis === 'object' && (analysis.summary || analysis.riskLevel)) {
-                                                return (
-                                                    <div className="mb-4 p-6 bg-indigo-50/30 dark:bg-indigo-900/20 rounded-2xl border-2 border-indigo-100 dark:border-indigo-800/50">
-                                                        <div className="flex justify-between items-start mb-4">
-                                                            <div className="flex items-center gap-3">
-                                                                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                                                                    analysis.riskLevel === 'CRITICAL' ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' :
-                                                                    analysis.riskLevel === 'HIGH' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' :
-                                                                    analysis.riskLevel === 'MEDIUM' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' :
-                                                                    'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
-                                                                }`}>
-                                                                    {analysis.riskLevel || 'ANALYZED'} RISK
-                                                                </span>
-                                                                {analysis.riskScore !== undefined && (
-                                                                    <span className="text-sm font-bold text-gray-500 dark:text-gray-400">
-                                                                        Score: {analysis.riskScore}/10
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                        <p className="text-gray-800 dark:text-gray-200 font-bold mb-3 leading-relaxed">
-                                                            {analysis.summary}
-                                                        </p>
-                                                        {analysis.observations && Array.isArray(analysis.observations) && analysis.observations.length > 0 && (
-                                                            <div className="mb-3">
-                                                                <h4 className="text-[10px] font-black uppercase text-indigo-500 mb-1">Key Observations</h4>
-                                                                <ul className="space-y-0.5">
-                                                                    {analysis.observations.map((obs: string, idx: number) => (
-                                                                        <li key={idx} className="text-xs text-gray-600 dark:text-gray-400 flex gap-2">
-                                                                            <span className="text-indigo-400">•</span> {obs}
-                                                                        </li>
-                                                                    ))}
-                                                                </ul>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                );
-                                            }
-                                        } catch (e) {
-                                            // Fallback to textarea
-                                        }
-                                        return null;
-                                    })()}
-
-                                    <textarea
-                                        disabled={isLocked}
-                                        rows={4}
-                                        className="w-full p-4 border-2 border-indigo-200 dark:border-indigo-800/50 bg-indigo-50/10 dark:bg-indigo-900/5 rounded-xl text-gray-900 dark:text-white font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none placeholder-gray-400 dark:placeholder-gray-500 resize-none disabled:opacity-60 text-xs font-mono"
-                                        placeholder="AI generated analysis or external AI feedback (JSON supported)..."
-                                        value={summary.aiAnalysis}
-                                        onChange={(e) => setSummary(prev => ({ ...prev, aiAnalysis: e.target.value }))}
-                                    />
-                                    <div className="mt-2 flex justify-end">
-                                        <button
-                                            type="button"
-                                            onClick={handleGenerateAI}
-                                            disabled={generatingAI || isLocked}
-                                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-all shadow-md disabled:opacity-50"
-                                        >
-                                            {generatingAI ? (
-                                                <span className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></span>
-                                            ) : (
-                                                <span>✨</span>
-                                            )}
-                                            {generatingAI ? "Generating..." : "Generate AI Analysis"}
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {isAdmin && (
-                            <div>
-                                <div className="block text-sm font-bold uppercase tracking-wider !text-gray-900 dark:!text-white mb-2">Follow-up Comment (Admins Only)</div>
-                                <textarea
-                                    disabled={isLocked}
-                                    rows={3}
-                                    className="w-full p-4 border-2 border-gray-300 dark:border-gray-600 bg-indigo-50/30 dark:bg-indigo-900/10 rounded-xl text-gray-900 dark:text-white font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none placeholder-gray-400 dark:placeholder-gray-500 resize-none disabled:opacity-60 border-indigo-200 dark:border-indigo-800"
-                                    placeholder="Add any admin follow-up notes here..."
-                                    value={summary.followUpComment}
-                                    onChange={(e) => setSummary(prev => ({ ...prev, followUpComment: e.target.value }))}
-                                />
-                            </div>
-                        )}
-                    </div>
-
                     {/* Comments Section */}
                     <div className="mt-16">
                         <CommentsList reviewId={review.id} />
@@ -525,7 +361,7 @@ export default function ConductReviewPage({ params }: { params: Promise<{ id: st
                                 type="submit"
                                 className="bg-green-600 hover:bg-green-500 text-white px-12 py-5 rounded-2xl font-black text-xl shadow-xl hover:shadow-green-500/30 transition-all transform hover:-translate-y-1 active:scale-95 flex items-center gap-3"
                             >
-                                <span>Submit Conduct Results</span>
+                                <span>Submit Review</span>
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                                 </svg>
