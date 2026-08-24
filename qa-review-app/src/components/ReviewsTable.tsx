@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { TableSearch } from "@/components/TableSearch";
-import { Filter, Eye, Calendar, Pencil } from "lucide-react";
+import { Filter, Eye, Calendar, Pencil, PlayCircle } from "lucide-react";
 import { MonthYearPicker } from "@/components/MonthYearPicker";
 import { format, isSameMonth, parseISO } from "date-fns";
 import { Pagination } from "@/components/Pagination";
@@ -339,6 +339,26 @@ export function ReviewsTable({ reviews, initialType = 'ALL' }: { reviews: Review
                                                     >
                                                         <Pencil className="h-4 w-4" />
                                                         Manage
+                                                    </Link>
+                                                )}
+                                                {(review.status === 'SCHEDULED' || review.status === 'PENDING') && (
+                                                    <Link
+                                                        href={`/reviews/${review.id}/conduct`}
+                                                        className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-300 inline-flex items-center gap-1 font-semibold"
+                                                        title="Conduct this review"
+                                                    >
+                                                        <PlayCircle className="h-4 w-4" />
+                                                        Conduct
+                                                    </Link>
+                                                )}
+                                                {review.status === 'SUBMITTED' && (
+                                                    <Link
+                                                        href={`/reviews/${review.id}/view`}
+                                                        className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 inline-flex items-center gap-1"
+                                                        title="View submitted review"
+                                                    >
+                                                        <Eye className="h-4 w-4" />
+                                                        View
                                                     </Link>
                                                 )}
                                                 {canMarkNotCompleted && review.status !== 'SUBMITTED' && review.status !== 'NOT_COMPLETED' && review.status !== 'PROJECT_ENDED' && (

@@ -143,8 +143,8 @@ export default function Navbar() {
                                 </>
                             )}
 
-                            {/* Role Dashboards - Non-Management */}
-                            {!isManagement && roles.map((role: Role) => {
+                            {/* Role Dashboards for any assigned roles */}
+                            {roles.map((role: Role) => {
                                 const roleConfig = ROLE_CONFIG[role];
                                 if (!roleConfig || role === 'GUEST' || !roleConfig.dashboardPath || roleConfig.dashboardPath === '/') return null;
                                 
