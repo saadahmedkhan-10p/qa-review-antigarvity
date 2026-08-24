@@ -361,7 +361,7 @@ export function ReviewsTable({ reviews, initialType = 'ALL' }: { reviews: Review
                                                         View
                                                     </Link>
                                                 )}
-                                                {canMarkNotCompleted && review.status !== 'SUBMITTED' && review.status !== 'NOT_COMPLETED' && review.status !== 'PROJECT_ENDED' && (
+                                                {canMarkNotCompleted && (review.status === 'PENDING' || review.status === 'SCHEDULED') && (
                                                     <button
                                                         onClick={() => setNotCompletedModal({ isOpen: true, reviewId: review.id, projectName: review.project.name, reason: "" })}
                                                         className="text-orange-600 dark:text-orange-400 hover:text-orange-900 dark:hover:text-orange-300 inline-flex items-center gap-1"
