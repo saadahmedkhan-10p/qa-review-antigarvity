@@ -47,6 +47,14 @@ const PROJECT_HEALTH_SECTION: Section = {
     ]
 };
 
+// Fixed Review Information section — always shown first on every form (auto-filled at conduct time)
+const REVIEW_INFO_FIELDS = [
+    { label: 'Project Name', hint: 'Auto-filled from the assigned project' },
+    { label: 'QA Contact Person', hint: 'Auto-filled from project contact' },
+    { label: 'Primary Reviewer', hint: 'Auto-filled from assigned reviewer' },
+    { label: 'Secondary Reviewer', hint: 'Auto-filled from assigned secondary reviewer' },
+];
+
 export function FormEditor({
     initialTitle = "",
     initialQuestions = [],
@@ -294,6 +302,27 @@ export function FormEditor({
                 </div>
 
                 <div className="space-y-8">
+                    {/* Fixed Review Information Section — always first (Read Only preview) */}
+                    <div className="border border-indigo-200 dark:border-indigo-900/50 rounded-lg p-5 bg-indigo-50 dark:bg-indigo-900/20">
+                        <div className="flex justify-between items-start mb-4">
+                            <div className="flex-1 mr-4">
+                                <div className="block text-xs uppercase font-bold text-gray-800 dark:text-gray-300 mb-1">Fixed Section (Always First)</div>
+                                <div className="block w-full border-b border-indigo-200 dark:border-indigo-800 bg-transparent py-1 text-lg font-medium text-gray-900 dark:text-white">
+                                    Review Information
+                                </div>
+                            </div>
+                            <span className="text-xs font-bold px-2 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 rounded">Auto-filled</span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {REVIEW_INFO_FIELDS.map((field, idx) => (
+                                <div key={idx} className="border border-indigo-200 dark:border-indigo-800 p-3 rounded-md bg-white dark:bg-gray-900">
+                                    <div className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-1">{field.label}</div>
+                                    <div className="text-xs text-gray-400 dark:text-gray-500 italic">{field.hint}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
                     {sections.map((section, sIndex) => (
                         <div key={section.id} className="border border-gray-300 dark:border-gray-600 rounded-lg p-5 bg-gray-50 dark:bg-gray-800">
                             <div className="flex justify-between items-start mb-4">

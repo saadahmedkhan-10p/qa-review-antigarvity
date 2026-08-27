@@ -82,7 +82,7 @@ export async function submitReview(
     });
 
     // Trigger AI Analysis if project is challenged or critical
-    const highRiskStatuses = ["Challenged", "Critical", "Risk", "Behind Schedule"];
+    const highRiskStatuses = ["Slightly Challenged", "Extremely Challenged", "Critical"];
     if (highRiskStatuses.includes(summary.healthStatus)) {
         AIAnalysisService.analyzeReview(reviewId).catch(err =>
             console.error("Background AI analysis failed:", err)
