@@ -422,7 +422,7 @@ export default function MonthlyReportView({ reviews }: MonthlyReportViewProps) {
                                                 {r.project?.name || 'Unknown Project'}
                                             </Link>
                                         </td>
-                                        <td className="px-4 py-2 text-gray-600 dark:text-gray-300">{r.deferredReason || '-'}</td>
+                                        <td className="px-4 py-2 text-gray-600 dark:text-gray-300">{r.deferredReason || r.followUpComment || r.observations || '-'}</td>
                                     </tr>
                                 ))
                             )}

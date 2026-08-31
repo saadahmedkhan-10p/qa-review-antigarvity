@@ -24,6 +24,7 @@ export default function AdminReviewPage({ params }: { params: Promise<{ id: stri
         deferredReason: "",
         endedReason: "",
         onHoldReason: "",
+        notCompletedReason: "",
         aiAnalysis: "",
         status: "PENDING"
     });
@@ -54,6 +55,7 @@ export default function AdminReviewPage({ params }: { params: Promise<{ id: stri
                         deferredReason: reviewData.deferredReason || "",
                         endedReason: reviewData.endedReason || "",
                         onHoldReason: reviewData.onHoldReason || "",
+                        notCompletedReason: reviewData.notCompletedReason || "",
                         aiAnalysis: reviewData.aiAnalysis || "",
                         status: reviewData.status || "PENDING"
                     });
@@ -115,9 +117,17 @@ export default function AdminReviewPage({ params }: { params: Promise<{ id: stri
         e.preventDefault();
 
         try {
-            await updateReview(review.id, answers, summary);
+            const finalSummary = {
+                ...summary,
+                deferredReason: summary.status === 'DEFERRED' ? (summary.deferredReason || summary.followUpComment || summary.observations || null) : summary.deferredReason,
+                onHoldReason: summary.status === 'ON_HOLD' ? (summary.onHoldReason || summary.followUpComment || summary.observations || null) : summary.onHoldReason,
+                endedReason: summary.status === 'PROJECT_ENDED' ? (summary.endedReason || summary.followUpComment || summary.observations || null) : summary.endedReason,
+                notCompletedReason: summary.status === 'NOT_COMPLETED' ? (summary.notCompletedReason || summary.followUpComment || summary.observations || null) : summary.notCompletedReason,
+            };
+
+            await updateReview(review.id, answers, finalSummary);
             toast.success("Review updated successfully!");
-            router.push("/admin/reviews"); // Redirect to reviews list (or reports?)
+            router.push("/admin/reviews"); // Redirect to reviews list
         } catch (error) {
             toast.error("Failed to update review");
             console.error(error);
@@ -347,6 +357,71 @@ export default function AdminReviewPage({ params }: { params: Promise<{ id: stri
                                     <option value="PROJECT_ENDED">PROJECT ENDED</option>
                                     <option value="NOT_COMPLETED">NOT COMPLETED</option>
                                 </select>
+
+                                {/* Conditional Reason Fields */}
+                                {summary.status === 'DEFERRED' && (
+                                    <div className="mt-4 p-4 bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-200 dark:border-orange-800 rounded-xl space-y-2 animate-in fade-in duration-200">
+                                        <label className="block text-xs font-black uppercase tracking-wider text-orange-900 dark:text-orange-200">
+                                            Deferred Reason <span className="text-red-500">*</span>
+                                        </label>
+                                        <textarea
+                                            rows={3}
+                                            required
+                                            className="w-full p-3 border border-orange-300 dark:border-orange-700 bg-white dark:bg-gray-900 rounded-lg text-gray-900 dark:text-white text-sm font-medium focus:ring-2 focus:ring-orange-500 outline-none placeholder-gray-400"
+                                            placeholder="Provide the reason for deferring this review..."
+                                            value={summary.deferredReason}
+                                            onChange={(e) => setSummary(prev => ({ ...prev, deferredReason: e.target.value }))}
+                                        />
+                                    </div>
+                                )}
+
+                                {summary.status === 'ON_HOLD' && (
+                                    <div className="mt-4 p-4 bg-purple-50 dark:bg-purple-900/20 border-2 border-purple-200 dark:border-purple-800 rounded-xl space-y-2 animate-in fade-in duration-200">
+                                        <label className="block text-xs font-black uppercase tracking-wider text-purple-900 dark:text-purple-200">
+                                            On Hold Reason <span className="text-red-500">*</span>
+                                        </label>
+                                        <textarea
+                                            rows={3}
+                                            required
+                                            className="w-full p-3 border border-purple-300 dark:border-purple-700 bg-white dark:bg-gray-900 rounded-lg text-gray-900 dark:text-white text-sm font-medium focus:ring-2 focus:ring-purple-500 outline-none placeholder-gray-400"
+                                            placeholder="Provide the reason for putting this review on hold..."
+                                            value={summary.onHoldReason}
+                                            onChange={(e) => setSummary(prev => ({ ...prev, onHoldReason: e.target.value }))}
+                                        />
+                                    </div>
+                                )}
+
+                                {summary.status === 'PROJECT_ENDED' && (
+                                    <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700 rounded-xl space-y-2 animate-in fade-in duration-200">
+                                        <label className="block text-xs font-black uppercase tracking-wider text-gray-900 dark:text-gray-200">
+                                            Project Ended Reason <span className="text-red-500">*</span>
+                                        </label>
+                                        <textarea
+                                            rows={3}
+                                            required
+                                            className="w-full p-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-lg text-gray-900 dark:text-white text-sm font-medium focus:ring-2 focus:ring-gray-500 outline-none placeholder-gray-400"
+                                            placeholder="Provide the reason why this project has ended..."
+                                            value={summary.endedReason}
+                                            onChange={(e) => setSummary(prev => ({ ...prev, endedReason: e.target.value }))}
+                                        />
+                                    </div>
+                                )}
+
+                                {summary.status === 'NOT_COMPLETED' && (
+                                    <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl space-y-2 animate-in fade-in duration-200">
+                                        <label className="block text-xs font-black uppercase tracking-wider text-red-900 dark:text-red-200">
+                                            Not Completed Reason <span className="text-red-500">*</span>
+                                        </label>
+                                        <textarea
+                                            rows={3}
+                                            required
+                                            className="w-full p-3 border border-red-300 dark:border-red-700 bg-white dark:bg-gray-900 rounded-lg text-gray-900 dark:text-white text-sm font-medium focus:ring-2 focus:ring-red-500 outline-none placeholder-gray-400"
+                                            placeholder="Provide the reason why this review was not completed on time..."
+                                            value={summary.notCompletedReason}
+                                            onChange={(e) => setSummary(prev => ({ ...prev, notCompletedReason: e.target.value }))}
+                                        />
+                                    </div>
+                                )}
                             </div>
 
                             <div>
