@@ -4,6 +4,7 @@ import { logActivity } from "@/lib/activityLogger";
 import { sendEmail, emailTemplates } from "@/lib/email";
 import { SessionUser } from "@/lib/auth";
 import { NotificationService } from "@/services/notificationService";
+import { AIAnalysisService } from "@/services/aiAnalysisService";
 import { User, Form } from "@prisma/client";
 import { z } from "zod";
 
@@ -242,6 +243,14 @@ export class ReviewService {
             data: updatePayload,
             include: { project: true }
         });
+
+        // Auto-trigger background AI analysis for challenged or critical reviews if not manually provided
+        const highRiskStatuses = ["Slightly Challenged", "Extremely Challenged", "Critical"];
+        if (highRiskStatuses.includes(review.healthStatus) && !updatePayload.aiAnalysis) {
+            AIAnalysisService.analyzeReview(id).catch(err =>
+                console.error("[ReviewService.adminUpdate] Background AI analysis failed:", err)
+            );
+        }
 
         await logActivity({
             userId: currentUser.id,

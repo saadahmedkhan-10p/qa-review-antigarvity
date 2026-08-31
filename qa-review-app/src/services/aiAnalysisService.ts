@@ -26,29 +26,75 @@ export class AIAnalysisService {
                             reviewer: true,
                         }
                     },
+                    form: true,
                     comments: true,
                 }
             });
 
             if (!review) return null;
 
-            // Strip PII (Simple regex for email/name patterns, but LLM system prompt is better)
+            // Robust parsing of answers and questions
+            let answers: any = {};
+            try {
+                answers = typeof review.answers === 'string' ? JSON.parse(review.answers || "{}") : (review.answers || {});
+            } catch (e) {
+                console.error("Failed to parse review answers:", e);
+            }
+
+            let questions: any[] = [];
+            try {
+                questions = typeof review.form?.questions === 'string' ? JSON.parse(review.form.questions || "[]") : (review.form?.questions || []);
+            } catch (e) {
+                console.error("Failed to parse form questions:", e);
+            }
+
+            // Flatten questions if they are nested in sections
+            const allQuestions: any[] = [];
+            if (Array.isArray(questions)) {
+                questions.forEach((item: any) => {
+                    if (item && item.questions && Array.isArray(item.questions)) {
+                        allQuestions.push(...item.questions);
+                    } else if (item && item.items && Array.isArray(item.items)) {
+                        allQuestions.push(...item.items);
+                    } else if (item) {
+                        allQuestions.push(item);
+                    }
+                });
+            }
+
             const commentsText = review.comments.map(c => c.content).join("\n");
-            
-            const prompt = `
-                Analyze the following QA Review data and provide a risk evaluation.
-                
-                PROJECT CONTEXT:
-                Name: ${review.project.name}
-                Current Health Status: ${review.healthStatus}
-                Reviewer Observations: ${review.observations || "None provided"}
-                Recommended Actions: ${review.recommendedActions || "None provided"}
-                
-                DISCUSSION LOGS:
-                ${commentsText || "No discussion logs available."}
-                
-                Provide a structured risk assessment.
-            `;
+
+            let prompt = `Analyze the following QA Review data for project "${review.project.name}" (${review.project.type || 'Software'}) and provide a comprehensive risk evaluation.\n\n`;
+            prompt += `PROJECT CONTEXT:\n`;
+            prompt += `- Project: ${review.project.name}\n`;
+            prompt += `- Review Status: ${review.status}\n`;
+            prompt += `- Health Status: ${review.healthStatus}\n`;
+            prompt += `- Reviewer Observations: ${review.observations || "None provided"}\n`;
+            prompt += `- Recommended Actions: ${review.recommendedActions || "None provided"}\n\n`;
+
+            prompt += `DETAILED Q&A ASSESSMENT DATA:\n`;
+            let qaCount = 0;
+            allQuestions.forEach((q: any) => {
+                if (!q || !q.id) return;
+                const answer = answers[q.id];
+                if (answer !== undefined && answer !== null && answer !== "") {
+                    const label = q.label || q.text || "Question";
+                    const formattedAnswer = Array.isArray(answer) ? answer.join(", ") : answer;
+                    const reason = answers[`${q.id}_reason`];
+                    prompt += `Q: ${label}\nA: ${formattedAnswer}${reason ? ` (Reason/Explanation: ${reason})` : ''}\n\n`;
+                    qaCount++;
+                }
+            });
+
+            if (qaCount === 0) {
+                prompt += "(No detailed Q&A data available)\n\n";
+            }
+
+            if (commentsText) {
+                prompt += `DISCUSSION & FOLLOW-UP LOGS:\n${commentsText}\n\n`;
+            }
+
+            prompt += `Provide a structured risk assessment focusing on identifying root causes, risks, and actionable recommendations.`;
 
             const { client: openai, model } = await getAIClient();
 

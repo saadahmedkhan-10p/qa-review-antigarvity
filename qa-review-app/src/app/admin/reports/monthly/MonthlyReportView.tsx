@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useMemo } from "react";
 import {
@@ -459,33 +459,63 @@ export default function MonthlyReportView({ reviews }: MonthlyReportViewProps) {
                                                 </Link>
                                             </td>
                                             <td className="px-3 py-3 text-gray-700 dark:text-gray-300 align-top break-words">{r.healthStatus}</td>
-                                            <td className="px-3 py-3 text-gray-600 dark:text-gray-300 align-top whitespace-pre-line break-words">{r.observations || '-'}</td>
-                                            <td className="px-3 py-3 text-indigo-600 dark:text-indigo-400 align-top whitespace-pre-line font-medium bg-indigo-50/20 dark:bg-indigo-900/10 break-words">
+                                            <td className="px-3 py-3 text-gray-600 dark:text-gray-300 align-top whitespace-pre-line break-words">{r.observations || '-'}</td>                                            <td className="px-3 py-3 text-indigo-600 dark:text-indigo-400 align-top whitespace-pre-line font-medium bg-indigo-50/20 dark:bg-indigo-900/10 break-words">
                                                 {(() => {
-                                                    if (!r.aiAnalysis) return '-';
+                                                    if (!r.aiAnalysis) {
+                                                        return (
+                                                            <Link href={`/admin/reviews/${r.id}`} className="text-xs text-indigo-500 hover:underline inline-flex items-center gap-1 font-semibold" title="Open review to generate AI analysis">
+                                                                <span>Generate AI Analysis</span>
+                                                                <span>→</span>
+                                                            </Link>
+                                                        );
+                                                    }
                                                     let analysis: any = null;
-                                                     try {
-                                                         analysis = JSON.parse(r.aiAnalysis);
-                                                     } catch (e) {
-                                                         return <span className="text-xs">{r.aiAnalysis}</span>;
-                                                     }
- 
-                                                     if (analysis && typeof analysis === 'object') {
-                                                         return (
-                                                             <div className="flex flex-col gap-1">
-                                                                 <span className="text-[10px] font-black uppercase tracking-tighter opacity-70">
-                                                                     {typeof analysis.riskLevel === 'string' ? analysis.riskLevel : 'ANALYZED'} {analysis.riskScore !== undefined ? `(${analysis.riskScore}/10)` : ''}
-                                                                 </span>
-                                                                 <span className="text-xs" title={typeof analysis.summary === 'string' ? analysis.summary : ''}>
-                                                                     {typeof analysis.summary === 'string' ? analysis.summary : JSON.stringify(analysis.summary)}
-                                                                 </span>
-                                                             </div>
-                                                         );
-                                                     }
-                                                     return <span className="text-xs">{r.aiAnalysis}</span>;
+                                                    try {
+                                                        analysis = JSON.parse(r.aiAnalysis);
+                                                    } catch (e) {
+                                                        return <span className="text-xs">{r.aiAnalysis}</span>;
+                                                    }
+
+                                                    if (analysis && typeof analysis === 'object') {
+                                                        return (
+                                                            <div className="flex flex-col gap-1">
+                                                                <span className={`text-[10px] font-black uppercase tracking-tighter w-fit px-1.5 py-0.5 rounded ${
+                                                                    analysis.riskLevel === 'CRITICAL' ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' :
+                                                                    analysis.riskLevel === 'HIGH' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' :
+                                                                    analysis.riskLevel === 'MEDIUM' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' :
+                                                                    'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                                                                }`}>
+                                                                    {typeof analysis.riskLevel === 'string' ? analysis.riskLevel : 'ANALYZED'} {analysis.riskScore !== undefined ? `(${analysis.riskScore}/10)` : ''}
+                                                                </span>
+                                                                <span className="text-xs text-gray-800 dark:text-gray-200" title={typeof analysis.summary === 'string' ? analysis.summary : ''}>
+                                                                    {typeof analysis.summary === 'string' ? analysis.summary : JSON.stringify(analysis.summary)}
+                                                                </span>
+                                                            </div>
+                                                        );
+                                                    }
+                                                    return <span className="text-xs">{r.aiAnalysis}</span>;
                                                 })()}
                                             </td>
-                                            <td className="px-3 py-3 text-gray-600 dark:text-gray-300 align-top whitespace-pre-line break-words">{r.recommendedActions || '-'}</td>
+                                            <td className="px-3 py-3 text-gray-600 dark:text-gray-300 align-top whitespace-pre-line break-words">
+                                                {(() => {
+                                                    if (r.recommendedActions) return r.recommendedActions;
+                                                    if (r.aiAnalysis) {
+                                                        try {
+                                                            const analysis = JSON.parse(r.aiAnalysis);
+                                                            if (analysis?.actionItems && Array.isArray(analysis.actionItems) && analysis.actionItems.length > 0) {
+                                                                return (
+                                                                    <ul className="list-disc list-inside space-y-0.5 text-xs text-gray-700 dark:text-gray-300">
+                                                                        {analysis.actionItems.map((item: string, idx: number) => (
+                                                                            <li key={idx}>{item}</li>
+                                                                        ))}
+                                                                    </ul>
+                                                                );
+                                                            }
+                                                        } catch (e) {}
+                                                    }
+                                                    return '-';
+                                                })()}
+                                            </td>
                                             <td className="px-3 py-3 text-gray-600 dark:text-gray-300 align-top whitespace-pre-line break-words">{r.followUpComment || '-'}</td>
                                         </tr>
                                     ))
