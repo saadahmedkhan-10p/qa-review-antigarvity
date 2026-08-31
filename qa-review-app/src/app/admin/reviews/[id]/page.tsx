@@ -183,6 +183,45 @@ export default function AdminReviewPage({ params }: { params: Promise<{ id: stri
 
                 <form onSubmit={handleSubmit} className="space-y-12 pb-24">
 
+                    {/* Review Information — Fixed auto-filled section */}
+                    <div className="bg-indigo-50/70 dark:bg-indigo-900/20 rounded-2xl p-8 border border-indigo-200 dark:border-indigo-800/50 shadow-sm">
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-50 mb-6 flex items-center gap-3">
+                            <span className="w-1.5 h-7 bg-indigo-400 dark:bg-indigo-500 rounded-full"></span>
+                            Review Information
+                            <span className="ml-auto text-xs font-semibold px-2.5 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 rounded-lg border border-indigo-200 dark:border-indigo-800">Auto-filled</span>
+                        </h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            {/* Project Name */}
+                            <div>
+                                <div className="text-xs font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 mb-2">Project Name</div>
+                                <div className="w-full border-2 border-indigo-100 dark:border-indigo-800/60 rounded-xl p-4 text-gray-900 dark:text-white bg-white dark:bg-gray-900 font-semibold">
+                                    {review.project.name}
+                                </div>
+                            </div>
+                            {/* QA Contact Person */}
+                            <div>
+                                <div className="text-xs font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 mb-2">QA Contact Person</div>
+                                <div className="w-full border-2 border-indigo-100 dark:border-indigo-800/60 rounded-xl p-4 text-gray-900 dark:text-white bg-white dark:bg-gray-900 font-semibold">
+                                    {review.project.contactPerson?.name || <span className="text-gray-400 font-normal italic">Not assigned</span>}
+                                </div>
+                            </div>
+                            {/* Primary Reviewer */}
+                            <div>
+                                <div className="text-xs font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 mb-2">Primary Reviewer</div>
+                                <div className="w-full border-2 border-indigo-100 dark:border-indigo-800/60 rounded-xl p-4 text-gray-900 dark:text-white bg-white dark:bg-gray-900 font-semibold">
+                                    {review.reviewer?.name || review.project.reviewer?.name || <span className="text-gray-400 font-normal italic">Not assigned</span>}
+                                </div>
+                            </div>
+                            {/* Secondary Reviewer */}
+                            <div>
+                                <div className="text-xs font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 mb-2">Secondary Reviewer</div>
+                                <div className="w-full border-2 border-indigo-100 dark:border-indigo-800/60 rounded-xl p-4 text-gray-900 dark:text-white bg-white dark:bg-gray-900 font-semibold">
+                                    {review.secondaryReviewer?.name || review.project.secondaryReviewer?.name || <span className="text-gray-400 font-normal italic">Not assigned</span>}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Questionnaire */}
                     <div className="space-y-10">
                         {sections.map((section: any) => (
