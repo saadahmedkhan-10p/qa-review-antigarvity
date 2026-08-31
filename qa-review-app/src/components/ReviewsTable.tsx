@@ -16,6 +16,7 @@ import { useAuth } from "@/context/AuthContext";
 import { ConfirmationModal } from "@/components/ConfirmationModal";
 import { Clock } from "lucide-react";
 import toast from "react-hot-toast";
+import { CalendarLinksDropdown } from "@/components/CalendarLinksDropdown";
 
 interface Review {
     id: string;
@@ -350,6 +351,15 @@ export function ReviewsTable({ reviews, initialType = 'ALL' }: { reviews: Review
                                                         <PlayCircle className="h-4 w-4" />
                                                         Conduct
                                                     </Link>
+                                                )}
+                                                {review.status === 'SCHEDULED' && review.scheduledDate && (
+                                                    <CalendarLinksDropdown
+                                                        reviewId={review.id}
+                                                        projectName={review.project.name}
+                                                        scheduledDate={review.scheduledDate}
+                                                        reviewerName={review.reviewer?.name || review.project.reviewer?.name}
+                                                        attendees={[]}
+                                                    />
                                                 )}
                                                 {review.status === 'SUBMITTED' && (
                                                     <Link

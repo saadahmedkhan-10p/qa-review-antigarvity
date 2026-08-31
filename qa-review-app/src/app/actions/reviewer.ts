@@ -5,6 +5,7 @@ import { logActivity } from "@/lib/activityLogger";
 import { sendEmail, emailTemplates } from "@/lib/email";
 import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/lib/withAuth";
+import { generateICS, getOutlookWebCalendarUrl } from "@/lib/calendar";
 
 export async function updateReviewStatus(reviewId: string, status: string, options?: { reason?: string; date?: Date }) {
     // H-04: Require authentication; verify ownership before updating
@@ -49,13 +50,87 @@ export async function updateReviewStatus(reviewId: string, status: string, optio
             where: { id: reviewId },
             data,
             include: {
-                project: true,
+                project: {
+                    include: {
+                        lead: true,
+                        contactPerson: true
+                    }
+                },
                 reviewer: true,
+                secondaryReviewer: true,
                 form: true
             }
         });
 
-        // Log activity
+        // If newly scheduled, trigger calendar invitation email to all stakeholders
+        if (status === 'SCHEDULED' && options?.date) {
+            (async () => {
+                try {
+                    const scheduledDate = new Date(options.date!);
+                    const attendees: { name: string; email: string }[] = [];
+
+                    if (review.reviewer?.email) attendees.push({ name: review.reviewer.name || 'Primary Reviewer', email: review.reviewer.email });
+                    if (review.secondaryReviewer?.email) attendees.push({ name: review.secondaryReviewer.name || 'Secondary Reviewer', email: review.secondaryReviewer.email });
+                    if (review.project.contactPerson?.email) attendees.push({ name: review.project.contactPerson.name || 'QA Contact', email: review.project.contactPerson.email });
+                    if (review.project.lead?.email) attendees.push({ name: review.project.lead.name || 'Project Lead', email: review.project.lead.email });
+
+                    const icsContent = generateICS({
+                        reviewId: review.id,
+                        projectName: review.project.name,
+                        formTitle: review.form.title,
+                        startDate: scheduledDate,
+                        reviewerName: review.reviewer?.name,
+                        qaContactName: review.project.contactPerson?.name,
+                        leadName: review.project.lead?.name,
+                        attendees
+                    });
+
+                    const outlookUrl = getOutlookWebCalendarUrl({
+                        reviewId: review.id,
+                        projectName: review.project.name,
+                        startDate: scheduledDate,
+                        reviewerName: review.reviewer?.name,
+                        qaContactName: review.project.contactPerson?.name,
+                        leadName: review.project.lead?.name,
+                        attendees
+                    });
+
+                    // Send invite email to each unique attendee
+                    const uniqueRecipients = new Map<string, string>();
+                    attendees.forEach(a => {
+                        if (a.email && !uniqueRecipients.has(a.email.toLowerCase())) {
+                            uniqueRecipients.set(a.email.toLowerCase(), a.name);
+                        }
+                    });
+
+                    for (const [email, name] of uniqueRecipients.entries()) {
+                        const emailData = emailTemplates.reviewScheduled({
+                            recipientName: name,
+                            projectName: review.project.name,
+                            scheduledDate,
+                            reviewerName: review.reviewer?.name || 'Assigned Reviewer',
+                            secondaryReviewerName: review.secondaryReviewer?.name,
+                            qaContactName: review.project.contactPerson?.name,
+                            leadName: review.project.lead?.name,
+                            reviewId: review.id,
+                            outlookUrl
+                        });
+
+                        await sendEmail(email, {
+                            ...emailData,
+                            icalEvent: {
+                                filename: `qa-review-${review.project.name.replace(/[^a-zA-Z0-9_-]/g, '_')}.ics`,
+                                method: 'REQUEST',
+                                content: icsContent
+                            }
+                        });
+                    }
+                } catch (e) {
+                    console.error('Failed to send calendar invite emails:', e);
+                }
+            })();
+        }
+
         // Log activity
         await logActivity({
             action: status === 'SUBMITTED' ? 'SUBMIT_REVIEW' : 'UPDATE_REVIEW',
@@ -172,34 +247,74 @@ export async function scheduleReview(reviewId: string, date: Date) {
         include: {
             project: {
                 include: {
-                    lead: true
+                    lead: true,
+                    contactPerson: true
                 }
             },
-            reviewer: true
+            reviewer: true,
+            secondaryReviewer: true,
+            form: true
         }
     });
 
-    // Send confirmation email to reviewer
-    await sendEmail(
-        review.reviewer.email,
-        emailTemplates.reviewScheduled(
-            review.reviewer.name,
-            review.project.name,
-            new Date(date).toLocaleDateString()
-        )
-    );
+    // Send calendar invite emails to all stakeholders
+    const scheduledDate = new Date(date);
+    const attendees: { name: string; email: string }[] = [];
 
-    // Notify lead
-    if (review.project.lead?.email) {
-        await sendEmail(
-            review.project.lead.email,
-            emailTemplates.leadNotification(
-                review.project.lead.name,
-                review.project.name,
-                review.reviewer.name,
-                `Review scheduled for ${new Date(date).toLocaleDateString()}`
-            )
-        );
+    if (review.reviewer?.email) attendees.push({ name: review.reviewer.name || 'Primary Reviewer', email: review.reviewer.email });
+    if (review.secondaryReviewer?.email) attendees.push({ name: review.secondaryReviewer.name || 'Secondary Reviewer', email: review.secondaryReviewer.email });
+    if (review.project.contactPerson?.email) attendees.push({ name: review.project.contactPerson.name || 'QA Contact', email: review.project.contactPerson.email });
+    if (review.project.lead?.email) attendees.push({ name: review.project.lead.name || 'Project Lead', email: review.project.lead.email });
+
+    const icsContent = generateICS({
+        reviewId: review.id,
+        projectName: review.project.name,
+        formTitle: review.form?.title,
+        startDate: scheduledDate,
+        reviewerName: review.reviewer?.name,
+        qaContactName: review.project.contactPerson?.name,
+        leadName: review.project.lead?.name,
+        attendees
+    });
+
+    const outlookUrl = getOutlookWebCalendarUrl({
+        reviewId: review.id,
+        projectName: review.project.name,
+        startDate: scheduledDate,
+        reviewerName: review.reviewer?.name,
+        qaContactName: review.project.contactPerson?.name,
+        leadName: review.project.lead?.name,
+        attendees
+    });
+
+    const uniqueRecipients = new Map<string, string>();
+    attendees.forEach(a => {
+        if (a.email && !uniqueRecipients.has(a.email.toLowerCase())) {
+            uniqueRecipients.set(a.email.toLowerCase(), a.name);
+        }
+    });
+
+    for (const [email, name] of uniqueRecipients.entries()) {
+        const emailData = emailTemplates.reviewScheduled({
+            recipientName: name,
+            projectName: review.project.name,
+            scheduledDate,
+            reviewerName: review.reviewer?.name || 'Assigned Reviewer',
+            secondaryReviewerName: review.secondaryReviewer?.name,
+            qaContactName: review.project.contactPerson?.name,
+            leadName: review.project.lead?.name,
+            reviewId: review.id,
+            outlookUrl
+        });
+
+        await sendEmail(email, {
+            ...emailData,
+            icalEvent: {
+                filename: `qa-review-${review.project.name.replace(/[^a-zA-Z0-9_-]/g, '_')}.ics`,
+                method: 'REQUEST',
+                content: icsContent
+            }
+        });
     }
 
     await logActivity({

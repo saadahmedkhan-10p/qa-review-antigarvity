@@ -6,6 +6,7 @@ import { getReviewerProjects, updateReviewStatus } from "@/app/actions/reviewer"
 import { format } from "date-fns";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { CalendarLinksDropdown } from "@/components/CalendarLinksDropdown";
 
 type ProjectWithReviews = any;
 
@@ -343,15 +344,31 @@ export default function ReviewerDashboard() {
 
                                                             {/* Action buttons (Conduct or View) */}
                                                             {isScheduled && (
-                                                                <Link
-                                                                    href={`/reviews/${review.id}/conduct`}
-                                                                    className="bg-indigo-600 dark:bg-indigo-500 text-white px-4 py-2.5 rounded-xl font-black text-center text-xs hover:bg-indigo-700 dark:hover:bg-indigo-400 transition-all shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2"
-                                                                >
-                                                                    <span>CONDUCT REVIEW</span>
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                                                                    </svg>
-                                                                </Link>
+                                                                <div className="flex flex-col gap-2">
+                                                                    <Link
+                                                                        href={`/reviews/${review.id}/conduct`}
+                                                                        className="bg-indigo-600 dark:bg-indigo-500 text-white px-4 py-2.5 rounded-xl font-black text-center text-xs hover:bg-indigo-700 dark:hover:bg-indigo-400 transition-all shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2"
+                                                                    >
+                                                                        <span>CONDUCT REVIEW</span>
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                                                        </svg>
+                                                                    </Link>
+                                                                    <CalendarLinksDropdown
+                                                                        reviewId={review.id}
+                                                                        projectName={project.name}
+                                                                        scheduledDate={review.scheduledDate}
+                                                                        reviewerName={user.name}
+                                                                        qaContactName={project.contactPerson?.name}
+                                                                        leadName={project.lead?.name}
+                                                                        attendees={[
+                                                                            ...(user.email ? [{ name: user.name, email: user.email }] : []),
+                                                                            ...(project.secondaryReviewer?.email ? [{ name: project.secondaryReviewer.name, email: project.secondaryReviewer.email }] : []),
+                                                                            ...(project.contactPerson?.email ? [{ name: project.contactPerson.name, email: project.contactPerson.email }] : []),
+                                                                            ...(project.lead?.email ? [{ name: project.lead.name, email: project.lead.email }] : [])
+                                                                        ]}
+                                                                    />
+                                                                </div>
                                                             )}
                                                             {isPending && !staged?.status && (
                                                                 <div className="bg-gray-200 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 px-4 py-2.5 rounded-xl font-black text-center text-xs flex items-center justify-center gap-2 cursor-not-allowed border-2 border-dashed border-gray-300 dark:border-gray-600">

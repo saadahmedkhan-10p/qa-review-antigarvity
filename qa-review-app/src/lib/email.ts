@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import path from 'path';
+import { format } from 'date-fns';
 
 // H-07: HTML-escape helper — prevents HTML injection in email templates
 function esc(value: string): string {
@@ -199,23 +200,6 @@ export const emailTemplates = {
     `),
   }),
 
-  reviewScheduled: (reviewerName: string, projectName: string, scheduledDate: string) => ({
-    subject: `Review Scheduled: ${esc(projectName)}`,
-    html: emailWrapper(`Review Scheduled: ${esc(projectName)}`, `
-      ${UI.h2('Review Scheduled Successfully')}
-      ${UI.p(`Hello ${UI.strong(esc(reviewerName))},`)}
-      ${UI.p('Your review has been scheduled successfully.')}
-      
-      ${UI.alertBox(`
-        <h3 style="margin-top: 0; margin-bottom: 12px;">${esc(projectName)}</h3>
-        <p style="margin: 0 0 8px 0;"><strong>Scheduled Date:</strong> ${esc(scheduledDate)}</p>
-        <p style="margin: 0;">Remember to complete the review by the <strong>20th of the month</strong>.</p>
-      `, 'info')}
-      
-      ${UI.button(`${APP_URL}/reviewer/dashboard`, 'View Dashboard')}
-    `),
-  }),
-
   leadNotification: (leadName: string, projectName: string, reviewerName: string, action: string) => ({
     subject: `Project Update: ${esc(projectName)}`,
     html: emailWrapper(`Project Update: ${esc(projectName)}`, `
@@ -383,10 +367,72 @@ export const emailTemplates = {
       ${UI.button(`${APP_URL}/admin/users`, 'Go to User Management')}
     `),
   }),
+
+  reviewScheduled: (data: {
+    recipientName: string;
+    projectName: string;
+    scheduledDate: Date;
+    reviewerName: string;
+    secondaryReviewerName?: string;
+    qaContactName?: string;
+    leadName?: string;
+    reviewId: string;
+    outlookUrl?: string;
+  }) => {
+    const formattedDate = format(new Date(data.scheduledDate), 'EEEE, MMMM d, yyyy');
+    const conductUrl = `${APP_URL}/reviews/${data.reviewId}/conduct`;
+
+    return {
+      subject: `📅 Scheduled: QA Review for ${esc(data.projectName)} on ${formattedDate}`,
+      html: emailWrapper(`QA Review Scheduled: ${data.projectName}`, `
+        ${UI.h2('QA Review Scheduled')}
+        ${UI.p(`Hello ${UI.strong(esc(data.recipientName))},`)}
+        ${UI.p(`A QA review meeting has been scheduled for project ${UI.strong(esc(data.projectName))}. A calendar invitation has been attached to this email.`)}
+
+        ${UI.highlightBox(`
+          <p style="margin: 0 0 8px 0; font-size: 13px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700;">Meeting & Review Details</p>
+          <p style="margin: 0 0 6px 0; font-size: 15px;"><strong>Project:</strong> ${esc(data.projectName)}</p>
+          <p style="margin: 0 0 6px 0; font-size: 15px;"><strong>Scheduled Date:</strong> <span style="color: #2563eb; font-weight: 700;">${formattedDate}</span></p>
+          <p style="margin: 0 0 6px 0; font-size: 15px;"><strong>Primary Reviewer:</strong> ${esc(data.reviewerName)}</p>
+          ${data.secondaryReviewerName ? `<p style="margin: 0 0 6px 0; font-size: 15px;"><strong>Secondary Reviewer:</strong> ${esc(data.secondaryReviewerName)}</p>` : ''}
+          ${data.qaContactName ? `<p style="margin: 0 0 6px 0; font-size: 15px;"><strong>QA Contact:</strong> ${esc(data.qaContactName)}</p>` : ''}
+          ${data.leadName ? `<p style="margin: 0; font-size: 15px;"><strong>Project Lead:</strong> ${esc(data.leadName)}</p>` : ''}
+        `)}
+
+        ${UI.alertBox('<strong>Calendar Invite Attached:</strong> You can accept this meeting directly in your email client (Outlook, Teams, Google Calendar) to add it to your calendar.', 'info')}
+
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 24px; margin-bottom: 16px;">
+          <tr>
+            <td align="center">
+              <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate;">
+                <tr>
+                  <td align="center" bgcolor="#2563eb" style="border-radius: 6px; padding: 12px 24px;">
+                    <a href="${conductUrl}" target="_blank" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 15px; font-weight: 600; color: #ffffff; text-decoration: none; display: block;">
+                      Open QA Review Form
+                    </a>
+                  </td>
+                  ${data.outlookUrl ? `
+                  <td width="12"></td>
+                  <td align="center" bgcolor="#0078d4" style="border-radius: 6px; padding: 12px 24px;">
+                    <a href="${data.outlookUrl}" target="_blank" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 15px; font-weight: 600; color: #ffffff; text-decoration: none; display: block;">
+                      Add to Outlook Web
+                    </a>
+                  </td>` : ''}
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      `)
+    };
+  },
 };
 
 // Send email function
-export async function sendEmail(to: string, template: { subject: string; html: string }) {
+export async function sendEmail(
+  to: string,
+  template: { subject: string; html: string; icalEvent?: any }
+) {
   try {
     // In development, log emails instead of sending
     if (process.env.NODE_ENV === 'development' && !process.env.SMTP_USER) {
@@ -396,7 +442,7 @@ export async function sendEmail(to: string, template: { subject: string; html: s
       return { success: true, mode: 'development' };
     }
 
-    const info = await transporter.sendMail({
+    const mailOptions: any = {
       from: `"QA Review System" <${process.env.SMTP_USER}>`,
       to,
       subject: template.subject,
@@ -406,7 +452,13 @@ export async function sendEmail(to: string, template: { subject: string; html: s
         path: path.join(process.cwd(), 'public/logo.png'),
         cid: 'logo'
       }]
-    });
+    };
+
+    if (template.icalEvent) {
+      mailOptions.icalEvent = template.icalEvent;
+    }
+
+    const info = await transporter.sendMail(mailOptions);
 
     console.log('✅ Email sent:', info.messageId);
     return { success: true, messageId: info.messageId };
