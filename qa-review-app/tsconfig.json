@@ -39,6 +39,9 @@
   "exclude": [
     "node_modules",
     "scripts",
-    "scratch"
+    "scratch",
+    "tests",
+    "src/__mocks__",
+    "src/__tests__"
   ]
 }

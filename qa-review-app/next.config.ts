@@ -2,9 +2,6 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ['@prisma/client', 'prisma'],
-  experimental: {
-    turbopackUseSystemTlsCerts: true,
-  },
 
   // M-08: Security headers applied to all routes
   async headers() {
