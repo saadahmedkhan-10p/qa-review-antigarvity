@@ -31,10 +31,12 @@ export async function getAIClient(): Promise<AIClientConfig> {
         "grok-beta": "grok-3",
         "grok-1": "grok-3",
         "gpt-4": "gpt-4o",
-        // Groq model aliases (old → stable current)
-        "llama-3.3-70b-versatile": "llama3-70b-8192",
-        "llama-3.1-70b-versatile": "llama3-70b-8192",
-        "llama-3.1-8b-instant": "llama3-8b-8192",
+        // Groq decommissioned models → gemma2-9b-it (active on all plans)
+        "llama-3.3-70b-versatile": "gemma2-9b-it",
+        "llama-3.1-70b-versatile": "gemma2-9b-it",
+        "llama-3.1-8b-instant": "gemma2-9b-it",
+        "llama3-70b-8192": "gemma2-9b-it",
+        "llama3-8b-8192": "gemma2-9b-it",
     };
     const resolveModel = (m: string | undefined, fallback: string): string => {
         if (!m) return fallback;
@@ -54,8 +56,8 @@ export async function getAIClient(): Promise<AIClientConfig> {
             ? "https://api.groq.com/openai/v1"
             : "https://api.x.ai/v1";
         const defaultModel = isGroq
-            ? "llama3-70b-8192"           // stable & widely available on Groq
-            : "grok-3";                   // xAI flagship model
+            ? "gemma2-9b-it"    // active on all Groq plans
+            : "grok-3";         // xAI flagship model
 
         return {
             client: new OpenAI({ apiKey, baseURL }),
