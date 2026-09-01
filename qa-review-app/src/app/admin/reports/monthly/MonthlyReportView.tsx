@@ -477,6 +477,19 @@ export default function MonthlyReportView({ reviews }: MonthlyReportViewProps) {
                                                     }
 
                                                     if (analysis && typeof analysis === 'object') {
+                                                        const cleanSummary = (typeof analysis.summary === 'string' ? analysis.summary : JSON.stringify(analysis.summary || ''))
+                                                            .replace(/<think>[\s\S]*?(?:<\/think>|$)/gi, "")
+                                                            .trim();
+
+                                                        if (!cleanSummary && (!analysis.observations || analysis.observations.length === 0) && (!analysis.actionItems || analysis.actionItems.length === 0)) {
+                                                            return (
+                                                                <Link href={`/admin/reviews/${r.id}`} className="text-xs text-indigo-500 hover:underline inline-flex items-center gap-1 font-semibold" title="Generate fresh AI analysis">
+                                                                    <span>Generate AI Analysis</span>
+                                                                    <span>✨</span>
+                                                                </Link>
+                                                            );
+                                                        }
+
                                                         return (
                                                             <div className="flex flex-col gap-1">
                                                                 <span className={`text-[10px] font-black uppercase tracking-tighter w-fit px-1.5 py-0.5 rounded ${
@@ -487,11 +500,11 @@ export default function MonthlyReportView({ reviews }: MonthlyReportViewProps) {
                                                                 }`}>
                                                                     {typeof analysis.riskLevel === 'string' ? analysis.riskLevel : 'ANALYZED'} {analysis.riskScore !== undefined ? `(${analysis.riskScore}/10)` : ''}
                                                                 </span>
-                                                                <span className="text-xs text-gray-800 dark:text-gray-200" title={typeof analysis.summary === 'string' ? analysis.summary : ''}>
-                                                                    {(typeof analysis.summary === 'string' ? analysis.summary : JSON.stringify(analysis.summary))
-                                                                        .replace(/<think>[\s\S]*?(?:<\/think>|$)/gi, "")
-                                                                        .trim()}
-                                                                </span>
+                                                                {cleanSummary && (
+                                                                    <span className="text-xs text-gray-800 dark:text-gray-200" title={cleanSummary}>
+                                                                        {cleanSummary}
+                                                                    </span>
+                                                                )}
                                                             </div>
                                                         );
                                                     }
