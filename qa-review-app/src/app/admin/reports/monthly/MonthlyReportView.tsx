@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useMemo } from "react";
 import {
@@ -488,7 +488,9 @@ export default function MonthlyReportView({ reviews }: MonthlyReportViewProps) {
                                                                     {typeof analysis.riskLevel === 'string' ? analysis.riskLevel : 'ANALYZED'} {analysis.riskScore !== undefined ? `(${analysis.riskScore}/10)` : ''}
                                                                 </span>
                                                                 <span className="text-xs text-gray-800 dark:text-gray-200" title={typeof analysis.summary === 'string' ? analysis.summary : ''}>
-                                                                    {typeof analysis.summary === 'string' ? analysis.summary : JSON.stringify(analysis.summary)}
+                                                                    {(typeof analysis.summary === 'string' ? analysis.summary : JSON.stringify(analysis.summary))
+                                                                        .replace(/<think>[\s\S]*?(?:<\/think>|$)/gi, "")
+                                                                        .trim()}
                                                                 </span>
                                                             </div>
                                                         );

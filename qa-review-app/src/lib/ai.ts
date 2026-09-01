@@ -16,14 +16,14 @@ let cachedGroqModel: string | null = null;
  * Updated as Groq adds new models.
  */
 const GROQ_PREFERRED_MODELS = [
+    "llama-3.3-70b-specdec",
+    "llama-3.1-8b-instant",
     "meta-llama/llama-4-maverick-17b-128e-instruct",
     "meta-llama/llama-4-scout-17b-16e-instruct",
-    "llama-3.3-70b-specdec",
-    "deepseek-r1-distill-llama-70b",
-    "qwen-qwq-32b",
     "compound-beta",
     "compound-beta-mini",
-    "llama-3.1-8b-instant",
+    "deepseek-r1-distill-llama-70b",
+    "qwen-qwq-32b",
 ];
 
 /**

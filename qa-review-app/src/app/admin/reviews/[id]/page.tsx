@@ -485,7 +485,9 @@ export default function AdminReviewPage({ params }: { params: Promise<{ id: stri
                                                     </div>
                                                     
                                                     <p className="text-gray-800 dark:text-gray-200 font-bold mb-4 leading-relaxed">
-                                                        {typeof analysis.summary === 'string' ? analysis.summary : JSON.stringify(analysis.summary)}
+                                                        {(typeof analysis.summary === 'string' ? analysis.summary : JSON.stringify(analysis.summary))
+                                                            .replace(/<think>[\s\S]*?(?:<\/think>|$)/gi, "")
+                                                            .trim()}
                                                     </p>
                                                     
                                                     {analysis.observations && Array.isArray(analysis.observations) && analysis.observations.length > 0 && (

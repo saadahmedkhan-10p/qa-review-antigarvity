@@ -98,15 +98,13 @@ export class AIAnalysisService {
 
             const { client: openai, model } = await getAIClient();
 
-            // Note: response_format is NOT used because some providers (e.g. Grok/xAI)
-            // do not support it. JSON is extracted from the response text instead.
             const response = await openai.chat.completions.create({
                 model: model,
                 messages: [
                     {
                         role: "system",
                         content: `You are an expert QA Project Auditor. 
-                        Your task is to evaluate project risk based on review observations and comments.
+                        Evaluate project risk based on review observations, questions, answers, and comments.
                         
                         CRITERIA:
                         - "LOW": Minor issues, on track.
@@ -115,7 +113,7 @@ export class AIAnalysisService {
                         - "CRITICAL": Major blockers, immediate intervention required.
                         
                         OUTPUT REQUIREMENTS:
-                        - Return JSON ONLY, no markdown, no code fences.
+                        - Output valid JSON only, no markdown code fences, no thinking tags, no preamble.
                         - riskScore: 0 to 10 (10 being highest risk).
                         - riskLevel: "LOW", "MEDIUM", "HIGH", or "CRITICAL".
                         - observations: Array of key risks identified.
@@ -123,34 +121,67 @@ export class AIAnalysisService {
                         - summary: A 2-3 sentence overview.
                         
                         PRIVACY:
-                        - Strip all PII (names, emails, phones) from the output.
-                        `
+                        - Strip all PII (names, emails, phones) from the output.`
                     },
                     {
                         role: "user",
                         content: prompt
                     }
                 ],
+                response_format: { type: "json_object" },
+                temperature: 0.2,
+                max_tokens: 2000,
             });
 
             const rawContent = response.choices[0].message.content || "{}";
 
-            // Robustly extract JSON from the response (handles markdown code fences)
-            let jsonString = rawContent;
-            const jsonMatch = rawContent.match(/(\{[\s\S]*\})/);
-            if (jsonMatch) {
-                jsonString = jsonMatch[1];
-            }
+            // Robust cleaning: strip <think>...</think> tags and markdown fences
+            let cleaned = rawContent.replace(/<think>[\s\S]*?(?:<\/think>|$)/gi, "").trim();
+            cleaned = cleaned.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+
+            const firstBrace = cleaned.indexOf("{");
+            const lastBrace = cleaned.lastIndexOf("}");
+            let jsonString = (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace)
+                ? cleaned.substring(firstBrace, lastBrace + 1)
+                : cleaned;
 
             let analysis: AIAnalysisResult;
             try {
-                analysis = JSON.parse(jsonString) as AIAnalysisResult;
+                const parsed = JSON.parse(jsonString);
+                const riskLevel = ["LOW", "MEDIUM", "HIGH", "CRITICAL"].includes(String(parsed.riskLevel).toUpperCase())
+                    ? String(parsed.riskLevel).toUpperCase() as any
+                    : "MEDIUM";
+                const riskScore = typeof parsed.riskScore === "number" ? Math.min(10, Math.max(0, parsed.riskScore)) : 5;
+                
+                let summaryText = typeof parsed.summary === "string" ? parsed.summary : JSON.stringify(parsed.summary || "");
+                summaryText = summaryText.replace(/<think>[\s\S]*?(?:<\/think>|$)/gi, "").trim();
+
+                const observations = Array.isArray(parsed.observations)
+                    ? parsed.observations.map((o: any) => typeof o === "string" ? o : JSON.stringify(o)).filter(Boolean)
+                    : [];
+
+                const actionItems = Array.isArray(parsed.actionItems)
+                    ? parsed.actionItems.map((a: any) => typeof a === "string" ? a : JSON.stringify(a)).filter(Boolean)
+                    : [];
+
+                analysis = {
+                    riskScore,
+                    riskLevel,
+                    summary: summaryText || "Project quality assessment complete.",
+                    observations,
+                    actionItems
+                };
             } catch {
-                // Fallback: wrap plain text in a minimal valid structure
+                console.warn("[AIAnalysisService] JSON parse failed, falling back to minimal object");
+                const cleanFallback = cleaned
+                    .replace(/<think>[\s\S]*?(?:<\/think>|$)/gi, "")
+                    .replace(/^#+\s+/gm, "")
+                    .trim();
+
                 analysis = {
                     riskScore: 5,
                     riskLevel: "MEDIUM",
-                    summary: rawContent,
+                    summary: cleanFallback.substring(0, 300) || "Analysis complete.",
                     observations: [],
                     actionItems: []
                 };

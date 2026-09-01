@@ -99,43 +99,77 @@ export async function generateAIAnalysis(reviewId: string) {
         prompt += `- actionItems: Array of recommended steps\n`;
 
         // 4. Call AI Provider
-        // Note: response_format is NOT used here because some providers (e.g. Grok/xAI)
-        // do not support it. JSON is extracted from the response text instead.
         const response = await openai.chat.completions.create({
             model: model,
             messages: [
                 { 
                     role: "system", 
-                    content: "You are a professional QA Project Auditor and Architect. Respond ONLY with a valid JSON object, no markdown, no code fences." 
+                    content: "You are a professional QA Project Auditor and Architect. Output valid JSON only, with no markdown code blocks, no thinking tags, and no conversational preamble." 
                 },
                 { role: "user", content: prompt }
             ],
-            temperature: 0.7,
-            max_tokens: 1000,
+            response_format: { type: "json_object" },
+            temperature: 0.2,
+            max_tokens: 2000,
         });
 
         const rawContent = response.choices[0].message.content || "{}";
 
-        // Robustly extract JSON from the response (handles markdown code fences)
-        let analysisText = rawContent;
-        const jsonMatch = rawContent.match(/(\{[\s\S]*\})/);
-        if (jsonMatch) {
-            analysisText = jsonMatch[1];
-        }
+        // 5. Robust cleaning: strip <think>...</think> tags and markdown fences
+        let cleaned = rawContent.replace(/<think>[\s\S]*?(?:<\/think>|$)/gi, "").trim();
+        cleaned = cleaned.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
 
-        // Validate it's parseable JSON before returning
+        const firstBrace = cleaned.indexOf("{");
+        const lastBrace = cleaned.lastIndexOf("}");
+        let jsonString = (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace)
+            ? cleaned.substring(firstBrace, lastBrace + 1)
+            : cleaned;
+
+        let finalAnalysis: any;
         try {
-            JSON.parse(analysisText);
-        } catch {
-            // Wrap plain text in a minimal valid JSON structure
-            analysisText = JSON.stringify({
+            const parsed = JSON.parse(jsonString);
+            if (parsed && typeof parsed === "object") {
+                const riskLevel = ["LOW", "MEDIUM", "HIGH", "CRITICAL"].includes(String(parsed.riskLevel).toUpperCase())
+                    ? String(parsed.riskLevel).toUpperCase()
+                    : "MEDIUM";
+                const riskScore = typeof parsed.riskScore === "number" ? Math.min(10, Math.max(0, parsed.riskScore)) : 5;
+                
+                let summaryText = typeof parsed.summary === "string" ? parsed.summary : JSON.stringify(parsed.summary || "");
+                summaryText = summaryText.replace(/<think>[\s\S]*?(?:<\/think>|$)/gi, "").trim();
+
+                const observations = Array.isArray(parsed.observations)
+                    ? parsed.observations.map((o: any) => typeof o === "string" ? o : JSON.stringify(o)).filter(Boolean)
+                    : [];
+
+                const actionItems = Array.isArray(parsed.actionItems)
+                    ? parsed.actionItems.map((a: any) => typeof a === "string" ? a : JSON.stringify(a)).filter(Boolean)
+                    : [];
+
+                finalAnalysis = {
+                    riskScore,
+                    riskLevel,
+                    summary: summaryText || "Project review quality assessment complete.",
+                    observations,
+                    actionItems
+                };
+            }
+        } catch (e) {
+            console.warn("generateAIAnalysis JSON parse failed, falling back to minimal object:", e);
+            const cleanFallback = cleaned
+                .replace(/<think>[\s\S]*?(?:<\/think>|$)/gi, "")
+                .replace(/^#+\s+/gm, "")
+                .trim();
+
+            finalAnalysis = {
                 riskScore: 5,
                 riskLevel: "MEDIUM",
-                summary: rawContent,
+                summary: cleanFallback.substring(0, 300) || "Analysis complete.",
                 observations: [],
                 actionItems: []
-            });
+            };
         }
+
+        const analysisText = JSON.stringify(finalAnalysis);
 
         console.log(`AI Analysis generated successfully for review ${reviewId}`);
 
