@@ -401,9 +401,9 @@ export function ReviewsTable({ reviews, initialType = 'ALL' }: { reviews: Review
                                             {review.status === 'SUBMITTED' ? (
                                                 <div className="flex flex-col gap-1">
                                                     {review.scheduledDate && (
-                                                        <span title="Scheduled Date" className="flex items-center gap-1 text-[10px] text-gray-400">
+                                                        <span title="Scheduled Date & Time" className="flex items-center gap-1 text-[10px] text-gray-400">
                                                             <Calendar className="h-3 w-3" />
-                                                            {format(new Date(review.scheduledDate), 'MMM d, yyyy')}
+                                                            {format(new Date(review.scheduledDate), 'MMM d, yyyy')} ({format(new Date(review.scheduledDate), 'h:mm a')})
                                                         </span>
                                                     )}
                                                     {review.submittedDate && (
@@ -413,10 +413,15 @@ export function ReviewsTable({ reviews, initialType = 'ALL' }: { reviews: Review
                                                     )}
                                                 </div>
                                             ) : review.status === 'SCHEDULED' && review.scheduledDate ? (
-                                                <span title="Scheduled Date" className="flex items-center gap-1">
-                                                    <Calendar className="h-3 w-3" />
-                                                    {format(new Date(review.scheduledDate), 'MMM d, yyyy')}
-                                                </span>
+                                                <div title="Scheduled Date & Time" className="flex flex-col">
+                                                    <span className="flex items-center gap-1 font-medium text-gray-900 dark:text-gray-200">
+                                                        <Calendar className="h-3.5 w-3.5 text-blue-500" />
+                                                        {format(new Date(review.scheduledDate), 'MMM d, yyyy')}
+                                                    </span>
+                                                    <span className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold ml-4">
+                                                        {format(new Date(review.scheduledDate), 'h:mm a')}
+                                                    </span>
+                                                </div>
                                             ) : (
                                                 <span className="text-gray-400">-</span>
                                             )}

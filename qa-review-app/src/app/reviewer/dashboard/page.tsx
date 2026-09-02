@@ -15,8 +15,8 @@ export default function ReviewerDashboard() {
     const [projects, setProjects] = useState<ProjectWithReviews[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // State for staged actions (status, reason, date) per review
-    const [stagedActions, setStagedActions] = useState<Record<string, { status: string, reason?: string, date?: string }>>({});
+    // State for staged actions (status, reason, date, time) per review
+    const [stagedActions, setStagedActions] = useState<Record<string, { status: string, reason?: string, date?: string, time?: string }>>({});
     const [activeType, setActiveType] = useState<'ALL' | 'MANUAL' | 'AUTOMATION_WEB' | 'AUTOMATION_MOBILE' | 'API' | 'DESKTOP'>('ALL');
 
     const loadData = async () => {
@@ -50,12 +50,20 @@ export default function ReviewerDashboard() {
         const action = stagedActions[reviewId];
         if (!action) return;
 
-        const { status, reason, date } = action;
+        const { status, reason, date, time } = action;
 
-        if (status === 'SCHEDULED' && !date) {
-            toast.error("Please select a date for scheduling");
-            return;
+        let scheduledDateObj: Date | undefined = undefined;
+        if (status === 'SCHEDULED') {
+            if (!date) {
+                toast.error("Please select a date for scheduling");
+                return;
+            }
+            const timeStr = time || "10:00";
+            const [hours, minutes] = timeStr.split(":").map(Number);
+            const [year, month, day] = date.split("-").map(Number);
+            scheduledDateObj = new Date(year, month - 1, day, hours || 0, minutes || 0, 0, 0);
         }
+
         if (['DEFERRED', 'ON_HOLD', 'PROJECT_ENDED'].includes(status) && !reason?.trim()) {
             toast.error("Please provide a reason/comment");
             return;
@@ -64,7 +72,7 @@ export default function ReviewerDashboard() {
         try {
             await updateReviewStatus(reviewId, status, {
                 reason,
-                date: date ? new Date(date) : undefined
+                date: scheduledDateObj
             });
             toast.success(`Review updated to ${status.replace('_', ' ')}`);
 
@@ -248,8 +256,9 @@ export default function ReviewerDashboard() {
                                                                 {review.status?.replace('_', ' ')}
                                                             </span>
                                                             {review.scheduledDate && (
-                                                                <div className="text-[10px] text-gray-700 dark:text-gray-400 font-bold uppercase tracking-tight">
-                                                                    SCH: {format(new Date(review.scheduledDate), 'MMM d, yyyy')}
+                                                                <div className="text-[10px] text-gray-700 dark:text-gray-400 font-bold uppercase tracking-tight flex items-center gap-1 flex-wrap">
+                                                                    <span>SCH: {format(new Date(review.scheduledDate), 'MMM d, yyyy')}</span>
+                                                                    <span className="text-indigo-600 dark:text-indigo-400 font-extrabold">({format(new Date(review.scheduledDate), 'h:mm a')})</span>
                                                                 </div>
                                                             )}
                                                             {review.submittedDate && (
@@ -293,7 +302,7 @@ export default function ReviewerDashboard() {
                                                                             {isScheduled ? "SCHEDULED (Change Status)" : "-- SELECT STATUS --"}
                                                                         </option>
                                                                         {isScheduled && <option value="PENDING">Reset to Pending</option>}
-                                                                        <option value="SCHEDULED">{isScheduled ? "Reschedule Date" : "Schedule Review"}</option>
+                                                                        <option value="SCHEDULED">{isScheduled ? "Reschedule Date/Time" : "Schedule Review"}</option>
                                                                         <option value="DEFERRED">Defer</option>
                                                                         <option value="ON_HOLD">Hold</option>
                                                                         <option value="PROJECT_ENDED">End Project</option>
@@ -321,13 +330,25 @@ export default function ReviewerDashboard() {
 
                                                             {/* Inline Inputs for Lifecycle actions */}
                                                             {currentStatus === 'SCHEDULED' && staged && (
-                                                                <div className="animate-in slide-in-from-top-1 fade-in duration-200">
-                                                                    <label className="text-[10px] font-black text-blue-600 uppercase mb-1 block">Pick Review Date</label>
-                                                                    <input
-                                                                        type="date"
-                                                                        className="w-full text-xs font-bold border-2 border-blue-200 dark:border-blue-900/50 rounded-xl p-2 bg-blue-100/30 dark:bg-blue-900/20 text-blue-950 dark:text-blue-100 focus:border-blue-500 outline-none"
-                                                                        onChange={(e) => handleStagedChange(review.id, { date: e.target.value })}
-                                                                    />
+                                                                <div className="animate-in slide-in-from-top-1 fade-in duration-200 bg-blue-50/70 dark:bg-blue-900/20 p-2.5 rounded-xl border border-blue-200 dark:border-blue-900/50 space-y-2">
+                                                                    <div>
+                                                                        <label className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase mb-1 block">Review Date</label>
+                                                                        <input
+                                                                            type="date"
+                                                                            value={staged.date || ""}
+                                                                            className="w-full text-xs font-bold border-2 border-blue-200 dark:border-blue-900/50 rounded-lg p-2 bg-white dark:bg-gray-900 text-blue-950 dark:text-blue-100 focus:border-blue-500 outline-none"
+                                                                            onChange={(e) => handleStagedChange(review.id, { date: e.target.value })}
+                                                                        />
+                                                                    </div>
+                                                                    <div>
+                                                                        <label className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase mb-1 block">Review Time (Teams / Outlook)</label>
+                                                                        <input
+                                                                            type="time"
+                                                                            value={staged.time || "10:00"}
+                                                                            className="w-full text-xs font-bold border-2 border-blue-200 dark:border-blue-900/50 rounded-lg p-2 bg-white dark:bg-gray-900 text-blue-950 dark:text-blue-100 focus:border-blue-500 outline-none"
+                                                                            onChange={(e) => handleStagedChange(review.id, { time: e.target.value })}
+                                                                        />
+                                                                    </div>
                                                                 </div>
                                                             )}
                                                             {['DEFERRED', 'ON_HOLD', 'PROJECT_ENDED'].includes(currentStatus) && staged && (

@@ -215,7 +215,12 @@ export default function LeadDashboard() {
                                                                 </span>
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                                                {review.scheduledDate ? format(new Date(review.scheduledDate), 'MMM d, yyyy') : '-'}
+                                                                {review.scheduledDate ? (
+                                                                    <div className="flex flex-col">
+                                                                        <span>{format(new Date(review.scheduledDate), 'MMM d, yyyy')}</span>
+                                                                        <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">({format(new Date(review.scheduledDate), 'h:mm a')})</span>
+                                                                    </div>
+                                                                ) : '-'}
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                                                 {review.submittedDate ? format(new Date(review.submittedDate), 'MMM d, yyyy') : '-'}

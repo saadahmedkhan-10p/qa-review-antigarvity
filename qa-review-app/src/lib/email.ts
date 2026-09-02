@@ -379,11 +379,13 @@ export const emailTemplates = {
     reviewId: string;
     outlookUrl?: string;
   }) => {
-    const formattedDate = format(new Date(data.scheduledDate), 'EEEE, MMMM d, yyyy');
+    const dateObj = new Date(data.scheduledDate);
+    const formattedDate = format(dateObj, 'EEEE, MMMM d, yyyy');
+    const formattedTime = format(dateObj, 'h:mm a');
     const conductUrl = `${APP_URL}/reviews/${data.reviewId}/conduct`;
 
     return {
-      subject: `📅 Scheduled: QA Review for ${esc(data.projectName)} on ${formattedDate}`,
+      subject: `📅 Scheduled: QA Review for ${esc(data.projectName)} on ${formattedDate} at ${formattedTime}`,
       html: emailWrapper(`QA Review Scheduled: ${data.projectName}`, `
         ${UI.h2('QA Review Scheduled')}
         ${UI.p(`Hello ${UI.strong(esc(data.recipientName))},`)}
@@ -392,7 +394,7 @@ export const emailTemplates = {
         ${UI.highlightBox(`
           <p style="margin: 0 0 8px 0; font-size: 13px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700;">Meeting & Review Details</p>
           <p style="margin: 0 0 6px 0; font-size: 15px;"><strong>Project:</strong> ${esc(data.projectName)}</p>
-          <p style="margin: 0 0 6px 0; font-size: 15px;"><strong>Scheduled Date:</strong> <span style="color: #2563eb; font-weight: 700;">${formattedDate}</span></p>
+          <p style="margin: 0 0 6px 0; font-size: 15px;"><strong>Date & Time:</strong> <span style="color: #2563eb; font-weight: 700;">${formattedDate} at ${formattedTime}</span></p>
           <p style="margin: 0 0 6px 0; font-size: 15px;"><strong>Primary Reviewer:</strong> ${esc(data.reviewerName)}</p>
           ${data.secondaryReviewerName ? `<p style="margin: 0 0 6px 0; font-size: 15px;"><strong>Secondary Reviewer:</strong> ${esc(data.secondaryReviewerName)}</p>` : ''}
           ${data.qaContactName ? `<p style="margin: 0 0 6px 0; font-size: 15px;"><strong>QA Contact:</strong> ${esc(data.qaContactName)}</p>` : ''}
