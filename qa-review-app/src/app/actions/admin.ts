@@ -267,6 +267,25 @@ export async function deleteForm(formData: FormData) {
     revalidatePath("/admin/forms");
 }
 
+export async function duplicateForm(formId: string) {
+    const user = await requireRole("ADMIN", "QA_HEAD");
+    const original = await ReviewService.getFormById(formId);
+    if (!original) return { error: "Form not found" };
+
+    const questions = typeof original.questions === "string"
+        ? JSON.parse(original.questions || "[]")
+        : (original.questions ?? []);
+
+    const copy = await ReviewService.createForm({
+        title: `${original.title} (Copy)`,
+        questions,
+        projectType: original.projectType
+    }, user);
+
+    revalidatePath("/admin/forms");
+    return { success: true, id: copy.id };
+}
+
 export async function triggerMonthlyReminders(type: "SCHEDULING" | "SUBMISSION" | "AUTO" = "AUTO") {
     await requireRole("ADMIN", "QA_HEAD", "QA_MANAGER", "QA_ARCHITECT");
 

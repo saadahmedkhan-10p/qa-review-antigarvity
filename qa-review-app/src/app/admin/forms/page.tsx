@@ -4,10 +4,10 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
-import { getForms, deleteForm } from "@/app/actions/admin";
+import { getForms, deleteForm, duplicateForm } from "@/app/actions/admin";
 import { ConfirmationModal } from "@/components/ConfirmationModal";
 import toast from "react-hot-toast";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Copy } from "lucide-react";
 import { Pagination } from "@/components/Pagination";
 import { format } from "date-fns";
 
@@ -30,6 +30,7 @@ function FormsListContent() {
         formId: "",
         formTitle: ""
     });
+    const [isDuplicating, setIsDuplicating] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
@@ -63,6 +64,24 @@ function FormsListContent() {
             loadForms();
         } catch (error: any) {
             toast.error(error.message || "Failed to delete form");
+        }
+    };
+
+    const handleDuplicate = async (formId: string, formTitle: string) => {
+        setIsDuplicating(formId);
+        const toastId = toast.loading(`Duplicating "${formTitle}"...`);
+        try {
+            const result = await duplicateForm(formId);
+            if (result?.error) {
+                toast.error(result.error, { id: toastId });
+            } else {
+                toast.success(`"${formTitle} (Copy)" created successfully!`, { id: toastId });
+                loadForms();
+            }
+        } catch (error: any) {
+            toast.error(error.message || "Failed to duplicate form", { id: toastId });
+        } finally {
+            setIsDuplicating(null);
         }
     };
 
@@ -179,13 +198,23 @@ function FormsListContent() {
                                                             <Pencil className="h-5 w-5" />
                                                         </Link>
                                                         {canCreateOrDelete && (
-                                                            <button
-                                                                onClick={() => setDeleteModal({ isOpen: true, formId: form.id, formTitle: form.title })}
-                                                                className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 inline-flex items-center justify-center transition-colors"
-                                                                title="Delete form"
-                                                            >
-                                                                <Trash2 className="h-5 w-5" />
-                                                            </button>
+                                                            <>
+                                                                <button
+                                                                    onClick={() => handleDuplicate(form.id, form.title)}
+                                                                    disabled={isDuplicating === form.id}
+                                                                    className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-300 p-1 rounded hover:bg-emerald-50 dark:hover:bg-emerald-900/20 inline-flex items-center justify-center transition-colors disabled:opacity-50"
+                                                                    title="Duplicate / Copy form"
+                                                                >
+                                                                    <Copy className={`h-5 w-5 ${isDuplicating === form.id ? 'animate-pulse' : ''}`} />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => setDeleteModal({ isOpen: true, formId: form.id, formTitle: form.title })}
+                                                                    className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 inline-flex items-center justify-center transition-colors"
+                                                                    title="Delete form"
+                                                                >
+                                                                    <Trash2 className="h-5 w-5" />
+                                                                </button>
+                                                            </>
                                                         )}
                                                     </div>
                                                 </td>
