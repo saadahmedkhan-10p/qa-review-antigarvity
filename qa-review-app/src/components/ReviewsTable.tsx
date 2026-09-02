@@ -11,10 +11,10 @@ import { useTableSort } from "@/hooks/useTableSort";
 import { useTableSearch } from "@/hooks/useTableSearch";
 import { SortIcon } from "@/components/table/SortIcon";
 import { ColumnFilter } from "@/components/table/ColumnFilter";
-import { markReviewAsNotCompleted } from "@/app/actions/admin";
+import { markReviewAsNotCompleted, triggerMonthlyReminders } from "@/app/actions/admin";
 import { useAuth } from "@/context/AuthContext";
 import { ConfirmationModal } from "@/components/ConfirmationModal";
-import { Clock } from "lucide-react";
+import { Clock, Send, Bell, ChevronDown } from "lucide-react";
 import toast from "react-hot-toast";
 import { CalendarLinksDropdown } from "@/components/CalendarLinksDropdown";
 
@@ -57,6 +57,30 @@ export function ReviewsTable({ reviews, initialType = 'ALL' }: { reviews: Review
         reason: ""
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSendingReminders, setIsSendingReminders] = useState(false);
+    const [showReminderMenu, setShowReminderMenu] = useState(false);
+
+    const handleSendReminders = async (type: "AUTO" | "SCHEDULING" | "SUBMISSION") => {
+        setIsSendingReminders(true);
+        setShowReminderMenu(false);
+        const toastId = toast.loading("Sending monthly reminder emails...");
+        try {
+            const res = await triggerMonthlyReminders(type);
+            if (res.success) {
+                if (res.emailsSent === 0) {
+                    toast.success("All reviews are up to date! No reminder emails needed.", { id: toastId });
+                } else {
+                    toast.success(`Successfully sent ${res.emailsSent} reminder email(s) & created ${res.notificationsCreated} notification(s)!`, { id: toastId, duration: 5000 });
+                }
+            } else {
+                toast.error("Failed to send reminders", { id: toastId });
+            }
+        } catch (e: any) {
+            toast.error(e.message || "Failed to trigger reminders", { id: toastId });
+        } finally {
+            setIsSendingReminders(false);
+        }
+    };
 
     const now = new Date();
     const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
@@ -183,6 +207,72 @@ export function ReviewsTable({ reviews, initialType = 'ALL' }: { reviews: Review
                                 <option value="NOT_COMPLETED">Not Completed</option>
                             </select>
                         </div>
+
+                        {/* Send Reminders Button (Management only) */}
+                        {isManagement && (
+                            <div className="relative">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowReminderMenu(!showReminderMenu)}
+                                    disabled={isSendingReminders}
+                                    className="flex items-center gap-2 px-3 py-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 rounded-lg text-xs font-bold transition-all shadow-sm disabled:opacity-50"
+                                >
+                                    <Bell className="h-3.5 w-3.5" />
+                                    <span>{isSendingReminders ? "Sending..." : "Send Reminders"}</span>
+                                    <ChevronDown className="h-3 w-3" />
+                                </button>
+
+                                {showReminderMenu && (
+                                    <>
+                                        <div
+                                            className="fixed inset-0 z-10"
+                                            onClick={() => setShowReminderMenu(false)}
+                                        />
+                                        <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-20 animate-in fade-in zoom-in-95 duration-100">
+                                            <div className="px-3 py-1.5 border-b border-gray-100 dark:border-gray-700 text-[10px] font-black uppercase tracking-wider text-gray-400">
+                                                Monthly Email & Bell Reminders
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleSendReminders("AUTO")}
+                                                className="w-full text-left px-4 py-2.5 hover:bg-indigo-50 dark:hover:bg-gray-700 text-xs font-medium text-gray-800 dark:text-gray-200 flex flex-col gap-0.5"
+                                            >
+                                                <span className="font-bold flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400">
+                                                    <span>⚡</span> Auto (Current Month Stage)
+                                                </span>
+                                                <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                                                    10th+ sends not-scheduled, 20th+ sends not-conducted
+                                                </span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleSendReminders("SCHEDULING")}
+                                                className="w-full text-left px-4 py-2.5 hover:bg-amber-50 dark:hover:bg-gray-700 text-xs font-medium text-gray-800 dark:text-gray-200 flex flex-col gap-0.5 border-t border-gray-100 dark:border-gray-700"
+                                            >
+                                                <span className="font-bold flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+                                                    <span>📅</span> Schedule Reminders (10th Deadline)
+                                                </span>
+                                                <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                                                    Email reviewers with reviews still unscheduled
+                                                </span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleSendReminders("SUBMISSION")}
+                                                className="w-full text-left px-4 py-2.5 hover:bg-red-50 dark:hover:bg-gray-700 text-xs font-medium text-gray-800 dark:text-gray-200 flex flex-col gap-0.5 border-t border-gray-100 dark:border-gray-700"
+                                            >
+                                                <span className="font-bold flex items-center gap-1.5 text-red-600 dark:text-red-400">
+                                                    <span>🚨</span> Conduct/Submit Reminders (20th Deadline)
+                                                </span>
+                                                <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                                                    Email reviewers with reviews still unconducted
+                                                </span>
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
 

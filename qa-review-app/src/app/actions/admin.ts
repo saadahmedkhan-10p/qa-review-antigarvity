@@ -5,6 +5,7 @@ import { requireRole } from "@/lib/withAuth";
 import { ProjectService } from "@/services/projectService";
 import { UserService } from "@/services/userService";
 import { ReviewService } from "@/services/reviewService";
+import { ReminderService } from "@/services/reminderService";
 import { userSchema, projectSchema, formSchema } from "@/lib/schemas";
 
 /**
@@ -262,4 +263,15 @@ export async function deleteForm(formData: FormData) {
     const id = formData.get("id") as string;
     await ReviewService.deleteForm(id, user);
     revalidatePath("/admin/forms");
+}
+
+export async function triggerMonthlyReminders(type: "SCHEDULING" | "SUBMISSION" | "AUTO" = "AUTO") {
+    await requireRole("ADMIN", "QA_HEAD", "QA_MANAGER", "QA_ARCHITECT");
+
+    const result = await ReminderService.processReminders(type);
+    revalidatePath("/admin/reviews");
+    revalidatePath("/admin/reports");
+    revalidatePath("/reviewer/dashboard");
+
+    return result;
 }
