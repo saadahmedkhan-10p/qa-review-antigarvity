@@ -184,10 +184,12 @@ export async function createReviewCycle(formId: string, targetNewOnly: boolean =
     const user = await requireRole("ADMIN", "QA_HEAD", "QA_MANAGER", "QA_ARCHITECT");
 
     try {
-        await ReviewService.initiateCycle(formId, targetNewOnly, user);
+        const created = await ReviewService.initiateCycle(formId, targetNewOnly, user);
         revalidatePath("/admin/projects");
+        revalidatePath("/admin/reviews");
         revalidatePath("/admin/reports");
-        return { success: true };
+        revalidatePath("/reviewer/dashboard");
+        return { success: true, count: created.length };
     } catch (e: any) {
         console.error("Create review cycle failed:", e);
         return { error: e.message || "Failed to initiate review cycle" };

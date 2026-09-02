@@ -6,6 +6,7 @@ import { SessionUser } from "@/lib/auth";
 import { NotificationService } from "@/services/notificationService";
 import { AIAnalysisService } from "@/services/aiAnalysisService";
 import { User, Form } from "@prisma/client";
+import { startOfMonth, endOfMonth } from "date-fns";
 import { z } from "zod";
 
 type ReviewInput = z.infer<typeof reviewSchema>;
@@ -146,6 +147,10 @@ export class ReviewService {
         const form = await prisma.form.findUnique({ where: { id: formId } });
         if (!form) throw new Error("Form not found");
 
+        const now = new Date();
+        const monthStart = startOfMonth(now);
+        const monthEnd = endOfMonth(now);
+
         const projects = await prisma.project.findMany({
             where: { status: "ACTIVE" },
             include: {
@@ -158,7 +163,8 @@ export class ReviewService {
             }
         });
 
-        const initiatedReviews = [];
+        const initiatedReviews: any[] = [];
+        const emailTasks: Array<{ project: ProjectWithCollaborators; form: Form }> = [];
 
         for (const project of projects) {
             // Logic filters (Project Type match, Target New Only)
@@ -166,15 +172,18 @@ export class ReviewService {
             if (targetNewOnly && project.reviews.length > 0) continue;
             if (!project.reviewerId || !project.reviewer) continue;
 
-            const existing = await prisma.review.findFirst({
+            // Check if a review already exists for this project in the CURRENT month
+            const existingThisMonth = await prisma.review.findFirst({
                 where: {
                     projectId: project.id,
-                    formId: formId,
-                    status: { not: "SUBMITTED" }
+                    createdAt: {
+                        gte: monthStart,
+                        lte: monthEnd
+                    }
                 }
             });
 
-            if (!existing) {
+            if (!existingThisMonth) {
                 const review = await prisma.review.create({
                     data: {
                         projectId: project.id,
@@ -185,17 +194,28 @@ export class ReviewService {
                     }
                 });
 
-                // Send invitations (email)
-                await this.sendReviewCycleEmails(project, form);
-
                 // In-app REVIEW_ASSIGNED notifications
                 await NotificationService.onReviewAssigned(review.id, project.name, project.reviewerId!);
                 if (project.secondaryReviewerId) {
                     await NotificationService.onReviewAssigned(review.id, project.name, project.secondaryReviewerId);
                 }
 
+                emailTasks.push({ project, form });
                 initiatedReviews.push(review);
             }
+        }
+
+        // Dispatch review cycle emails in the background (asynchronous non-blocking)
+        if (emailTasks.length > 0) {
+            (async () => {
+                for (const task of emailTasks) {
+                    try {
+                        await this.sendReviewCycleEmails(task.project, task.form);
+                    } catch (err) {
+                        console.error(`[initiateCycle] Background email error for ${task.project.name}:`, err);
+                    }
+                }
+            })().catch(err => console.error("[initiateCycle] Background email batch error:", err));
         }
 
         await logActivity({

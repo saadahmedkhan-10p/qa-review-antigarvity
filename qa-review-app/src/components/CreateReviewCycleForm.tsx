@@ -25,7 +25,11 @@ export function CreateReviewCycleForm({ forms }: CreateReviewCycleFormProps) {
                 toast.error(result.error);
                 return;
             }
-            toast.success("Review cycle initiated and invites sent successfully");
+            if (result && result.count === 0) {
+                toast("All active projects already have review cycles for this month.", { icon: "ℹ️" });
+            } else {
+                toast.success(`Review cycle initiated for ${result?.count ?? ""} project(s) & invites sent!`);
+            }
         } catch (error) {
             console.error(error);
             toast.error("Failed to initiate review cycle");
