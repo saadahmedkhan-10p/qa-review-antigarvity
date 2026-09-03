@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
   serverExternalPackages: ['@prisma/client', 'prisma'],
 
   // M-08: Security headers applied to all routes
