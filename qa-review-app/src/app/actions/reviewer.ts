@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/lib/withAuth";
 import { generateICS, getOutlookWebCalendarUrl } from "@/lib/calendar";
 
-export async function updateReviewStatus(reviewId: string, status: string, options?: { reason?: string; date?: Date }) {
+export async function updateReviewStatus(reviewId: string, status: string, options?: { reason?: string; date?: Date; timeZone?: string }) {
     // H-04: Require authentication; verify ownership before updating
     const caller = await requireAuth();
 
@@ -108,6 +108,7 @@ export async function updateReviewStatus(reviewId: string, status: string, optio
                             recipientName: name,
                             projectName: review.project.name,
                             scheduledDate,
+                            timeZone: options?.timeZone || 'Asia/Karachi',
                             reviewerName: review.reviewer?.name || 'Assigned Reviewer',
                             secondaryReviewerName: review.secondaryReviewer?.name,
                             qaContactName: review.project.contactPerson?.name,
@@ -228,13 +229,17 @@ export async function debugReviewer(reviewerId: string) {
     };
 }
 
-export async function scheduleReview(reviewId: string, date: Date) {
-    // H-04: Require auth and verify the caller owns this review
+export async function scheduleReview(reviewId: string, date: Date, timeZone?: string) {
+    // H-04: Require authentication; verify ownership before scheduling
     const caller = await requireAuth();
-    const reviewRecord = await prisma.review.findUnique({ where: { id: reviewId } });
+
+    const currentReview = await prisma.review.findUnique({
+        where: { id: reviewId }
+    });
+
     const callerRoles = caller.roles as string[];
     const isAdmin = callerRoles.includes("ADMIN") || callerRoles.includes("QA_HEAD");
-    if (!isAdmin && reviewRecord?.reviewerId !== caller.id && reviewRecord?.secondaryReviewerId !== caller.id) {
+    if (!isAdmin && currentReview?.reviewerId !== caller.id && currentReview?.secondaryReviewerId !== caller.id) {
         throw new Error("Forbidden");
     }
 
@@ -299,6 +304,7 @@ export async function scheduleReview(reviewId: string, date: Date) {
             recipientName: name,
             projectName: review.project.name,
             scheduledDate,
+            timeZone: timeZone || 'Asia/Karachi',
             reviewerName: review.reviewer?.name || 'Assigned Reviewer',
             secondaryReviewerName: review.secondaryReviewer?.name,
             qaContactName: review.project.contactPerson?.name,

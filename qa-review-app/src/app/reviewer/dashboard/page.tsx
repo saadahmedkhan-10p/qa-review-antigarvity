@@ -70,9 +70,11 @@ export default function ReviewerDashboard() {
         }
 
         try {
+            const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Karachi';
             await updateReviewStatus(reviewId, status, {
                 reason,
-                date: scheduledDateObj
+                date: scheduledDateObj,
+                timeZone: userTimeZone
             });
             toast.success(`Review updated to ${status.replace('_', ' ')}`);
 

@@ -372,6 +372,7 @@ export const emailTemplates = {
     recipientName: string;
     projectName: string;
     scheduledDate: Date;
+    timeZone?: string;
     reviewerName: string;
     secondaryReviewerName?: string;
     qaContactName?: string;
@@ -380,8 +381,24 @@ export const emailTemplates = {
     outlookUrl?: string;
   }) => {
     const dateObj = new Date(data.scheduledDate);
-    const formattedDate = format(dateObj, 'EEEE, MMMM d, yyyy');
-    const formattedTime = format(dateObj, 'h:mm a');
+    const timeZone = data.timeZone || 'Asia/Karachi';
+
+    const formattedDate = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    }).format(dateObj);
+
+    const formattedTime = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      timeZoneName: 'short'
+    }).format(dateObj);
+
     const conductUrl = `${APP_URL}/reviews/${data.reviewId}/conduct`;
 
     return {
