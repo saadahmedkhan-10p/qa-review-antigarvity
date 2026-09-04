@@ -7,6 +7,7 @@ import { UserService } from "@/services/userService";
 import { ReviewService } from "@/services/reviewService";
 import { ReminderService } from "@/services/reminderService";
 import { userSchema, projectSchema, formSchema } from "@/lib/schemas";
+import { pruneActivityLogs } from "@/lib/activityLogger";
 
 /**
  * --- Read Actions (Wrappers for Services) ---
@@ -294,5 +295,13 @@ export async function triggerMonthlyReminders(type: "SCHEDULING" | "SUBMISSION" 
     revalidatePath("/admin/reports");
     revalidatePath("/reviewer/dashboard");
 
+    return result;
+}
+
+export async function purgeOldActivityLogs(retentionDays: number = 40) {
+    await requireRole("ADMIN");
+
+    const result = await pruneActivityLogs(retentionDays);
+    revalidatePath("/admin/activity-logs");
     return result;
 }

@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Activity, Filter, Download, Search, Calendar } from "lucide-react";
+import { Activity, Filter, Download, Search, Calendar, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { ConfirmationModal } from "@/components/ConfirmationModal";
+import { purgeOldActivityLogs } from "@/app/actions/admin";
+import toast from "react-hot-toast";
 
 interface ActivityLog {
     id: string;
@@ -38,6 +41,8 @@ export default function ActivityLogsPage() {
         search: '',
     });
     const [page, setPage] = useState(0);
+    const [isPurgeModalOpen, setIsPurgeModalOpen] = useState(false);
+    const [purging, setPurging] = useState(false);
     const limit = 50;
 
     // Authorization check - redirect non-admin users
@@ -146,6 +151,22 @@ export default function ActivityLogsPage() {
         a.click();
     };
 
+    const handlePurgeLogs = async () => {
+        setPurging(true);
+        const toastId = toast.loading("Purging logs older than 40 days...");
+        try {
+            const result = await purgeOldActivityLogs(40);
+            toast.success(`Successfully purged ${result.deletedCount} old log(s)!`, { id: toastId });
+            setIsPurgeModalOpen(false);
+            setPage(0);
+            await loadLogs();
+        } catch (error: any) {
+            toast.error(error.message || "Failed to purge activity logs", { id: toastId });
+        } finally {
+            setPurging(false);
+        }
+    };
+
     const getActionColor = (action: string) => {
         if (action.startsWith('CREATE')) return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
         if (action.startsWith('UPDATE')) return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
@@ -169,13 +190,23 @@ export default function ActivityLogsPage() {
                                 Monitor all user actions and system events
                             </p>
                         </div>
-                        <button
-                            onClick={exportToCSV}
-                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-                        >
-                            <Download className="h-5 w-5" />
-                            Export CSV
-                        </button>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setIsPurgeModalOpen(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-600 dark:text-red-300 border border-red-200 dark:border-red-800 rounded-lg transition-colors font-medium text-sm"
+                                title="Delete logs older than 40 days"
+                            >
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                                Purge Logs (&gt; 40 Days)
+                            </button>
+                            <button
+                                onClick={exportToCSV}
+                                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm"
+                            >
+                                <Download className="h-4 w-4" />
+                                Export CSV
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -474,6 +505,15 @@ export default function ActivityLogsPage() {
                     )}
                 </div>
             </div>
+
+            <ConfirmationModal
+                isOpen={isPurgeModalOpen}
+                title="Purge Old Activity Logs?"
+                message="Are you sure you want to permanently delete all activity logs older than 40 days? This action cannot be undone."
+                confirmText={purging ? "Purging..." : "Purge Logs"}
+                onConfirm={handlePurgeLogs}
+                onCancel={() => !purging && setIsPurgeModalOpen(false)}
+            />
         </div>
     );
 }

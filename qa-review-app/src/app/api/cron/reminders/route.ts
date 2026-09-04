@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { ReminderService } from '@/services/reminderService';
+import { pruneActivityLogs } from '@/lib/activityLogger';
 
 export async function GET(request: Request) {
     try {
@@ -22,12 +23,22 @@ export async function GET(request: Request) {
         // Run reminders via ReminderService
         const result = await ReminderService.processReminders(typeParam || 'AUTO');
 
+        // Automatically purge activity logs older than 40 days as part of daily cron maintenance
+        let logsPruned = 0;
+        try {
+            const pruneResult = await pruneActivityLogs(40);
+            logsPruned = pruneResult.deletedCount;
+        } catch (e) {
+            console.error('[cron/reminders] Error pruning activity logs:', e);
+        }
+
         return NextResponse.json({
             success: true,
             reminderType: result.type,
             today: result.today,
             emailsSent: result.emailsSent,
             notificationsCreated: result.notificationsCreated,
+            activityLogsPruned: logsPruned,
             details: result.details
         });
 

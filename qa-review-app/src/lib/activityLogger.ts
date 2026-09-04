@@ -78,3 +78,25 @@ export async function getActivityLogs(options?: {
 
     return { logs, total };
 }
+
+/**
+ * Delete activity logs older than specified number of days (default: 40)
+ */
+export async function pruneActivityLogs(retentionDays: number = 40) {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
+
+    const result = await prisma.activityLog.deleteMany({
+        where: {
+            createdAt: {
+                lt: cutoffDate,
+            },
+        },
+    });
+
+    return {
+        deletedCount: result.count,
+        cutoffDate,
+        retentionDays,
+    };
+}
