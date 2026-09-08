@@ -112,13 +112,13 @@ export function EditProjectForm({
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Review Lead</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Review Lead (Optional)</label>
                 <select
                     name="leadId"
                     defaultValue={project.leadId || ""}
-                    required
                     className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm p-3 text-gray-900 dark:text-white dark:bg-gray-700 focus:ring-indigo-500 focus:border-indigo-500"
                 >
+                    <option value="">-- None --</option>
                     {leads.map((u: any) => (
                         <option key={u.id} value={u.id}>
                             {u.name}
@@ -128,13 +128,13 @@ export function EditProjectForm({
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Reviewer (Primary)</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Reviewer (Primary) (Optional)</label>
                 <select
                     name="reviewerId"
                     defaultValue={project.reviewerId || ""}
-                    required
                     className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm p-3 text-gray-900 dark:text-white dark:bg-gray-700 focus:ring-indigo-500 focus:border-indigo-500"
                 >
+                    <option value="">-- None --</option>
                     {reviewers.map((u: any) => (
                         <option key={u.id} value={u.id}>
                             {u.name}
