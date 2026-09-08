@@ -123,6 +123,16 @@ export async function reopenProject(projectId: string) {
     revalidatePath("/admin/projects");
 }
 
+export async function removeLeadsFromManualProjects() {
+    await requireRole("ADMIN", "QA_HEAD");
+
+    const result = await ProjectService.removeLeadsFromManualProjects();
+    revalidatePath("/admin/projects");
+    revalidatePath("/admin/reports");
+    revalidatePath("/admin/reviews");
+    return result;
+}
+
 /**
  * --- User Actions ---
  */

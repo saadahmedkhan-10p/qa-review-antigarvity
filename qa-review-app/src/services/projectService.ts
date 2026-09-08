@@ -323,4 +323,23 @@ export class ProjectService {
             );
         }
     }
+
+    /**
+     * Remove assigned review leads from all manual projects
+     */
+    static async removeLeadsFromManualProjects() {
+        const result = await prisma.project.updateMany({
+            where: {
+                type: 'MANUAL',
+                leadId: {
+                    not: null
+                }
+            },
+            data: {
+                leadId: null
+            }
+        });
+
+        return { success: true, count: result.count };
+    }
 }
