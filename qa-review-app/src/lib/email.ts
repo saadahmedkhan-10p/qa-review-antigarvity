@@ -218,15 +218,14 @@ export const emailTemplates = {
   }),
 
   reminderScheduling: (reviewerName: string, projectName: string, secondaryReviewerName?: string, isSecondary?: boolean) => ({
-    subject: isSecondary ? `Update: Review Scheduling for ${esc(projectName)}` : `Reminder: Schedule Review for ${esc(projectName)}`,
-    html: emailWrapper(isSecondary ? 'Review Scheduling Update' : 'Action Required: Schedule Review', `
-      ${UI.h2(isSecondary ? 'Review Scheduling Update' : 'Action Required: Schedule Review')}
+    subject: `Reminder: Schedule Review for ${esc(projectName)}`,
+    html: emailWrapper('Action Required: Schedule Review', `
+      ${UI.h2('Action Required: Schedule Review')}
       ${UI.p(`Hello ${UI.strong(esc(reviewerName))},`)}
-      ${UI.p(isSecondary ? `The QA review for <strong>${esc(projectName)}</strong> is currently being scheduled by the primary reviewer.` : `This is a reminder to schedule your QA review for <strong>${esc(projectName)}</strong> for this month.`)}
+      ${UI.p(`This is a reminder that the QA review for <strong>${esc(projectName)}</strong> needs to be scheduled. The primary reviewer is responsible for scheduling it by the 10th of the month.`)}
       
       ${UI.alertBox(`
         <h3 style="margin-top: 0; margin-bottom: 12px;">${esc(projectName)}</h3>
-        ${!isSecondary ? '<p style="margin: 0 0 8px 0;">Please schedule your review as soon as possible.</p>' : ''}
         <p style="margin: 0;"><strong>Deadline for scheduling: 10th of the month</strong></p>
         ${secondaryReviewerName ? `<p style="margin: 12px 0 0 0; font-size: 13px;">Cc: ${esc(secondaryReviewerName)}</p>` : ''}
       `, 'warning')}
