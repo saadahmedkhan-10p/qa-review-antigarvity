@@ -1,11 +1,8 @@
-import dotenv from 'dotenv';
+import { loadEnvConfig } from '@next/env';
 import path from 'path';
 
-// Load environment variables for standalone script execution
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
-dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
-dotenv.config({ path: path.resolve(process.cwd(), '.env.production') });
-dotenv.config({ path: path.resolve(process.cwd(), '.env.production.local') });
+// Load environment variables exactly the same way Next.js loads them
+loadEnvConfig(process.cwd());
 
 import { ReminderService } from '../src/services/reminderService';
 import { pruneActivityLogs } from '../src/lib/activityLogger';
