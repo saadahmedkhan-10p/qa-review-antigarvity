@@ -1,3 +1,12 @@
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Load environment variables for standalone script execution
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env.production') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env.production.local') });
+
 import { ReminderService } from '../src/services/reminderService';
 import { pruneActivityLogs } from '../src/lib/activityLogger';
 
