@@ -227,28 +227,28 @@ export const emailTemplates = {
       ${UI.alertBox(`
         <h3 style="margin-top: 0; margin-bottom: 12px;">${esc(projectName)}</h3>
         <p style="margin: 0;"><strong>Deadline for scheduling: 10th of the month</strong></p>
-        ${secondaryReviewerName ? `<p style="margin: 12px 0 0 0; font-size: 13px;">Cc: ${esc(secondaryReviewerName)}</p>` : ''}
+        ${secondaryReviewerName ? `<p style="margin: 12px 0 0 0; font-size: 13px;">${isSecondary ? `Primary Reviewer: ${esc(secondaryReviewerName)}` : `Cc: ${esc(secondaryReviewerName)}`}</p>` : ''}
       `, 'warning')}
       
       ${UI.button(`${APP_URL}/reviewer/dashboard`, 'View Dashboard')}
     `),
   }),
 
-  reminderSubmission: (reviewerName: string, projectName: string, secondaryReviewerName?: string) => ({
+  reminderSubmission: (reviewerName: string, projectName: string, secondaryReviewerName?: string, isSecondary?: boolean) => ({
     subject: `Reminder: Submit Review for ${esc(projectName)}`,
-    html: emailWrapper(`Reminder: Submit Review for ${esc(projectName)}`, `
+    html: emailWrapper('Action Required: Submit Review', `
       ${UI.h2('Action Required: Submit Review')}
       ${UI.p(`Hello ${UI.strong(esc(reviewerName))},`)}
-      ${UI.p(`This is a reminder to submit your QA review for <strong>${esc(projectName)}</strong>.`)}
+      ${UI.p(`This is a reminder that the QA review for <strong>${esc(projectName)}</strong> is due for submission by the 20th of the month.`)}
       
       ${UI.alertBox(`
         <h3 style="margin-top: 0; margin-bottom: 12px;">${esc(projectName)}</h3>
         <p style="margin: 0 0 8px 0;">The review deadline is approaching.</p>
         <p style="margin: 0;"><strong>Deadline for submission: 20th of the month</strong></p>
-        ${secondaryReviewerName ? `<p style="margin: 12px 0 0 0; font-size: 13px;">Cc: ${esc(secondaryReviewerName)}</p>` : ''}
+        ${secondaryReviewerName ? `<p style="margin: 12px 0 0 0; font-size: 13px;">${isSecondary ? `Primary Reviewer: ${esc(secondaryReviewerName)}` : `Cc: ${esc(secondaryReviewerName)}`}</p>` : ''}
       `, 'error')}
       
-      ${UI.button(`${APP_URL}/reviewer/dashboard`, 'Submit Review')}
+      ${UI.button(`${APP_URL}/reviewer/dashboard`, isSecondary ? 'View Dashboard' : 'Submit Review')}
     `),
   }),
 

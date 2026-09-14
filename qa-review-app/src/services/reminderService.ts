@@ -193,7 +193,8 @@ export class ReminderService {
                         const secTemplate = emailTemplates.reminderSubmission(
                             project.secondaryReviewer.name,
                             project.name,
-                            project.reviewer.name
+                            project.reviewer.name,
+                            true
                         );
                         await sendEmail(project.secondaryReviewer.email, secTemplate);
                     }
