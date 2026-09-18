@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { CalendarLinksDropdown } from "@/components/CalendarLinksDropdown";
+import { Video } from "lucide-react";
 
 type ProjectWithReviews = any;
 
@@ -15,8 +16,8 @@ export default function ReviewerDashboard() {
     const [projects, setProjects] = useState<ProjectWithReviews[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // State for staged actions (status, reason, date, time) per review
-    const [stagedActions, setStagedActions] = useState<Record<string, { status: string, reason?: string, date?: string, time?: string }>>({});
+    // State for staged actions (status, reason, date, time, meetingLink) per review
+    const [stagedActions, setStagedActions] = useState<Record<string, { status: string, reason?: string, date?: string, time?: string, meetingLink?: string }>>({});
     const [activeType, setActiveType] = useState<'ALL' | 'MANUAL' | 'AUTOMATION_WEB' | 'AUTOMATION_MOBILE' | 'API' | 'DESKTOP'>('ALL');
 
     const loadData = async () => {
@@ -50,7 +51,7 @@ export default function ReviewerDashboard() {
         const action = stagedActions[reviewId];
         if (!action) return;
 
-        const { status, reason, date, time } = action;
+        const { status, reason, date, time, meetingLink } = action;
 
         let scheduledDateObj: Date | undefined = undefined;
         if (status === 'SCHEDULED') {
@@ -74,7 +75,8 @@ export default function ReviewerDashboard() {
             await updateReviewStatus(reviewId, status, {
                 reason,
                 date: scheduledDateObj,
-                timeZone: userTimeZone
+                timeZone: userTimeZone,
+                meetingLink
             });
             toast.success(`Review updated to ${status.replace('_', ' ')}`);
 
@@ -351,6 +353,19 @@ export default function ReviewerDashboard() {
                                                                             onChange={(e) => handleStagedChange(review.id, { time: e.target.value })}
                                                                         />
                                                                     </div>
+                                                                    <div>
+                                                                        <label className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase mb-1 flex items-center justify-between">
+                                                                            <span>Teams / Meeting Link</span>
+                                                                            <span className="text-[9px] text-gray-500 dark:text-gray-400 font-medium lowercase">Optional</span>
+                                                                        </label>
+                                                                        <input
+                                                                            type="url"
+                                                                            placeholder="https://teams.microsoft.com/l/meetup-join/..."
+                                                                            value={staged.meetingLink !== undefined ? staged.meetingLink : (review.meetingLink || "")}
+                                                                            className="w-full text-xs font-bold border-2 border-blue-200 dark:border-blue-900/50 rounded-lg p-2 bg-white dark:bg-gray-900 text-blue-950 dark:text-blue-100 focus:border-blue-500 outline-none placeholder:font-normal placeholder:text-gray-400"
+                                                                            onChange={(e) => handleStagedChange(review.id, { meetingLink: e.target.value })}
+                                                                        />
+                                                                    </div>
                                                                 </div>
                                                             )}
                                                             {['DEFERRED', 'ON_HOLD', 'PROJECT_ENDED'].includes(currentStatus) && staged && (
@@ -377,6 +392,17 @@ export default function ReviewerDashboard() {
                                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                                                                         </svg>
                                                                     </Link>
+                                                                    {review.meetingLink && (
+                                                                        <a
+                                                                            href={review.meetingLink}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="bg-purple-600 dark:bg-purple-500 text-white px-4 py-2 rounded-xl font-bold text-center text-xs hover:bg-purple-700 dark:hover:bg-purple-600 transition-all flex items-center justify-center gap-2 shadow-md shadow-purple-500/20"
+                                                                        >
+                                                                            <Video className="h-3.5 w-3.5" />
+                                                                            <span>JOIN TEAMS</span>
+                                                                        </a>
+                                                                    )}
                                                                     <CalendarLinksDropdown
                                                                         reviewId={review.id}
                                                                         projectName={project.name}
@@ -384,6 +410,7 @@ export default function ReviewerDashboard() {
                                                                         reviewerName={user.name}
                                                                         qaContactName={project.contactPerson?.name}
                                                                         leadName={project.lead?.name}
+                                                                        meetingLink={review.meetingLink}
                                                                         attendees={[
                                                                             ...(user.email ? [{ name: user.name, email: user.email }] : []),
                                                                             ...(project.secondaryReviewer?.email ? [{ name: project.secondaryReviewer.name, email: project.secondaryReviewer.email }] : []),

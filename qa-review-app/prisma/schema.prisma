@@ -94,6 +94,7 @@ model Review {
   aiAnalysis          String?
   scheduledDate       DateTime?
   submittedDate       DateTime?
+  meetingLink         String?
   answers             String?
   createdAt           DateTime     @default(now())
   updatedAt           DateTime     @updatedAt

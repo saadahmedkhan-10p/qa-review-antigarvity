@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Utility functions for creating iCalendar (.ics) files and calendar deep links (Outlook, Teams).
  */
 
@@ -13,6 +13,7 @@ export interface CalendarEventDetails {
     reviewerName?: string;
     qaContactName?: string;
     leadName?: string;
+    meetingLink?: string;
     attendees?: { name: string; email: string }[];
     appUrl?: string;
 }
@@ -42,6 +43,7 @@ export function generateICS(event: CalendarEventDetails): string {
 
     const uid = `qa-review-${event.reviewId}-${start.getTime()}@10pearls.com`;
     const summary = `QA Review: ${event.projectName}`;
+    const meetingLink = event.meetingLink?.trim();
 
     const descriptionLines = [
         `QA Review for Project: ${event.projectName}`,
@@ -49,11 +51,12 @@ export function generateICS(event: CalendarEventDetails): string {
         event.reviewerName ? `Primary Reviewer: ${event.reviewerName}` : "",
         event.qaContactName ? `QA Contact Person: ${event.qaContactName}` : "",
         event.leadName ? `Project Lead: ${event.leadName}` : "",
+        meetingLink ? `Join Teams Meeting: ${meetingLink}` : "",
         "",
         `Conduct Review Link: ${reviewUrl}`,
         "",
         "This meeting was automatically scheduled via the 10Pearls QA Review System."
-    ].filter(line => line !== undefined);
+    ].filter(line => line !== undefined && line !== "");
 
     const description = descriptionLines.join("\\n");
 
@@ -78,7 +81,10 @@ export function generateICS(event: CalendarEventDetails): string {
         `DTEND:${dtEnd}`,
         `SUMMARY:${summary}`,
         `DESCRIPTION:${description}`,
-        `LOCATION:Microsoft Teams / Online Meeting`,
+        meetingLink ? `LOCATION:${meetingLink}` : `LOCATION:Microsoft Teams / Online Meeting`,
+        meetingLink ? `X-MICROSOFT-SKYPETEAMSMEETINGURL:${meetingLink}` : "",
+        meetingLink ? `X-MICROSOFT-LOCATIONDISPLAYNAME:Microsoft Teams Meeting` : "",
+        meetingLink ? `X-MICROSOFT-LOCATIONSOURCE:None` : "",
         `ORGANIZER;CN=${organizerName}:mailto:${organizerEmail}`,
         attendeeStrings ? attendeeStrings : "",
         "STATUS:CONFIRMED",
@@ -105,11 +111,13 @@ export function getOutlookWebCalendarUrl(event: CalendarEventDetails): string {
 
     const start = event.startDate;
     const end = event.endDate || new Date(start.getTime() + 60 * 60 * 1000);
+    const meetingLink = event.meetingLink?.trim();
 
     const subject = `QA Review: ${event.projectName}`;
     const body = `QA Review for Project: ${event.projectName}\n` +
         (event.reviewerName ? `Primary Reviewer: ${event.reviewerName}\n` : "") +
         (event.qaContactName ? `QA Contact: ${event.qaContactName}\n` : "") +
+        (meetingLink ? `\nJoin Teams Meeting: ${meetingLink}\n` : "") +
         `\nConduct Review: ${reviewUrl}\n`;
 
     const to = (event.attendees || []).map(a => a.email).filter(Boolean).join(";");
@@ -121,7 +129,7 @@ export function getOutlookWebCalendarUrl(event: CalendarEventDetails): string {
         startdt: start.toISOString(),
         enddt: end.toISOString(),
         body,
-        location: "Microsoft Teams Meeting",
+        location: meetingLink || "Microsoft Teams Meeting",
         to
     });
 

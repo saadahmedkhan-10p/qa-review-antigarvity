@@ -14,7 +14,7 @@ import { ColumnFilter } from "@/components/table/ColumnFilter";
 import { markReviewAsNotCompleted, triggerMonthlyReminders } from "@/app/actions/admin";
 import { useAuth } from "@/context/AuthContext";
 import { ConfirmationModal } from "@/components/ConfirmationModal";
-import { Clock, Send, Bell, ChevronDown } from "lucide-react";
+import { Clock, Send, Bell, ChevronDown, Video } from "lucide-react";
 import toast from "react-hot-toast";
 import { CalendarLinksDropdown } from "@/components/CalendarLinksDropdown";
 
@@ -23,6 +23,7 @@ interface Review {
     status: string;
     submittedDate: string | null;
     scheduledDate: string | null;
+    meetingLink?: string | null;
     project: {
         name: string;
         type?: string;
@@ -448,13 +449,28 @@ export function ReviewsTable({ reviews, initialType = 'ALL' }: { reviews: Review
                                                     </Link>
                                                 )}
                                                 {review.status === 'SCHEDULED' && review.scheduledDate && (
-                                                    <CalendarLinksDropdown
-                                                        reviewId={review.id}
-                                                        projectName={review.project.name}
-                                                        scheduledDate={review.scheduledDate}
-                                                        reviewerName={review.reviewer?.name || review.project.reviewer?.name}
-                                                        attendees={[]}
-                                                    />
+                                                    <>
+                                                        {review.meetingLink && (
+                                                            <a
+                                                                href={review.meetingLink}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 inline-flex items-center gap-1 font-semibold text-xs"
+                                                                title="Join Microsoft Teams meeting"
+                                                            >
+                                                                <Video className="h-4 w-4" />
+                                                                Teams
+                                                            </a>
+                                                        )}
+                                                        <CalendarLinksDropdown
+                                                            reviewId={review.id}
+                                                            projectName={review.project.name}
+                                                            scheduledDate={review.scheduledDate}
+                                                            reviewerName={review.reviewer?.name || review.project.reviewer?.name}
+                                                            meetingLink={review.meetingLink || undefined}
+                                                            attendees={[]}
+                                                        />
+                                                    </>
                                                 )}
                                                 {review.status === 'SUBMITTED' && (
                                                     <Link

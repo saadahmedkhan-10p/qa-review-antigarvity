@@ -379,6 +379,7 @@ export const emailTemplates = {
     leadName?: string;
     reviewId: string;
     outlookUrl?: string;
+    meetingLink?: string;
   }) => {
     const dateObj = new Date(data.scheduledDate);
     const timeZone = data.timeZone || 'Asia/Karachi';
@@ -412,6 +413,9 @@ export const emailTemplates = {
           <p style="margin: 0 0 8px 0; font-size: 13px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700;">Meeting & Review Details</p>
           <p style="margin: 0 0 6px 0; font-size: 15px;"><strong>Project:</strong> ${esc(data.projectName)}</p>
           <p style="margin: 0 0 6px 0; font-size: 15px;"><strong>Date & Time:</strong> <span style="color: #2563eb; font-weight: 700;">${formattedDate} at ${formattedTime}</span></p>
+          ${data.meetingLink ? `
+          <p style="margin: 0 0 6px 0; font-size: 15px;"><strong>Online Meeting:</strong> <a href="${esc(data.meetingLink)}" target="_blank" style="color: #4f46e5; font-weight: 700; text-decoration: underline;">Join Microsoft Teams Meeting</a></p>
+          ` : ''}
           <p style="margin: 0 0 6px 0; font-size: 15px;"><strong>Primary Reviewer:</strong> ${esc(data.reviewerName)}</p>
           ${data.secondaryReviewerName ? `<p style="margin: 0 0 6px 0; font-size: 15px;"><strong>Secondary Reviewer:</strong> ${esc(data.secondaryReviewerName)}</p>` : ''}
           ${data.qaContactName ? `<p style="margin: 0 0 6px 0; font-size: 15px;"><strong>QA Contact:</strong> ${esc(data.qaContactName)}</p>` : ''}
@@ -425,6 +429,14 @@ export const emailTemplates = {
             <td align="center">
               <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate;">
                 <tr>
+                  ${data.meetingLink ? `
+                  <td align="center" bgcolor="#4f46e5" style="border-radius: 6px; padding: 12px 24px;">
+                    <a href="${esc(data.meetingLink)}" target="_blank" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 15px; font-weight: 700; color: #ffffff; text-decoration: none; display: block;">
+                      Join Teams Meeting
+                    </a>
+                  </td>
+                  <td width="12"></td>
+                  ` : ''}
                   <td align="center" bgcolor="#2563eb" style="border-radius: 6px; padding: 12px 24px;">
                     <a href="${conductUrl}" target="_blank" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 15px; font-weight: 600; color: #ffffff; text-decoration: none; display: block;">
                       Open QA Review Form

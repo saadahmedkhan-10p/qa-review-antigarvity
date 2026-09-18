@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/lib/withAuth";
 import { generateICS, getOutlookWebCalendarUrl } from "@/lib/calendar";
 
-export async function updateReviewStatus(reviewId: string, status: string, options?: { reason?: string; date?: Date; timeZone?: string }) {
+export async function updateReviewStatus(reviewId: string, status: string, options?: { reason?: string; date?: Date; timeZone?: string; meetingLink?: string }) {
     // H-04: Require authentication; verify ownership before updating
     const caller = await requireAuth();
 
@@ -33,17 +33,24 @@ export async function updateReviewStatus(reviewId: string, status: string, optio
 
         if (status === 'SCHEDULED' && options?.date) {
             data.scheduledDate = options.date;
+            if (options?.meetingLink !== undefined) {
+                data.meetingLink = options.meetingLink?.trim() || null;
+            }
         } else if (status === 'PENDING') {
             data.scheduledDate = null;
+            data.meetingLink = null;
         } else if (status === 'DEFERRED') {
             data.deferredReason = options?.reason || null;
             data.scheduledDate = null;
+            data.meetingLink = null;
         } else if (status === 'ON_HOLD') {
             data.onHoldReason = options?.reason || null;
             data.scheduledDate = null;
+            data.meetingLink = null;
         } else if (status === 'PROJECT_ENDED') {
             data.endedReason = options?.reason || null;
             data.scheduledDate = null;
+            data.meetingLink = null;
         }
 
         const review = await prisma.review.update({
@@ -74,6 +81,8 @@ export async function updateReviewStatus(reviewId: string, status: string, optio
                     if (review.project.contactPerson?.email) attendees.push({ name: review.project.contactPerson.name || 'QA Contact', email: review.project.contactPerson.email });
                     if (review.project.lead?.email) attendees.push({ name: review.project.lead.name || 'Project Lead', email: review.project.lead.email });
 
+                    const meetingLink = review.meetingLink || options?.meetingLink?.trim();
+
                     const icsContent = generateICS({
                         reviewId: review.id,
                         projectName: review.project.name,
@@ -82,6 +91,7 @@ export async function updateReviewStatus(reviewId: string, status: string, optio
                         reviewerName: review.reviewer?.name,
                         qaContactName: review.project.contactPerson?.name,
                         leadName: review.project.lead?.name,
+                        meetingLink,
                         attendees
                     });
 
@@ -92,6 +102,7 @@ export async function updateReviewStatus(reviewId: string, status: string, optio
                         reviewerName: review.reviewer?.name,
                         qaContactName: review.project.contactPerson?.name,
                         leadName: review.project.lead?.name,
+                        meetingLink,
                         attendees
                     });
 
@@ -114,7 +125,8 @@ export async function updateReviewStatus(reviewId: string, status: string, optio
                             qaContactName: review.project.contactPerson?.name,
                             leadName: review.project.lead?.name,
                             reviewId: review.id,
-                            outlookUrl
+                            outlookUrl,
+                            meetingLink
                         });
 
                         await sendEmail(email, {
@@ -229,7 +241,7 @@ export async function debugReviewer(reviewerId: string) {
     };
 }
 
-export async function scheduleReview(reviewId: string, date: Date, timeZone?: string) {
+export async function scheduleReview(reviewId: string, date: Date, timeZone?: string, meetingLink?: string) {
     // H-04: Require authentication; verify ownership before scheduling
     const caller = await requireAuth();
 
@@ -247,6 +259,7 @@ export async function scheduleReview(reviewId: string, date: Date, timeZone?: st
         where: { id: reviewId },
         data: {
             scheduledDate: date,
+            meetingLink: meetingLink?.trim() || null,
             status: "SCHEDULED"
         },
         include: {
@@ -271,6 +284,8 @@ export async function scheduleReview(reviewId: string, date: Date, timeZone?: st
     if (review.project.contactPerson?.email) attendees.push({ name: review.project.contactPerson.name || 'QA Contact', email: review.project.contactPerson.email });
     if (review.project.lead?.email) attendees.push({ name: review.project.lead.name || 'Project Lead', email: review.project.lead.email });
 
+    const activeMeetingLink = review.meetingLink || meetingLink?.trim();
+
     const icsContent = generateICS({
         reviewId: review.id,
         projectName: review.project.name,
@@ -279,6 +294,7 @@ export async function scheduleReview(reviewId: string, date: Date, timeZone?: st
         reviewerName: review.reviewer?.name,
         qaContactName: review.project.contactPerson?.name,
         leadName: review.project.lead?.name,
+        meetingLink: activeMeetingLink,
         attendees
     });
 
@@ -289,6 +305,7 @@ export async function scheduleReview(reviewId: string, date: Date, timeZone?: st
         reviewerName: review.reviewer?.name,
         qaContactName: review.project.contactPerson?.name,
         leadName: review.project.lead?.name,
+        meetingLink: activeMeetingLink,
         attendees
     });
 
@@ -310,7 +327,8 @@ export async function scheduleReview(reviewId: string, date: Date, timeZone?: st
             qaContactName: review.project.contactPerson?.name,
             leadName: review.project.lead?.name,
             reviewId: review.id,
-            outlookUrl
+            outlookUrl,
+            meetingLink: activeMeetingLink
         });
 
         await sendEmail(email, {

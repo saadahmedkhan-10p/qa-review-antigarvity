@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useRef, useEffect } from "react";
 import { Calendar, Download, ExternalLink, Video } from "lucide-react";
@@ -11,6 +11,7 @@ interface CalendarLinksDropdownProps {
     reviewerName?: string;
     qaContactName?: string;
     leadName?: string;
+    meetingLink?: string;
     attendees?: { name: string; email: string }[];
 }
 
@@ -21,6 +22,7 @@ export function CalendarLinksDropdown({
     reviewerName,
     qaContactName,
     leadName,
+    meetingLink,
     attendees = []
 }: CalendarLinksDropdownProps) {
     const [isOpen, setIsOpen] = useState(false);
@@ -45,6 +47,7 @@ export function CalendarLinksDropdown({
         reviewerName,
         qaContactName,
         leadName,
+        meetingLink,
         attendees
     };
 
@@ -88,6 +91,21 @@ export function CalendarLinksDropdown({
                     <div className="px-3 py-2">
                         <p className="text-[10px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-500">Meeting & Calendar</p>
                     </div>
+                    {meetingLink && (
+                        <div className="py-1">
+                            <a
+                                href={meetingLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={() => setIsOpen(false)}
+                                className="flex items-center gap-2.5 px-4 py-2 text-xs font-bold text-purple-700 dark:text-purple-300 bg-purple-50/70 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors"
+                            >
+                                <Video className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                                <span>Join Teams Meeting</span>
+                                <ExternalLink className="h-3 w-3 ml-auto text-purple-400" />
+                            </a>
+                        </div>
+                    )}
                     <div className="py-1">
                         <a
                             href={outlookUrl}
