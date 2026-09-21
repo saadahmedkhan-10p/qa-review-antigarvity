@@ -111,6 +111,23 @@ export class ReminderService {
                 }
             });
 
+            // ── Deduplication: skip if reminder already sent TODAY ───────────
+            const todayUTCStr = today.toISOString().slice(0, 10); // "YYYY-MM-DD"
+            if (runType === "SCHEDULING" && currentReview?.schedulingReminderSentAt) {
+                const sentStr = currentReview.schedulingReminderSentAt.toISOString().slice(0, 10);
+                if (sentStr === todayUTCStr) {
+                    console.log(`[ReminderService] SKIP scheduling reminder for ${project.name} — already sent today`);
+                    continue;
+                }
+            }
+            if (runType === "SUBMISSION" && currentReview?.submissionReminderSentAt) {
+                const sentStr = currentReview.submissionReminderSentAt.toISOString().slice(0, 10);
+                if (sentStr === todayUTCStr) {
+                    console.log(`[ReminderService] SKIP submission reminder for ${project.name} — already sent today`);
+                    continue;
+                }
+            }
+
             // ── 1. SCHEDULING REMINDER (10th of the month) ───────────────────
             if (runType === "SCHEDULING") {
                 // Trigger if review does not exist, or review is PENDING and has no scheduledDate
@@ -167,6 +184,14 @@ export class ReminderService {
                         emailSent: emailRes.success,
                         error: emailRes.error ? String(emailRes.error) : undefined
                     });
+
+                    // Stamp the sent timestamp to prevent re-sending the same day
+                    if (currentReview) {
+                        await prisma.review.update({
+                            where: { id: currentReview.id },
+                            data: { schedulingReminderSentAt: today }
+                        });
+                    }
                 }
             }
 
@@ -226,6 +251,14 @@ export class ReminderService {
                         emailSent: emailRes.success,
                         error: emailRes.error ? String(emailRes.error) : undefined
                     });
+
+                    // Stamp the sent timestamp to prevent re-sending the same day
+                    if (currentReview) {
+                        await prisma.review.update({
+                            where: { id: currentReview.id },
+                            data: { submissionReminderSentAt: today }
+                        });
+                    }
                 }
             }
         }

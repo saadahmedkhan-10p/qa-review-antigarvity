@@ -92,10 +92,12 @@ model Review {
   recommendedActions  String?
   followUpComment     String?
   aiAnalysis          String?
-  scheduledDate       DateTime?
-  submittedDate       DateTime?
-  meetingLink         String?
-  answers             String?
+  scheduledDate               DateTime?
+  submittedDate               DateTime?
+  meetingLink                 String?
+  answers                     String?
+  schedulingReminderSentAt    DateTime?
+  submissionReminderSentAt    DateTime?
   createdAt           DateTime     @default(now())
   updatedAt           DateTime     @updatedAt
 
