@@ -55,7 +55,8 @@ export async function submitReview(
         data: {
             status: status,
             submittedDate: isSubmission ? new Date() : undefined,
-            scheduledDate: summary.scheduledDate ? new Date(summary.scheduledDate) : null,
+            // Only update scheduledDate if explicitly provided — don't null it out on submission
+            ...(summary.scheduledDate !== undefined ? { scheduledDate: summary.scheduledDate ? new Date(summary.scheduledDate) : null } : {}),
             answers: JSON.stringify(answers),
             healthStatus: summary.healthStatus,
             deferredReason: summary.deferredReason,
@@ -147,7 +148,7 @@ export async function submitReview(
     // Log the activity
     await logActivity({
         userId: user?.id || review.reviewerId,
-        userName: user?.name || review.reviewer.name,
+        userName: user?.name || review.reviewer?.name || 'Unknown',
         action: isSubmission ? 'SUBMIT_REVIEW' : 'UPDATE_REVIEW',
         entity: 'Review',
         entityId: reviewId,
