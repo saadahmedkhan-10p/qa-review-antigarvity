@@ -16,6 +16,7 @@ import { useTableSearch } from "@/hooks/useTableSearch";
 import { SortIcon } from "@/components/table/SortIcon";
 import { ColumnFilter } from "@/components/table/ColumnFilter";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { ExportReviewReportModal } from "@/components/ExportReviewReportModal";
 
 interface Review {
     id: string;
@@ -290,6 +291,8 @@ export function ReportsView({ reviews, pageTitle, typeFilter, initialMonth, init
                             <Calendar className="h-4 w-4" />
                             Detailed Report
                         </Link>
+
+                        <ExportReviewReportModal />
                     </div>
                 </div>
 
