@@ -169,3 +169,45 @@ export async function submitReview(
 
     return { success: true };
 }
+
+/**
+ * Fetch the most recently submitted review for a project (excluding the current review being conducted).
+ */
+export async function getPreviousSubmittedReview(projectId: string, currentReviewId: string) {
+    const session = await getSession();
+    if (!session || !session.user) {
+        throw new Error("Unauthorized");
+    }
+
+    const previousReview = await prisma.review.findFirst({
+        where: {
+            projectId,
+            id: { not: currentReviewId },
+            status: "SUBMITTED"
+        },
+        orderBy: [
+            { submittedDate: "desc" },
+            { createdAt: "desc" }
+        ],
+        select: {
+            id: true,
+            healthStatus: true,
+            observations: true,
+            recommendedActions: true,
+            answers: true,
+            submittedDate: true,
+            createdAt: true
+        }
+    });
+
+    if (!previousReview) return null;
+
+    return {
+        id: previousReview.id,
+        healthStatus: previousReview.healthStatus,
+        observations: previousReview.observations,
+        recommendedActions: previousReview.recommendedActions,
+        answers: previousReview.answers,
+        submittedDate: (previousReview.submittedDate || previousReview.createdAt).toISOString()
+    };
+}

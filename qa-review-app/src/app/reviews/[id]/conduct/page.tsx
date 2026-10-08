@@ -1,13 +1,13 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
-import { getReview, submitReview } from "@/app/actions/review";
+import { getReview, submitReview, getPreviousSubmittedReview } from "@/app/actions/review";
 import CommentsList from "@/components/comments/CommentsList";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useAuth } from "@/context/AuthContext";
 import { Role } from "@/types/roles";
-import { Clock } from "lucide-react";
+import { Clock, Copy, Loader2 } from "lucide-react";
 
 export default function ConductReviewPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
@@ -28,6 +28,7 @@ export default function ConductReviewPage({ params }: { params: Promise<{ id: st
     const isHead = authUser?.roles ? (authUser.roles.includes("ADMIN") || authUser.roles.includes("QA_HEAD")) : false;
 
     const [loading, setLoading] = useState(true);
+    const [copyingLoading, setCopyingLoading] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -220,22 +221,107 @@ export default function ConductReviewPage({ params }: { params: Promise<{ id: st
         }
     };
 
+    const handleCopyLastReview = async () => {
+        if (!review?.projectId || !review?.id) return;
+
+        try {
+            setCopyingLoading(true);
+            const previous = await getPreviousSubmittedReview(review.projectId, review.id);
+
+            if (!previous) {
+                toast.error("No previous submitted review found for this project.");
+                return;
+            }
+
+            const dateStr = new Date(previous.submittedDate).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric"
+            });
+
+            const confirmCopy = window.confirm(
+                `Copy answers from the previous review (${dateStr})?\n\nThis will pre-fill the form with its answers, observations, and recommendations. You can review and modify any answers before submitting.`
+            );
+
+            if (!confirmCopy) return;
+
+            let parsedAnswers: Record<string, any> = {};
+            if (previous.answers) {
+                parsedAnswers = typeof previous.answers === 'string'
+                    ? JSON.parse(previous.answers)
+                    : previous.answers;
+            }
+
+            // Sync top-level health fields into dynamic form answers if not present
+            if (previous.healthStatus && !parsedAnswers['health-status']) {
+                parsedAnswers['health-status'] = previous.healthStatus;
+            }
+            if (previous.observations && !parsedAnswers['health-observations']) {
+                parsedAnswers['health-observations'] = previous.observations;
+            }
+
+            setAnswers(prev => ({
+                ...prev,
+                ...parsedAnswers
+            }));
+
+            setSummary(prev => ({
+                ...prev,
+                healthStatus: previous.healthStatus || prev.healthStatus,
+                observations: previous.observations || prev.observations,
+                recommendedActions: previous.recommendedActions || prev.recommendedActions
+            }));
+
+            toast.success(`Copied answers from previous review (${dateStr})!`);
+        } catch (err) {
+            console.error("Failed to copy previous review:", err);
+            toast.error("Failed to copy previous review answers.");
+        } finally {
+            setCopyingLoading(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-white dark:bg-gray-900 p-8 transition-colors duration-200">
             <div className="max-w-4xl mx-auto">
                 {/* Header */}
-                <div className="flex justify-between items-start mb-8 border-b dark:border-gray-800 pb-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 border-b dark:border-gray-800 pb-6">
                     <div>
                         <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">{review.form.title}</h1>
                         <p className="text-gray-500 dark:text-gray-400 mt-2 flex items-center gap-2">
                             <span className="font-semibold text-gray-700 dark:text-gray-300">Project:</span> {review.project.name}
                         </p>
                     </div>
-                    {isLocked && (
-                        <div className={`px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest border shadow-sm animate-pulse ${review.status === 'NOT_COMPLETED' ? 'bg-orange-50 dark:bg-orange-900/40 text-orange-900 dark:text-orange-200 border-orange-200 dark:border-orange-700/50' : 'bg-amber-50 dark:bg-amber-900/40 text-amber-900 dark:text-amber-200 border-amber-200 dark:border-amber-700/50'}`}>
-                            {review.status.replace("_", " ")} (Read Only)
-                        </div>
-                    )}
+
+                    <div className="flex items-center gap-3">
+                        {!isLocked && (
+                            <button
+                                type="button"
+                                onClick={handleCopyLastReview}
+                                disabled={copyingLoading}
+                                className="flex items-center gap-2 px-4 py-2.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 disabled:opacity-50 cursor-pointer"
+                                title="Pre-fill form with answers from the most recent submitted review of this project"
+                            >
+                                {copyingLoading ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        <span>Loading...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Copy className="h-4 w-4" />
+                                        <span>Copy Last Submitted Review</span>
+                                    </>
+                                )}
+                            </button>
+                        )}
+
+                        {isLocked && (
+                            <div className={`px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest border shadow-sm animate-pulse ${review.status === 'NOT_COMPLETED' ? 'bg-orange-50 dark:bg-orange-900/40 text-orange-900 dark:text-orange-200 border-orange-200 dark:border-orange-700/50' : 'bg-amber-50 dark:bg-amber-900/40 text-amber-900 dark:text-amber-200 border-amber-200 dark:border-amber-700/50'}`}>
+                                {review.status.replace("_", " ")} (Read Only)
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {review.status === 'NOT_COMPLETED' && (
