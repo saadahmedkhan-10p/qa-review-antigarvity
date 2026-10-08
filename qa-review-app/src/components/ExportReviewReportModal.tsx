@@ -55,9 +55,6 @@ export function ExportReviewReportModal() {
         };
     }, [isOpen, category]);
 
-    // Only render for ADMIN or QA_HEAD
-    if (!isAdmin) return null;
-
     const filteredProjects = useMemo(() => {
         return projects.filter((p) =>
             p.name.toLowerCase().includes(searchTerm.toLowerCase().trim())
@@ -125,6 +122,9 @@ export function ExportReviewReportModal() {
             setGeneratingPdf(false);
         }
     };
+
+    // Only render for ADMIN or QA_HEAD
+    if (!isAdmin) return null;
 
     return (
         <>
