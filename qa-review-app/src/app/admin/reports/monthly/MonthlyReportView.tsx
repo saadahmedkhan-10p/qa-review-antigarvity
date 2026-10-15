@@ -81,72 +81,6 @@ export default function MonthlyReportView({ reviews }: MonthlyReportViewProps) {
         });
     }, [reviews, currentDate, activeType]);
 
-    // ── Teghub Metric ─────────────────────────────────────────────────
-    const teghubStats = useMemo(() => {
-        const results: Array<{
-            projectName: string;
-            reviewId: string;
-            answer: string | null;
-            reason: string | null;
-        }> = [];
-
-        // Helper: recursively find any question whose label contains "teghub"
-        const findTeghubQuestion = (items: any[]): string | null => {
-            if (!Array.isArray(items)) return null;
-            for (const item of items) {
-                if (item.label && item.label.toLowerCase().includes('teghub')) {
-                    return item.id as string;
-                }
-                const nested = item.questions || item.items;
-                if (nested) {
-                    const found = findTeghubQuestion(nested);
-                    if (found) return found;
-                }
-            }
-            return null;
-        };
-
-        // Only look at SUBMITTED reviews for this month
-        const submitted = monthReviews.filter(r => r.status === 'SUBMITTED');
-
-        submitted.forEach(r => {
-            let questions: any[] = [];
-            try {
-                questions = typeof r.form?.questions === 'string'
-                    ? JSON.parse(r.form.questions || '[]')
-                    : (r.form?.questions || []);
-            } catch {}
-
-            const qId = findTeghubQuestion(questions);
-            if (!qId) return; // This form doesn't have a Teghub question
-
-            let answers: Record<string, any> = {};
-            try {
-                answers = typeof r.answers === 'string'
-                    ? JSON.parse(r.answers || '{}')
-                    : (r.answers || {});
-            } catch {}
-
-            const answer = answers[qId] ?? null;
-            const reason = answers[`${qId}_reason`] ?? null;
-
-            results.push({
-                projectName: r.project?.name || 'Unknown',
-                reviewId: r.id,
-                answer: answer ? String(answer) : null,
-                reason: reason ? String(reason) : null,
-            });
-        });
-
-        // Sort: Yes first, then No, then unanswered
-        results.sort((a, b) => {
-            const order = (ans: string | null) =>
-                ans === 'Yes' ? 0 : ans === 'No' ? 1 : 2;
-            return order(a.answer) - order(b.answer);
-        });
-
-        return results;
-    }, [monthReviews]);
 
     // ── Question Insights: extract all unique questions from this month's submitted reviews ──
     const allQuestionsMap = useMemo(() => {
@@ -580,66 +514,6 @@ export default function MonthlyReportView({ reviews }: MonthlyReportViewProps) {
                         </tbody>
                     </table>
                 </div>
-
-                {/* ── Teghub Metric Section ─────────────────────────────── */}
-                {teghubStats.length > 0 && (
-                    <div className="mb-8 border border-indigo-200 dark:border-indigo-700/50 rounded-lg overflow-hidden print:overflow-visible print-table-container">
-                        <div className="bg-indigo-600 dark:bg-indigo-800 px-4 py-2 flex items-center justify-between">
-                            <span className="font-bold text-white print-section-header">
-                                Are you using Teghub? — {format(currentDate, 'MMMM yyyy')}
-                            </span>
-                            <div className="flex gap-3 text-xs font-bold">
-                                <span className="bg-green-500 text-white px-2 py-0.5 rounded-full">
-                                    ✅ Yes: {teghubStats.filter(r => r.answer === 'Yes').length}
-                                </span>
-                                <span className="bg-red-500 text-white px-2 py-0.5 rounded-full">
-                                    ❌ No: {teghubStats.filter(r => r.answer === 'No').length}
-                                </span>
-                                {teghubStats.filter(r => !r.answer).length > 0 && (
-                                    <span className="bg-gray-400 text-white px-2 py-0.5 rounded-full">
-                                        — N/A: {teghubStats.filter(r => !r.answer).length}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                        <table className="w-full text-sm">
-                            <thead className="bg-indigo-50 dark:bg-indigo-900/20 border-b border-indigo-200 dark:border-indigo-700/50">
-                                <tr>
-                                    <th className="text-left px-4 py-2 font-bold text-indigo-800 dark:text-indigo-300 w-[40%]">Project Name</th>
-                                    <th className="text-left px-4 py-2 font-bold text-indigo-800 dark:text-indigo-300 w-[15%]">Answer</th>
-                                    <th className="text-left px-4 py-2 font-bold text-indigo-800 dark:text-indigo-300">Reason (if No)</th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700">
-                                {teghubStats.map((row, i) => (
-                                    <tr key={i} className={`${row.answer === 'Yes' ? 'bg-green-50/40 dark:bg-green-900/10' : row.answer === 'No' ? 'bg-red-50/40 dark:bg-red-900/10' : ''}`}>
-                                        <td className="px-4 py-2.5 font-medium text-indigo-600 dark:text-indigo-400">
-                                            <Link href={`/admin/reviews/${row.reviewId}`} className="hover:underline">
-                                                {row.projectName}
-                                            </Link>
-                                        </td>
-                                        <td className="px-4 py-2.5">
-                                            {row.answer === 'Yes' ? (
-                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300">
-                                                    ✅ Yes
-                                                </span>
-                                            ) : row.answer === 'No' ? (
-                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300">
-                                                    ❌ No
-                                                </span>
-                                            ) : (
-                                                <span className="text-gray-400 text-xs">—</span>
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-2.5 text-gray-600 dark:text-gray-400 text-sm">
-                                            {row.reason || '—'}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
 
                 {/* Detailed Challenged Projects (Bottom Table) */}
                 <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden print:overflow-visible bg-white dark:bg-gray-800 print-table-container print-detailed-table-container">
