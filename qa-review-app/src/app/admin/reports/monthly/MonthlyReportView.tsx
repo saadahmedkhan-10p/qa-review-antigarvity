@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, Label
 } from 'recharts';
@@ -48,6 +48,10 @@ export default function MonthlyReportView({ reviews }: MonthlyReportViewProps) {
     const activeType = ((searchParams.get("type") as any) || 'ALL') as 'ALL' | 'MANUAL' | 'AUTOMATION_WEB' | 'AUTOMATION_MOBILE' | 'API' | 'DESKTOP';
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
     const reportRef = useRef<HTMLDivElement>(null);
+
+    // Question Insights filter state
+    const [selectedQId, setSelectedQId] = useState<string>('');
+    const [selectedAnswer, setSelectedAnswer] = useState<string>('ALL');
 
     const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
     const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
@@ -143,6 +147,86 @@ export default function MonthlyReportView({ reviews }: MonthlyReportViewProps) {
 
         return results;
     }, [monthReviews]);
+
+    // ── Question Insights: extract all unique questions from this month's submitted reviews ──
+    const allQuestionsMap = useMemo(() => {
+        // Map of qId → { label, options: Set<string>, sectionTitle? }
+        const map = new Map<string, { label: string; options: Set<string>; sectionTitle?: string }>();
+
+        const extractQuestions = (items: any[], sectionTitle?: string) => {
+            if (!Array.isArray(items)) return;
+            items.forEach(item => {
+                // Section / group node
+                if (item.title && item.questions) {
+                    extractQuestions(item.questions, item.title);
+                    return;
+                }
+                if (item.id && item.label && item.type) {
+                    if (!map.has(item.id)) {
+                        map.set(item.id, { label: item.label, options: new Set(), sectionTitle });
+                    }
+                    // Collect all possible option values
+                    (item.options || []).forEach((opt: any) => {
+                        const val = typeof opt === 'string' ? opt : (opt.label || opt.value || String(opt));
+                        map.get(item.id)!.options.add(val);
+                    });
+                }
+            });
+        };
+
+        const submitted = monthReviews.filter(r => r.status === 'SUBMITTED');
+        submitted.forEach(r => {
+            let questions: any[] = [];
+            try {
+                questions = typeof r.form?.questions === 'string'
+                    ? JSON.parse(r.form.questions || '[]')
+                    : (r.form?.questions || []);
+            } catch {}
+            extractQuestions(questions);
+        });
+
+        return map;
+    }, [monthReviews]);
+
+    // ── Question Insights: filtered results based on selected question & answer ──
+    const questionFilterResults = useMemo(() => {
+        if (!selectedQId) return [];
+        const submitted = monthReviews.filter(r => r.status === 'SUBMITTED');
+
+        return submitted.map(r => {
+            let answers: Record<string, any> = {};
+            try {
+                answers = typeof r.answers === 'string'
+                    ? JSON.parse(r.answers || '{}')
+                    : (r.answers || {});
+            } catch {}
+
+            const rawAnswer = answers[selectedQId];
+            const answer = rawAnswer !== undefined && rawAnswer !== null ? String(rawAnswer) : null;
+            const reason = answers[`${selectedQId}_reason`]
+                ? String(answers[`${selectedQId}_reason`])
+                : null;
+
+            // Apply answer filter
+            if (selectedAnswer !== 'ALL') {
+                if (!answer || answer.toLowerCase() !== selectedAnswer.toLowerCase()) return null;
+            }
+
+            return {
+                projectName: r.project?.name || 'Unknown',
+                reviewId: r.id,
+                reviewer: r.reviewer?.name || r.secondaryReviewer?.name || '—',
+                answer,
+                reason,
+            };
+        }).filter(Boolean) as Array<{
+            projectName: string;
+            reviewId: string;
+            reviewer: string;
+            answer: string | null;
+            reason: string | null;
+        }>;
+    }, [monthReviews, selectedQId, selectedAnswer]);
 
     // Aggregate Data
     const stats = useMemo(() => {
@@ -666,6 +750,124 @@ export default function MonthlyReportView({ reviews }: MonthlyReportViewProps) {
                         </table>
                     </div>
                 </div>
+
+                {/* ── Question Insights Panel ─────────────────────────────────── */}
+                <div className="mt-10 border border-violet-200 dark:border-violet-700/50 rounded-xl overflow-hidden print:hidden">
+                    {/* Header */}
+                    <div className="bg-violet-600 dark:bg-violet-800 px-5 py-3 flex items-center gap-3">
+                        <svg className="w-5 h-5 text-violet-200 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span className="font-bold text-white text-sm tracking-wide">Question Insights — Filter by Any Question</span>
+                    </div>
+
+                    {/* Filters Row */}
+                    <div className="bg-violet-50 dark:bg-violet-900/20 px-5 py-4 border-b border-violet-200 dark:border-violet-700/40 flex flex-col sm:flex-row gap-3 items-start sm:items-end">
+                        {/* Question selector */}
+                        <div className="flex-1 min-w-0">
+                            <label className="block text-xs font-bold text-violet-700 dark:text-violet-300 mb-1.5 uppercase tracking-wider">
+                                Select Question
+                            </label>
+                            <select
+                                value={selectedQId}
+                                onChange={e => { setSelectedQId(e.target.value); setSelectedAnswer('ALL'); }}
+                                className="w-full bg-white dark:bg-gray-800 border border-violet-300 dark:border-violet-600 rounded-lg px-3 py-2 text-sm text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                            >
+                                <option value="">— Choose a question —</option>
+                                {Array.from(allQuestionsMap.entries()).map(([qId, q]) => (
+                                    <option key={qId} value={qId}>
+                                        {q.sectionTitle ? `[${q.sectionTitle}] ` : ''}{q.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Answer filter */}
+                        <div className="w-full sm:w-48 shrink-0">
+                            <label className="block text-xs font-bold text-violet-700 dark:text-violet-300 mb-1.5 uppercase tracking-wider">
+                                Filter by Answer
+                            </label>
+                            <select
+                                value={selectedAnswer}
+                                onChange={e => setSelectedAnswer(e.target.value)}
+                                disabled={!selectedQId}
+                                className="w-full bg-white dark:bg-gray-800 border border-violet-300 dark:border-violet-600 rounded-lg px-3 py-2 text-sm text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-violet-500 disabled:opacity-50"
+                            >
+                                <option value="ALL">All Answers</option>
+                                {selectedQId && allQuestionsMap.has(selectedQId) &&
+                                    Array.from(allQuestionsMap.get(selectedQId)!.options).map(opt => (
+                                        <option key={opt} value={opt}>{opt}</option>
+                                    ))
+                                }
+                            </select>
+                        </div>
+
+                        {/* Result count badge */}
+                        {selectedQId && (
+                            <div className="shrink-0 bg-violet-600 text-white text-xs font-bold px-3 py-2 rounded-lg self-end whitespace-nowrap">
+                                {questionFilterResults.length} project{questionFilterResults.length !== 1 ? 's' : ''}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Results table */}
+                    {!selectedQId ? (
+                        <div className="px-5 py-10 text-center text-gray-400 dark:text-gray-500 text-sm bg-white dark:bg-gray-800">
+                            Select a question above to see how each project answered it in {format(currentDate, 'MMMM yyyy')}.
+                        </div>
+                    ) : questionFilterResults.length === 0 ? (
+                        <div className="px-5 py-10 text-center text-gray-400 dark:text-gray-500 text-sm bg-white dark:bg-gray-800">
+                            No submitted reviews matched the selected filters for {format(currentDate, 'MMMM yyyy')}.
+                        </div>
+                    ) : (
+                        <div className="bg-white dark:bg-gray-800">
+                            <table className="w-full text-sm">
+                                <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-600">
+                                    <tr>
+                                        <th className="text-left px-4 py-2.5 font-bold text-gray-700 dark:text-gray-300 w-[35%]">Project</th>
+                                        <th className="text-left px-4 py-2.5 font-bold text-gray-700 dark:text-gray-300 w-[20%]">Reviewer</th>
+                                        <th className="text-left px-4 py-2.5 font-bold text-gray-700 dark:text-gray-300 w-[15%]">Answer</th>
+                                        <th className="text-left px-4 py-2.5 font-bold text-gray-700 dark:text-gray-300">Reason / Detail</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                                    {questionFilterResults.map((row, i) => {
+                                        const ans = row.answer?.toLowerCase();
+                                        const isYes = ans === 'yes';
+                                        const isNo = ans === 'no';
+                                        return (
+                                            <tr key={i} className={`${isYes ? 'bg-green-50/30 dark:bg-green-900/10' : isNo ? 'bg-red-50/30 dark:bg-red-900/10' : ''} hover:bg-violet-50/30 dark:hover:bg-violet-900/10 transition-colors`}>
+                                                <td className="px-4 py-2.5 font-medium">
+                                                    <Link href={`/admin/reviews/${row.reviewId}`} className="text-violet-600 dark:text-violet-400 hover:underline">
+                                                        {row.projectName}
+                                                    </Link>
+                                                </td>
+                                                <td className="px-4 py-2.5 text-gray-600 dark:text-gray-300">{row.reviewer}</td>
+                                                <td className="px-4 py-2.5">
+                                                    {row.answer ? (
+                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
+                                                            isYes ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' :
+                                                            isNo  ? 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300' :
+                                                                    'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                                                        }`}>
+                                                            {isYes ? '✅ ' : isNo ? '❌ ' : ''}{row.answer}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-gray-400 text-xs">—</span>
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400 text-sm">
+                                                    {row.reason || '—'}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+
             </div>
         </div>
     );
