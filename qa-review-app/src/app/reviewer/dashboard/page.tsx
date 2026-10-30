@@ -11,6 +11,17 @@ import { Video } from "lucide-react";
 
 type ProjectWithReviews = any;
 
+function safeFormatDate(dateVal: any, formatStr: string): string | null {
+    if (!dateVal) return null;
+    try {
+        const d = new Date(dateVal);
+        if (isNaN(d.getTime())) return null;
+        return format(d, formatStr);
+    } catch {
+        return null;
+    }
+}
+
 export default function ReviewerDashboard() {
     const { user, loading: authLoading } = useAuth();
     const [projects, setProjects] = useState<ProjectWithReviews[]>([]);
@@ -259,15 +270,15 @@ export default function ReviewerDashboard() {
                                                             }`}>
                                                                 {review.status?.replace('_', ' ')}
                                                             </span>
-                                                            {review.scheduledDate && (
+                                                            {review.scheduledDate && safeFormatDate(review.scheduledDate, 'MMM d, yyyy') && (
                                                                 <div className="text-[10px] text-gray-700 dark:text-gray-400 font-bold uppercase tracking-tight flex items-center gap-1 flex-wrap">
-                                                                    <span>SCH: {format(new Date(review.scheduledDate), 'MMM d, yyyy')}</span>
-                                                                    <span className="text-indigo-600 dark:text-indigo-400 font-extrabold">({format(new Date(review.scheduledDate), 'h:mm a')})</span>
+                                                                    <span>SCH: {safeFormatDate(review.scheduledDate, 'MMM d, yyyy')}</span>
+                                                                    <span className="text-indigo-600 dark:text-indigo-400 font-extrabold">({safeFormatDate(review.scheduledDate, 'h:mm a')})</span>
                                                                 </div>
                                                             )}
-                                                            {review.submittedDate && (
+                                                            {review.submittedDate && safeFormatDate(review.submittedDate, 'MMM d, yyyy') && (
                                                                 <div className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-tight">
-                                                                    SUB: {format(new Date(review.submittedDate), 'MMM d, yyyy')}
+                                                                    SUB: {safeFormatDate(review.submittedDate, 'MMM d, yyyy')}
                                                                 </div>
                                                             )}
                                                             {isTerminal && review.status === 'SUBMITTED' && (
@@ -403,21 +414,23 @@ export default function ReviewerDashboard() {
                                                                             <span>JOIN TEAMS</span>
                                                                         </a>
                                                                     )}
-                                                                    <CalendarLinksDropdown
-                                                                        reviewId={review.id}
-                                                                        projectName={project.name}
-                                                                        scheduledDate={review.scheduledDate}
-                                                                        reviewerName={user.name}
-                                                                        qaContactName={project.contactPerson?.name}
-                                                                        leadName={project.lead?.name}
-                                                                        meetingLink={review.meetingLink}
-                                                                        attendees={[
-                                                                            ...(user.email ? [{ name: user.name, email: user.email }] : []),
-                                                                            ...(project.secondaryReviewer?.email ? [{ name: project.secondaryReviewer.name, email: project.secondaryReviewer.email }] : []),
-                                                                            ...(project.contactPerson?.email ? [{ name: project.contactPerson.name, email: project.contactPerson.email }] : []),
-                                                                            ...(project.lead?.email ? [{ name: project.lead.name, email: project.lead.email }] : [])
-                                                                        ]}
-                                                                    />
+                                                            {review.scheduledDate && safeFormatDate(review.scheduledDate, 'MMM d, yyyy') && (
+                                                                        <CalendarLinksDropdown
+                                                                            reviewId={review.id}
+                                                                            projectName={project.name}
+                                                                            scheduledDate={review.scheduledDate}
+                                                                            reviewerName={user.name}
+                                                                            qaContactName={project.contactPerson?.name}
+                                                                            leadName={project.lead?.name}
+                                                                            meetingLink={review.meetingLink}
+                                                                            attendees={[
+                                                                                ...(user.email ? [{ name: user.name, email: user.email }] : []),
+                                                                                ...(project.secondaryReviewer?.email ? [{ name: project.secondaryReviewer.name, email: project.secondaryReviewer.email }] : []),
+                                                                                ...(project.contactPerson?.email ? [{ name: project.contactPerson.name, email: project.contactPerson.email }] : []),
+                                                                                ...(project.lead?.email ? [{ name: project.lead.name, email: project.lead.email }] : [])
+                                                                            ]}
+                                                                        />
+                                                                    )}
                                                                 </div>
                                                             )}
                                                             {isPending && !staged?.status && (

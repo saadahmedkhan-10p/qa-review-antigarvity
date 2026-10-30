@@ -38,12 +38,17 @@ export function CalendarLinksDropdown({
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const dateObj = typeof scheduledDate === "string" ? new Date(scheduledDate) : scheduledDate;
+    const dateObj = scheduledDate
+        ? (typeof scheduledDate === "string" ? new Date(scheduledDate) : scheduledDate)
+        : new Date(Date.now() + 60 * 60 * 1000); // fallback: 1hr from now
+
+    const isValidDate = dateObj instanceof Date && !isNaN(dateObj.getTime());
+    const safeDateObj = isValidDate ? dateObj : new Date(Date.now() + 60 * 60 * 1000);
 
     const eventDetails = {
         reviewId,
         projectName,
-        startDate: dateObj,
+        startDate: safeDateObj,
         reviewerName,
         qaContactName,
         leadName,
