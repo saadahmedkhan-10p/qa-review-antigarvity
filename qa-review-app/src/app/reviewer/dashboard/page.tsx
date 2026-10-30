@@ -240,7 +240,7 @@ export default function ReviewerDashboard() {
                                                             )}
                                                         </div>
                                                         <div className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold mb-1">{project.type}</div>
-                                                        <div className="text-xs text-gray-500 dark:text-gray-400 font-medium italic">{review.form.title}</div>
+                                                        <div className="text-xs text-gray-500 dark:text-gray-400 font-medium italic">{review.form?.title}</div>
                                                     </td>
                                                     <td className="px-8 py-6">
                                                         <div className="text-sm font-medium text-gray-800 dark:text-gray-300">L: {project.lead?.name || 'N/A'}</div>
